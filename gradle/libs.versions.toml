@@ -1,0 +1,32 @@
+[versions]
+serilization = "1.8.1"
+sp = "2.1.20"
+nicehttp = "0.4.13"
+okhttp3 = "4.12.0"
+foundation = "0.15.2"
+net = "5.17.0"
+seleniumhq = "4.34.0"
+scope = "1.10.2"
+jsoup = "1.20.1"
+lucene = "4.10.4"
+gson = "2.13.1"
+
+
+[libraries]
+kotlinx-serilization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serilization"}
+nicehttp = { group = "com.github.Blatzar", name = "NiceHttp", version.ref = "nicehttp"}
+okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp3"}
+jewel = { group = "org.jetbrains.jewel", name = "jewel-decorated-window", version.ref = "foundation"}
+jewel-int = { group = "org.jetbrains.jewel", name = "jewel-int-ui-decorated-window", version.ref = "foundation"}
+net-jna = { group = "net.java.dev.jna", name = "jna", version.ref = "net"}
+java-seleniumhq = { group = "org.seleniumhq.selenium", name = "selenium-java", version.ref = "seleniumhq"}
+kotlinx-coroutines-swing = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "scope"}
+jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup"}
+apache-lucene = { group = "org.apache.lucene", name = "lucene-core", version.ref = "lucene"}
+apache-lucene-analizer = { group = "org.apache.lucene", name = "lucene-analyzers-common", version.ref = "lucene"}
+apache-lucene-query = { group = "org.apache.lucene", name = "lucene-queryparser", version.ref = "lucene"}
+google-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson"}
+
+
+[plugins]
+kotlinx-serilization-pg = { id = "plugin.serialization", version.ref = "sp" }
