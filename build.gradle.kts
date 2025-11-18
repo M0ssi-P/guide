@@ -41,6 +41,9 @@ dependencies {
     implementation(libs.apache.lucene.analizer)
     implementation(libs.apache.lucene.query)
     implementation(libs.google.gson)
+    implementation(libs.xerial.sqlite)
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.0")
+
 }
 
 val jdkLevel = "21"

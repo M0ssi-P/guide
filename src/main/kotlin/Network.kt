@@ -35,17 +35,29 @@ fun initialiseNetwork() {
         50L * 1024L * 1024L
     )
 
+
     okHttpClient = OkHttpClient.Builder()
         .followRedirects(true)
         .followSslRedirects(true)
         .cache(cache)
         .apply {
-            addGoogleDns()
-//            when (dns) {
-//                1 -> addGoogleDns()
-//                2 -> addCloudFlareDns()
-//                3 -> addAdGuardDns()
-//            }
+            when (dns) {
+                1 -> addGoogleDns()
+                2 -> addCloudFlareDns()
+                3 -> addAdGuardDns()
+            }
+        }
+        .addNetworkInterceptor { chain ->
+            val response = chain.proceed(chain.request())
+
+            response.newBuilder()
+                .removeHeader("Pragma")
+                .removeHeader("Cache-Control")
+                .header(
+                    "Cache-Control",
+                    "public, max-age=${TimeUnit.HOURS.toSeconds(6)}"
+                )
+                .build()
         }
         .build()
 

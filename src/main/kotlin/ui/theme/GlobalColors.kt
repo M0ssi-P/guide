@@ -18,6 +18,7 @@ val Inter = FontFamily(
     Font("fonts/Inter-Bold.ttf", FontWeight.Bold),
     Font("fonts/Inter-Light.ttf", FontWeight.Light),
     Font("fonts/Inter-Medium.ttf", FontWeight.Medium),
+    Font("fonts/Inter-SemiBold.ttf", FontWeight.SemiBold)
 )
 
 val LightColors = Colors(
@@ -38,9 +39,10 @@ val CustomTypography = Typography(
     h1 = TextStyle(fontFamily = Arbutus, fontSize = 24.sp, fontWeight = FontWeight.Normal),
     h2 = TextStyle(fontFamily = Inter, fontSize = 20.sp, fontWeight = FontWeight.Bold),
     h3 = TextStyle(fontFamily = Inter, fontSize = 16.sp, fontWeight = FontWeight.Medium),
-    body = TextStyle(fontFamily = Inter, fontSize = 14.sp, fontWeight = FontWeight.Normal),
+    body = TextStyle(fontFamily = Inter, fontSize = 14.sp, fontWeight = FontWeight.Normal, lineHeight = 24.sp, letterSpacing = 0.5.sp),
     button = TextStyle(fontFamily = Inter, fontSize = 12.sp, fontWeight = FontWeight.Bold),
     subs = TextStyle(fontFamily = Inter, fontSize = 12.sp, fontWeight = FontWeight.SemiBold),
+    semiText = TextStyle(fontFamily = Inter, fontSize = 12.sp, fontWeight = FontWeight.Medium),
     tab = TextStyle(fontFamily = Arbutus, fontSize = 12.sp, fontWeight = FontWeight.Normal)
 )
 

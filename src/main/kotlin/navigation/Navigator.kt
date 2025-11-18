@@ -28,7 +28,7 @@ class Navigator {
     private fun parseRoute(route: String): Route {
         return when {
             route.startsWith("/") -> {
-                Route("/wewew")
+                Route(route)
             }
             else -> {
                 Route("dsdsd")

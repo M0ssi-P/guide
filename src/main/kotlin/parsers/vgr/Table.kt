@@ -100,7 +100,7 @@ class Table: TableParser() {
                         id = isFoundHub.id,
                         date = isFoundHub.date,
                         dateCode = table.p,
-                        language = isFoundHub.languageCode,
+                        language = language.iso63901!!,
                         location = isFoundHub.location,
                         nextSermonDate = hasNext?.p ?: "",
                         prevSermonDate = hasPrev?.p ?: "",
@@ -168,11 +168,14 @@ class Table: TableParser() {
 
             val body = Jsoup.parse(it.Content);
             body.select("p").map { i ->
-                val mainClasses = setOf("first_par", "normal_pn")
-                val number = if(i.classNames().any {c -> c == "first_par"}) 1 else {
+                val mainClasses = setOf("first_par", "normal_pn", "q")
+                val number = if(i.classNames().any {c -> c == "first_par"}) 1 else if(i.classNames().any { c -> c == "p"}) {
+                    i.select("span.first span.qn").text().dropLast(1).toIntOrNull()
+                } else {
                     i.select("span.first span.pn").text().toIntOrNull()
                 }
                 val isScripture = i.classNames().contains("scr");
+                val isQuestion = i.classNames().contains("q");
 
                 if(i.classNames().any { com -> com in mainClasses }) {
                     section.content.add(
@@ -180,71 +183,85 @@ class Table: TableParser() {
                             id = hub?.sermon?.blocks?.find { bk -> bk.blockNumber == number }?.blockId,
                             number = number,
                             isFirst = number == 1,
+                            isQuestion = isQuestion,
                             text = "",
                             content = mutableListOf()
                         )
                     )
                 }
-                val targetP = section.content.last()
-                targetP.content.add(
-                    Line(
-                        displayNumber = false,
-                        number = targetP.number!!,
-                        segments = mutableListOf()
+
+                if(section.content.isNotEmpty() && section.content.last().number != null) {
+                    val targetP = section.content.last()
+                    targetP.content.add(
+                        Line(
+                            displayNumber = false,
+                            number = targetP.number!!,
+                            segments = mutableListOf()
+                        )
                     )
-                )
 
-                if(i.classNames().none { toIgnore -> toIgnore in mainClasses } && targetP.text.isNotEmpty()) {
-                    targetP.text += "\n"
-                }
+                    if(i.classNames().none { toIgnore -> toIgnore in mainClasses } && targetP.text.isNotEmpty()) {
+                        targetP.text += "\n"
+                    }
 
-                i.select("span.st").map { x ->
-                    val ignoredClasses = setOf("eagle", "se", "pn")
+                    i.select("span.st").map { x ->
+                        val ignoredClasses = setOf("eagle", "se", "pn")
 
-                    x.childNodes().map { node ->
-                        when(node) {
-                            is TextNode -> {
-                                targetP.text += node.text()
-                                targetP.content.last().segments.add(
-                                    Segment(
-                                        style = listOf(Style.Normal),
-                                        content = node.text()
+                        x.childNodes().map { node ->
+                            when(node) {
+                                is TextNode -> {
+                                    targetP.text += node.text()
+                                    targetP.content.last().segments.add(
+                                        Segment(
+                                            style = listOf(Style.Normal),
+                                            content = node.text()
+                                        )
                                     )
-                                )
-                            }
-                            is Element -> {
-                                val classNames = node.classNames()
-                                if (classNames.none { toIgnore -> toIgnore in ignoredClasses }) {
-                                    when {
-                                        classNames.contains("en") -> {
-                                            val text = node.text()
-                                            targetP.text += text
-                                            targetP.content.last().segments.add(
-                                                Segment(
-                                                    style = listOf(Style.BlankTape, Style.Deemed),
-                                                    content = text
+                                }
+                                is Element -> {
+                                    val classNames = node.classNames()
+                                    if (classNames.none { toIgnore -> toIgnore in ignoredClasses }) {
+                                        when {
+                                            classNames.contains("en") -> {
+                                                val text = node.text()
+                                                targetP.text += text
+                                                targetP.content.last().segments.add(
+                                                    Segment(
+                                                        style = listOf(Style.BlankTape, Style.Deemed),
+                                                        content = text
+                                                    )
                                                 )
-                                            )
-                                        }
-                                        classNames.contains("italic") -> {
-                                            val text = node.text()
-                                            targetP.text += text
-                                            targetP.content.last().segments.add(
-                                                Segment(
-                                                    style = mutableListOf(Style.Italic, if(isScripture) Style.Scripture else Style.Nothing),
-                                                    content = text
+                                            }
+                                            classNames.contains("bold") -> {
+                                                val text = node.text()
+                                                targetP.text += text
+                                                targetP.content.last().segments.add(
+                                                    Segment(
+                                                        style = listOf(Style.Normal, Style.Bold),
+                                                        content = text
+                                                    )
                                                 )
-                                            )
-                                        }
-                                        classNames.contains("ellquell") -> {
-                                            val text = node.text()
-                                            targetP.text += text
-                                            targetP.content.last().segments.add(
-                                                Segment(
-                                                    style = listOf(Style.Normal),
-                                                    content = text
+                                            }
+                                            classNames.contains("italic") -> {
+                                                val text = node.text()
+                                                targetP.text += text
+                                                targetP.content.last().segments.add(
+                                                    Segment(
+                                                        style = mutableListOf(Style.Italic, if(isScripture) Style.Scripture else Style.Nothing),
+                                                        content = text
+                                                    )
                                                 )
-                                            )
+                                            }
+                                            classNames.contains("ellquell") -> {
+                                                val text = node.text()
+                                                targetP.text += text
+                                                targetP.content.last().segments.add(
+                                                    Segment(
+                                                        style = listOf(Style.Normal),
+                                                        content = text
+                                                    )
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -359,7 +376,7 @@ class Table: TableParser() {
 
         val title = Jsoup.parse(el.d.split("|")[4]).text()
         val doc = Jsoup.parse(el.d.split("|")[5])
-        val cleanText = doc.select("p").html().replace("<br>", "\n").replace("<br/>", "\n").replace("<br />", "\n")
+        val cleanText = doc.select("p").html().replace("<br>", "").replace("<br/>", "").replace("<br />", "")
         val text = Jsoup.parseBodyFragment(cleanText).body().wholeText()
 
         return IQotd(

@@ -24,6 +24,6 @@ fun FlexDotText(text: String, bgColor: Color) {
     Row(modifier = Modifier.wrapContentWidth(), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(5.dp).height(5.dp).clip(RoundedCornerShape(6.dp)).background(bgColor))
         Spacer(modifier = Modifier.width(5.dp))
-        Text(text, style = theme.typography.button, color = theme.colors.text)
+        Text(text, style = theme.typography.semiText, color = theme.colors.text)
     }
 }

@@ -5,5 +5,6 @@ data class Paragraph(
     val number: Int?,
     var text: String,
     val isFirst: Boolean,
+    val isQuestion: Boolean = false,
     val content: MutableList<Line>
 )

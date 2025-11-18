@@ -9,5 +9,6 @@ data class Typography(
     val body: TextStyle,
     val button: TextStyle,
     val subs: TextStyle,
+    val semiText: TextStyle,
     val tab: TextStyle
 )

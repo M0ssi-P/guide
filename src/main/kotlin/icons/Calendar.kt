@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 
 private val calendarCache = mutableMapOf<Color, ImageVector>()
 
-fun calendar(strokeColor: Color): ImageVector {
+fun calendarIcon(strokeColor: Color): ImageVector {
     return calendarCache.getOrPut(strokeColor) {
         ImageVector.Builder(
             name = "calendar",

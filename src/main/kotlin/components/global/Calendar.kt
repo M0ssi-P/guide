@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -22,12 +22,15 @@ import org.jetbrains.jewel.ui.component.Text
 import ui.theme.LocalTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import parsers.vgr.VgrViewModel
+import parsers.vgr.models.Calendar
+import ui.UiState
 import java.time.LocalDate
 import java.time.YearMonth
 
 @Composable
 @Preview
-fun Calendar() {
+fun Calendar(model: VgrViewModel) {
     val theme = LocalTheme.current
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
     val today = LocalDate.now()
@@ -39,14 +42,19 @@ fun Calendar() {
     ) {
         // --- Day headers ---
         val dayNames = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             for (day in dayNames) {
-                Box(modifier = Modifier.size(width = 53.dp, height = 32.dp).background(
+                val isToday = today.dayOfWeek.name.substring(0, 3).equals(day, ignoreCase = true);
+                val color = if (isToday) theme.colors.primaryText else theme.colors.text
+
+                Box(modifier = Modifier.weight(1f).background(
                     color = Color(0x20767680),
                     shape = RoundedCornerShape(16.dp)
                 ), contentAlignment = Alignment.Center) {
                     Text(
-                        text = day, color = theme.colors.text, style = theme.typography.subs
+                        text = day, color = color, style = theme.typography.subs,
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
             }
@@ -54,6 +62,6 @@ fun Calendar() {
 
         Spacer(modifier = Modifier.height(1.dp))
 
-        CalendarGrid(currentMonth, today)
+        CalendarGrid(currentMonth, today, model)
     }
 }

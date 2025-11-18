@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import components.titleBarView
+import db.ConfigViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -127,18 +128,22 @@ fun main() {
                  DecoratedWindow(
                      onCloseRequest = { exitApplication() },
                      state = windowState,
-                     title = "Jewel standalone sample",
+                     title = "The Guide",
                  ) {
                      NavSystem {
+                         val configModel = remember { ConfigViewModel() }
                          val navigator = LocalNavigator.current
 
+
                          Row(modifier = Modifier.fillMaxSize().background(theme.colors.background)) {
-                             Box(modifier = Modifier
-                                 .width(241.dp)
-                                 .fillMaxHeight()
-                                 .background(theme.colors.menu)
-                                 .newBorder(theme.colors.border, 1.dp, setOf(BorderSide.Right))
-                             ) {
+                             if(dbExists("table_en.db")) {
+                                 Box(modifier = Modifier
+                                     .width(241.dp)
+                                     .fillMaxHeight()
+                                     .background(theme.colors.menu)
+                                     .newBorder(theme.colors.border, 1.dp, setOf(BorderSide.Right))
+                                 ) {
+                                 }
                              }
                              Column(modifier = Modifier.fillMaxSize()){
                                  titleBarView(ui)
