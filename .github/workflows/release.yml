@@ -45,7 +45,7 @@ jobs:
             --vendor "Pacifique Mossi" `
             --win-menu `
             --win-shortcut `
-            --win-console`
+            --win-console `
             --dest dist
 
       # -------- MACOS --------
@@ -60,7 +60,6 @@ jobs:
             --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
             --vendor "Pacifique Mossi" \
-            --mac-console \
             --dest dist
 
       # -------- LINUX --------
@@ -75,7 +74,6 @@ jobs:
             --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
             --vendor "Pacifique Mossi" \
-            --linux-console \
             --dest dist
 
       - name: Upload installers to Release
