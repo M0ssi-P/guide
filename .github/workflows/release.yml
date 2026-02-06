@@ -40,7 +40,7 @@ jobs:
             --main-jar The_Guide.jar `
             --main-class MainKt `
             --name "The Guide" `
-            --app-version ${{ github.ref_name }} `
+            --app-version **${github.ref_name#v}** `
             --vendor "Pacifique Mossi" `
             --win-menu `
             --win-shortcut `
