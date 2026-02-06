@@ -16,4 +16,4 @@ pluginManagement {
 
 }
 
-rootProject.name = "game"
+rootProject.name = "The_Guide"

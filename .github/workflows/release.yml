@@ -27,8 +27,15 @@ jobs:
         if: runner.os != 'Windows'
         run: chmod +x gradlew
 
-      - name: Build fat JAR
-        run: ./gradlew packageUberJarForCurrentOS
+      - name: Build Compose uber JAR
+        run: ./gradlew clean packageUberJarForCurrentOS
+
+      - name: Resolve JAR name
+        shell: bash
+        run: |
+          JAR_PATH=$(ls build/compose/jars/*.jar | head -n 1)
+          echo "JAR_PATH=$JAR_PATH" >> $GITHUB_ENV
+          echo "JAR_NAME=$(basename "$JAR_PATH")" >> $GITHUB_ENV
 
       # -------- WINDOWS --------
       - name: Build Windows installer
@@ -37,7 +44,7 @@ jobs:
           $version = "${{ github.ref_name }}".Replace("v", "")
           jpackage `
             --type exe `
-            --input build/libs `
+            --input build/compose/jars `
             --main-jar The_Guide.jar `
             --main-class MainKt `
             --name "The Guide" `
@@ -55,7 +62,7 @@ jobs:
         run: |
           jpackage \
             --type dmg \
-            --input build/libs \
+            --input build/compose/jars \
             --main-jar The_Guide.jar \
             --main-class MainKt \
             --name "The Guide" \
@@ -70,7 +77,7 @@ jobs:
         run: |
           jpackage \
             --type deb \
-            --input build/libs \
+            --input build/compose/jars \
             --main-jar The_Guide.jar \
             --main-class MainKt \
             --name "The Guide" \
