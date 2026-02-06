@@ -37,8 +37,8 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-21.0.8-windows-x64-b895.146.zip" -OutFile "C:\jbr\win\jbr.zip"
           New-Item -ItemType Directory -Force -Path "C:\jbr\win"
+          Invoke-WebRequest -Uri "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-21.0.8-windows-x64-b895.146.zip" -OutFile "C:\jbr\win\jbr.zip"
           Expand-Archive -Path "C:\jbr\win\jbr.zip" -DestinationPath "C:\jbr\win"
           echo "JAVA_HOME=C:\jbr\win\jbrsdk-21.0.8" >> $Env:GITHUB_ENV
 
