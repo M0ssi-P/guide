@@ -45,7 +45,7 @@ jobs:
           jpackage `
             --type exe `
             --input build/compose/jars `
-            --main-jar The_Guide.jar `
+            --main-jar "$JAR_NAME" `
             --main-class MainKt `
             --name "The Guide" `
             --app-version $version `
@@ -63,7 +63,7 @@ jobs:
           jpackage \
             --type dmg \
             --input build/compose/jars \
-            --main-jar The_Guide.jar \
+            --main-jar "$JAR_NAME" \
             --main-class MainKt \
             --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
@@ -78,7 +78,7 @@ jobs:
           jpackage \
             --type deb \
             --input build/compose/jars \
-            --main-jar The_Guide.jar \
+            --main-jar "$JAR_NAME" \
             --main-class MainKt \
             --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
