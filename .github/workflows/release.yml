@@ -39,7 +39,7 @@ jobs:
             --input build/compose/jars ^
             --main-jar The_Guide.jar ^
             --main-class MainKt ^
-            --name The Guide ^
+            --name "The Guide" ^
             --app-version ${{ github.ref_name }} ^
             --vendor "Pacifique Mossi" ^
             --win-menu ^
@@ -55,7 +55,7 @@ jobs:
             --input build/compose/jars \
             --main-jar The_Guide.jar \
             --main-class MainKt \
-            --name The Guide \
+            --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
             --vendor "Pacifique Mossi" \
             --dest dist
@@ -69,7 +69,7 @@ jobs:
             --input build/compose/jars \
             --main-jar The_Guide.jar \
             --main-class MainKt \
-            --name The Guide \
+            --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
             --vendor "Pacifique Mossi" \
             --dest dist
