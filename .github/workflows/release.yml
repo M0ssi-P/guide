@@ -34,13 +34,14 @@ jobs:
       - name: Build Windows installer
         if: runner.os == 'Windows'
         run: |
+          $version = "${{ github.ref_name }}".Replace("v", "")
           jpackage `
             --type exe `
             --input build/libs `
             --main-jar The_Guide.jar `
             --main-class MainKt `
             --name "The Guide" `
-            --app-version **${github.ref_name#v}** `
+            --app-version $version `
             --vendor "Pacifique Mossi" `
             --win-menu `
             --win-shortcut `
