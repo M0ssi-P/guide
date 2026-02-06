@@ -46,6 +46,7 @@ jobs:
             --win-menu `
             --win-shortcut `
             --win-console `
+            --add-modules ALL-MODULE-PATH `
             --dest dist
 
       # -------- MACOS --------
@@ -60,6 +61,7 @@ jobs:
             --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
             --vendor "Pacifique Mossi" \
+            --add-modules ALL-MODULE-PATH \
             --dest dist
 
       # -------- LINUX --------
@@ -74,6 +76,7 @@ jobs:
             --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
             --vendor "Pacifique Mossi" \
+            --add-modules ALL-MODULE-PATH \
             --dest dist
 
       - name: Upload installers to Release
