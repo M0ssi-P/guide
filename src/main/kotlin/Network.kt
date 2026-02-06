@@ -28,7 +28,10 @@ lateinit var okHttpClient: OkHttpClient
 lateinit var client: Requests
 
 fun initialiseNetwork() {
-    val dns = loadData<Int>("settings_dns")
+    val dns = loadData<Int>("settings_dns") ?: 1.apply {
+        saveData("settings_dns", this)
+    }
+
     val cacheDir = System.getProperty("java.io.tmpdir")
     cache = Cache(
         File(cacheDir, "http_cache"),

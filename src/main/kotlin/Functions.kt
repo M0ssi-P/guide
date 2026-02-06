@@ -14,8 +14,6 @@ val SubHeadList: List<String> = listOf("d")
 val ParagraphList: List<String> = listOf("p", "q1", "q2", "pi", "li1", "m")
 val ItalicList = mutableListOf("it", "add")
 
-val dotenv = dotenv()
-
 fun saveData(fileName: String, data: Any?) {
     tryWith {
         val filesDir = AppDir()
