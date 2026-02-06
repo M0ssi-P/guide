@@ -2,13 +2,15 @@ package com.composables
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
 private val locationCache = mutableMapOf<Color, ImageVector>()
 
-fun location(strokeColor: Color): ImageVector {
+fun locationIcon(strokeColor: Color): ImageVector {
     return locationCache.getOrPut(strokeColor) {
         ImageVector.Builder(
             name = "location",
@@ -18,7 +20,10 @@ fun location(strokeColor: Color): ImageVector {
             viewportHeight = 20f
         ).apply {
             path(
-                stroke = SolidColor(strokeColor)
+                stroke = SolidColor(strokeColor),
+                strokeLineWidth = 1.5f,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round
             ) {
                 moveTo(10.0001f, 11.1916f)
                 curveTo(11.436f, 11.1916f, 12.6001f, 10.0276f, 12.6001f, 8.59163f)

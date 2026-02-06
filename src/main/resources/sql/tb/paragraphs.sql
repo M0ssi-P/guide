@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS paragraphs (
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE
-            );
+            )

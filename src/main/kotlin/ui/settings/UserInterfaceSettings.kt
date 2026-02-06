@@ -1,5 +1,6 @@
 package ui.settings
 
+import parsers.bible.models.ILanguage
 import java.io.Serializable
 
 data class UserInterfaceSettings(
@@ -21,8 +22,10 @@ data class UserInterfaceSettings(
     var layoutAnimations: Boolean = true,
     var animationSpeed: Float = 1f,
 
-    var downloadedLanguages: MutableList<Pair<String, String>> = mutableListOf(
-        Pair("en", "eng")
-    )
+    var downloadedLanguages: List<Triple<String, String, ILanguage>> = mutableListOf(),
+    val hasConfigured: Boolean = false,
+    val currentBibleLanguage: String = "en",
+    val currentTableLanguage: String = "en",
+    val currentBibleVersion: String = "KJV"
 
 ) : Serializable

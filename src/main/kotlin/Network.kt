@@ -47,18 +47,18 @@ fun initialiseNetwork() {
                 3 -> addAdGuardDns()
             }
         }
-        .addNetworkInterceptor { chain ->
-            val response = chain.proceed(chain.request())
-
-            response.newBuilder()
-                .removeHeader("Pragma")
-                .removeHeader("Cache-Control")
-                .header(
-                    "Cache-Control",
-                    "public, max-age=${TimeUnit.HOURS.toSeconds(6)}"
-                )
-                .build()
-        }
+//        .addNetworkInterceptor { chain ->
+//            val response = chain.proceed(chain.request())
+//
+//            response.newBuilder()
+//                .removeHeader("Pragma")
+//                .removeHeader("Cache-Control")
+//                .header(
+//                    "Cache-Control",
+//                    "public, max-age=${TimeUnit.HOURS.toSeconds(6)}"
+//                )
+//                .build()
+//        }
         .build()
 
     client = Requests(

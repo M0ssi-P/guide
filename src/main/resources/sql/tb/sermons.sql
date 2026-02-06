@@ -18,4 +18,4 @@ CREATE TABLE IF NOT EXISTS sermons (
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (language_id) REFERENCES languages(id) ON DELETE CASCADE
-            );
+            )

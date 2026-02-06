@@ -14,13 +14,14 @@ fun bookSquare(strokeColor: Color): ImageVector {
     return bookSquareCache.getOrPut(strokeColor) {
         ImageVector.Builder(
             name = "bookSquare",
-            defaultWidth = 48.dp,
-            defaultHeight = 48.dp,
+            defaultWidth = 20.dp,
+            defaultHeight = 20.dp,
             viewportWidth = 20f,
             viewportHeight = 20f
         ).apply {
             path(
                 stroke = SolidColor(strokeColor),
+                strokeLineWidth = 1.5f,
                 strokeLineCap = StrokeCap.Round,
                 strokeLineJoin = StrokeJoin.Round
             ) {

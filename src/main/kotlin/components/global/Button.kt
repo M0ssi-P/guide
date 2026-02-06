@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.LocalContentColor
@@ -23,22 +26,28 @@ import androidx.compose.ui.unit.dp
 fun Button(
 //    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = Color(0xFF444444),
+    fillMaxSize: Boolean = true,
+    secondModifier: Modifier = Modifier,
     contentColor: Color = Color.White,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
+    verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
     shape: Shape = RoundedCornerShape(6.dp),
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     content: @Composable RowScope.() -> Unit
 ) {
+    val fillMS = if (fillMaxSize) Modifier.fillMaxSize() else Modifier;
+
     Box(
         modifier = modifier,
-        contentAlignment = Alignment.Center
     ) {
-        CompositionLocalProvider(LocalContentColor provides contentColor) {
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                content = content
-            )
+        Row(
+            modifier = fillMS.then(secondModifier),
+            horizontalArrangement = horizontalArrangement,
+            verticalAlignment = verticalAlignment,
+        ) {
+            CompositionLocalProvider(LocalContentColor provides contentColor) {
+                content()
+            }
         }
     }
 }

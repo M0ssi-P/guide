@@ -1,24 +1,32 @@
-import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.ComposeFoundationFlags
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import backblazeb2.BackBlazeB2
+import backblazeb2.actions.B2Credentials
+import components.layouts.Sidebar
 import components.titleBarView
 import db.ConfigViewModel
-import kotlinx.coroutines.CoroutineScope
+import db.checkIfOneExist
+import db.controller.songbooks.Books.importBook
+import db.controller.songbooks.Books.importLyrics
+import db.controller.songbooks.Books.importSong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.swing.Swing
-import kotlinx.coroutines.withContext
-import navigation.LocalNavigator
+import kotlinx.serialization.json.Json
+import models.IProviderStats
+import models.ISongDetails
+import navigation.LocalTabs
+import navigation.ModalListener
 import navigation.NavSystem
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.theme.*
@@ -29,53 +37,90 @@ import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.window.DecoratedWindow
 import org.jetbrains.jewel.window.styling.TitleBarColors
 import org.jetbrains.jewel.window.styling.TitleBarStyle
-import parsers.bible.Bible
-import parsers.vgr.Table
-import ui.modifier.stroke.BorderSide
-import ui.modifier.stroke.newBorder
+import presentation.PresentationHost
+import presentation.PresentationWindowHost
+import ui.config.DB
+import ui.config.songBooksCreateUpdatedAtTrigger
+import ui.config.startSongBookStatement
+import ui.db.DBConfig
 import ui.screens.NavHost
 import ui.theme.LocalTheme
 import ui.theme.ThemeUI
 
-@Composable
-@Preview
-fun App() {
-    var text by remember { mutableStateOf("Hello, World!") }
-
-    Box(modifier = Modifier.fillMaxSize().padding(top = 40.dp)){
-        Button(onClick = {
-            text = "Hello, Desktop!"
-            CoroutineScope(Dispatchers.Swing).launch {
-                withContext(Dispatchers.IO) {
-                    val t = Table()
-//                    val l = t.getAllLanguages()
-//                    val one = l.find { it.iso63901 == "en"}
-//                    val res = t.getAllSermons(one!!)
-//                    val sermon = res[0]
-//                    val req = t.getSermon(sermon)
-                    val cal = t.getCalendar().activeDays.find { it.day == 11 }
-                    println(t.qotd(cal!!))
-//                    val b = Bible()
-//                    val versions = b.getVersionsFromLanguage("eng", "all")
-//                    val one = versions.find { it.localAbbreviation == "NKJV" }
-//                    val fillVersion = b.getFullVersion(one!!)
-//                    val getChapter = b.getChapterDoc(fillVersion, book = "PSA", 23)
-//                    println(getChapter)
-                }
-            }
-        }) {
-            Text(text)
-        }
-    }
-}
-
+@OptIn(ExperimentalFoundationApi::class)
 fun main() {
-    initialiseNetwork()
+     ComposeFoundationFlags.isNonComposedClickableEnabled = false
+     initialiseNetwork()
 
      application {
          val ui by rememberUpdatedState(IntUiThemes.Dark)
          val textStyle = JewelTheme.createDefaultTextStyle()
          val windowState = rememberWindowState(size = DpSize(1390.dp, 865.dp))
+         val configViewModel = remember { ConfigViewModel() }
+         val shouldHide = configViewModel.shouldHide.collectAsState()
+         val shouldHideSidebar = remember { mutableStateOf(
+             loadData<Boolean>("should_hide_sidebar") ?: false
+         ) }
+         val isHideSidebarHovered = remember { mutableStateOf(false) }
+
+//         LaunchedEffect(1) {
+//             launch(Dispatchers.Main) {
+//                 val b2 = BackBlazeB2(
+//                     B2Credentials(
+//                         applicationKeyId = "00522d1ad344c240000000002",
+//                         applicationKey = "K005792uG9GXuDBM25nRpYYXQb6/Qw8"
+//                     )
+//                 )
+//
+//                 b2.authorize()
+//
+//                 val bucket = b2.bucket("the-guide")
+//                 val db = DB.connection("songbooks.db")
+//                 startSongBookStatement(db)
+//                 songBooksCreateUpdatedAtTrigger(db)
+//
+//                 listOf<String>("only-believe.zip", "collection-de-cantiques.zip", "nyimbo-za-wokovu.zip", "nyimbo-za-mungu.zip").forEach { saveName ->
+//                     val f = bucket.file("songbooks/$saveName")
+//                     val stream = f.createReadStream()
+//
+//                     val zipBytes = stream.readBytes()
+//
+//                     val extractedJsonFiles = extractZipToMemory(zipBytes)
+//
+//                     var id: String? = null;
+//
+//                     for ((name, content) in extractedJsonFiles) {
+//                         if (name.startsWith("stat")) {
+//                             val data = Json.decodeFromString<IProviderStats>(content)
+//
+//                             val isFound = db.checkIfOneExist(
+//                                 """
+//                                 SELECT 1 FROM books WHERE save_name = ? LIMIT 1
+//                                 """.trimIndent(),
+//                                 saveName.replace(".zip", "")
+//                             )
+//
+//                             if(!isFound) {
+//                                 db.importBook(data) {
+//                                     id = it
+//                                     println(it)
+//                                 }
+//                             }
+//                         } else {
+//                             if(!id.isNullOrEmpty()) {
+//                                 val data = Json.decodeFromString<List<ISongDetails>>(content)
+//
+//                                 data.forEach { song ->
+//                                     db.importSong(song, id!!) { songId, lyrics ->
+//                                         db.importLyrics(lyrics, songId)
+//                                     }
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         }
 
          val themeDefinition =
              if (ui.isDark()) {
@@ -125,37 +170,40 @@ fun main() {
                  ),
                  swingCompatMode = false
              ) {
-                 DecoratedWindow(
-                     onCloseRequest = { exitApplication() },
-                     state = windowState,
-                     title = "The Guide",
-                 ) {
-                     NavSystem {
-                         val configModel = remember { ConfigViewModel() }
-                         val navigator = LocalNavigator.current
+                 PresentationHost {
+                     DecoratedWindow(
+                         onCloseRequest = { exitApplication() },
+                         state = windowState,
+                         title = "The Guide",
+                         icon = painterResource("icons/logo.png")
+                     ) {
+                         NavSystem {
+                             val navigator = LocalTabs.current
 
-
-                         Row(modifier = Modifier.fillMaxSize().background(theme.colors.background)) {
-                             if(dbExists("table_en.db")) {
-                                 Box(modifier = Modifier
-                                     .width(241.dp)
-                                     .fillMaxHeight()
-                                     .background(theme.colors.menu)
-                                     .newBorder(theme.colors.border, 1.dp, setOf(BorderSide.Right))
-                                 ) {
+                             ModalListener {
+                                 Row(modifier = Modifier.fillMaxSize()) {
+                                     if(!shouldHide.value && !shouldHideSidebar.value) {
+                                         Sidebar(shouldHideSidebar, shouldHide.value, isHideSidebarHovered)
+                                     }
+                                     Column(modifier = Modifier.fillMaxSize()){
+                                         titleBarView(if (shouldHide.value) 1.dp else 38.dp, shouldHideSidebar, onHovered = isHideSidebarHovered)
+                                         Box(
+                                             modifier = Modifier.fillMaxSize(),
+                                             contentAlignment = Alignment.Center
+                                         ) {
+                                             if(shouldHide.value) DBConfig(configViewModel) else NavHost(navigator)
+                                         }
+                                     }
                                  }
-                             }
-                             Column(modifier = Modifier.fillMaxSize()){
-                                 titleBarView(ui)
-                                 Box(
-                                     modifier = Modifier.fillMaxSize(),
-                                     contentAlignment = Alignment.Center
-                                 ) {
-                                     NavHost(navigator)
+
+                                 if(shouldHideSidebar.value) {
+                                     Sidebar(shouldHideSidebar, shouldHide.value, isHideSidebarHovered)
                                  }
                              }
                          }
                      }
+
+                     PresentationWindowHost()
                  }
              }
          }

@@ -771,6 +771,7 @@ data class IBibleVersionResponse(
 internal fun ILanguageResponse.IVersionResponse.toILanguage(): ILanguage {
     return ILanguage(
         id,
+        dbId = null,
         iso63901,
         iso63903,
         name,

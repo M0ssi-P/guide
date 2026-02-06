@@ -47,3 +47,42 @@ fun createUpdatedAtTrigger(conn: Connection) {
         }
     }
 }
+
+fun songBooksCreateUpdatedAtTrigger(conn: Connection) {
+    conn.createStatement().use { stmt ->
+        val sql = listOf<String>(
+            """
+                CREATE TRIGGER IF NOT EXISTS update_books_updated_at
+                AFTER UPDATE ON books
+                BEGIN
+                    UPDATE books SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+                END;
+            """.trimIndent(),
+            """
+                CREATE TRIGGER IF NOT EXISTS update_songs_updated_at
+            AFTER UPDATE ON songs
+            BEGIN
+                UPDATE songs SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
+            """.trimIndent(),
+            """
+                CREATE TRIGGER IF NOT EXISTS update_lyrics_updated_at
+            AFTER UPDATE ON lyrics
+            BEGIN
+                UPDATE lyrics SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
+            """.trimIndent(),
+            """
+                CREATE TRIGGER IF NOT EXISTS update_favourites_updated_at
+            AFTER UPDATE ON favourites
+            BEGIN
+                UPDATE favourites SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
+            """.trimIndent()
+        )
+
+        sql.forEach {
+            stmt.execute(it)
+        }
+    }
+}

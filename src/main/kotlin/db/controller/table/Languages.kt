@@ -1,13 +1,11 @@
 package db.controller.table
 
 import db.controller.table.Languages.importLanguage
-import db.controller.table.Sermons.importSermon
 import db.generateId
 import db.run
 import db.runAndReturn
 import kotlinx.coroutines.suspendCancellableCoroutine
 import parsers.bible.models.ILanguage
-import parsers.vgr.models.Sermon
 import java.sql.Connection
 
 object Languages {
@@ -45,12 +43,33 @@ object Languages {
             """.trimIndent(),
             languageCode
         ) { rs ->
-            if (rs.next()) {
-                id = rs.getString("id")
-            }
+            id = rs.getString("id")
         }
 
         return id
+    }
+
+    fun Connection.getAllLanguages(): List<ILanguage> {
+        return runAndReturn(
+            """
+                SELECT * FROM languages
+            """.trimIndent()
+        ) { rs ->
+            ILanguage(
+                id = null,
+                dbId = rs.getString("id"),
+                iso63901 = rs.getString("iso_63901"),
+                iso63903 = rs.getString("iso_63903"),
+                name = rs.getString("name"),
+                localName = rs.getString("local_name"),
+                tag = rs.getString("tag"),
+                hasAudio = rs.getBoolean("has_audio"),
+                hasText = rs.getBoolean("has_text"),
+                totalVersions = rs.getInt("total_versions"),
+                textDirection = rs.getString("text_direction"),
+                font = null
+            )
+        }
     }
 }
 

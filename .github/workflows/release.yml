@@ -1,0 +1,82 @@
+name: Build & Release Desktop App
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Grant execute permission for Gradle
+        if: runner.os != 'Windows'
+        run: chmod +x gradlew
+
+      - name: Build fat JAR
+        run: ./gradlew packageUberJarForCurrentOS
+
+      # -------- WINDOWS --------
+      - name: Build Windows installer
+        if: runner.os == 'Windows'
+        run: |
+          jpackage ^
+            --type exe ^
+            --input build/compose/jars ^
+            --main-jar The_Guide.jar ^
+            --main-class MainKt ^
+            --name The Guide ^
+            --app-version ${{ github.ref_name }} ^
+            --vendor "Pacifique Mossi" ^
+            --win-menu ^
+            --win-shortcut ^
+            --dest dist
+
+      # -------- MACOS --------
+      - name: Build macOS installer
+        if: runner.os == 'macOS'
+        run: |
+          jpackage \
+            --type dmg \
+            --input build/compose/jars \
+            --main-jar The_Guide.jar \
+            --main-class MainKt \
+            --name The Guide \
+            --app-version ${GITHUB_REF_NAME#v} \
+            --vendor "Pacifique Mossi" \
+            --dest dist
+
+      # -------- LINUX --------
+      - name: Build Linux installer
+        if: runner.os == 'Linux'
+        run: |
+          jpackage \
+            --type deb \
+            --input build/compose/jars \
+            --main-jar The_Guide.jar \
+            --main-class MainKt \
+            --name The Guide \
+            --app-version ${GITHUB_REF_NAME#v} \
+            --vendor "Pacifique Mossi" \
+            --dest dist
+
+      - name: Upload installers to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

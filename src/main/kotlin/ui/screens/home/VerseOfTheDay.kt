@@ -26,6 +26,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import components.global.Button
@@ -80,7 +81,13 @@ fun VerseOfTheDay() {
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     Text(
-                                        "${state.data.bookHuman} ${state.data.chapter}:${state.data.verseNumber}",
+                                        "${state.data.bookHuman} ${state.data.chapter}:${
+                                            if(state.data.verseNumbers.size > 1) {
+                                                state.data.verseNumbers.first().toString() + "-" + state.data.verseNumbers.last()
+                                            } else {
+                                                state.data.verseNumbers.first().toString()
+                                            }
+                                        }",
                                         color = theme.colors.secondaryText,
                                         style = theme.typography.h2
 
@@ -136,6 +143,7 @@ fun VerseOfTheDay() {
                                                 Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
                                             )
                                         ).padding(vertical = 11.dp, horizontal = 19.dp),
+                                        fillMaxSize = false,
                                         padding = PaddingValues(vertical = 0.dp, horizontal = 0.dp)
                                     ) {
                                         Text(
@@ -168,12 +176,13 @@ fun VerseOfTheDay() {
                                             Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
                                         )
                                     ).padding(vertical = 8.dp, horizontal = 14.dp),
-                                    padding = PaddingValues(vertical = 0.dp, horizontal = 0.dp)
+                                    padding = PaddingValues(vertical = 0.dp, horizontal = 0.dp),
+                                    fillMaxSize = false
                                 ) {
                                     Text(
-                                        text = vgrVM.uiSettings.downloadedLanguages.toMap()[
-                                            vgrVM.uiSettings.contentLanguage
-                                        ]?.toUpperCase() ?: "ENG", color = theme.colors.activeTab, style = theme.typography.subs
+                                        text = vgrVM.uiSettings.downloadedLanguages.find {
+                                            it.second == vgrVM.uiSettings.contentLanguage
+                                        }?.second?.toUpperCase() ?: "ENG", color = theme.colors.activeTab, style = theme.typography.subs
                                     )
                                 }
                             }
@@ -181,6 +190,26 @@ fun VerseOfTheDay() {
                             Text(
                                 text = state.data.TheTable.text, color = theme.colors.text, style = theme.typography.body
                             )
+                        }
+
+                        Spacer(modifier = Modifier.height(30.dp))
+                        Row {
+                            Button (
+                                modifier = Modifier.background(
+                                    color = theme.colors.blue100,
+                                    shape = RoundedCornerShape(4.dp)
+                                ).pointerHoverIcon(
+                                    PointerIcon(
+                                        Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+                                    )
+                                ).padding(vertical = 12.dp, horizontal = 20.dp),
+                                padding = PaddingValues(vertical = 0.dp, horizontal = 0.dp),
+                                fillMaxSize = false
+                            ) {
+                                Text(
+                                    text = "Read More", color = theme.colors.blue3, style = theme.typography.subs
+                                )
+                            }
                         }
                     }
                 }

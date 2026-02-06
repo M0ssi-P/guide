@@ -25,14 +25,12 @@ fun <T> Connection.runAndReturn(sql: String, vararg params: Any?, mapper: (Resul
         params.forEachIndexed { index, param ->
             stmt.setObject( index + 1, param)
         }
-        stmt.executeQuery().use {
-            stmt.executeQuery().use { rs ->
-                val results = mutableListOf<T>()
-                while (rs.next()) {
-                    results.add(mapper(rs))
-                }
-                return results
+        stmt.executeQuery().use { rs ->
+            val results = mutableListOf<T>()
+            while (rs.next()) {
+                results.add(mapper(rs))
             }
+            return results
         }
     }
 }
@@ -42,7 +40,6 @@ fun Connection.checkIfOneExist(sql: String, vararg params: Any?): Boolean {
         params.forEachIndexed { index, param ->
             stmt.setObject(index + 1, param)
         }
-
         stmt.executeQuery().use {
             return it.next()
         }

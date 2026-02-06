@@ -2,55 +2,111 @@ package navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.vector.ImageVector
+import java.util.UUID
 
-data class Route(val path: String, val params: Map<String, String> = emptyMap())
+class Navigator(page: Screen = Screen.Library(LibraryScreen.Hymns())) {
+    val id: String = UUID.randomUUID().toString()
+    private val _backStack = mutableStateListOf<Screen>(page)
+    private val _query = mutableStateListOf(QueryParams())
+    private val _forwardStack = mutableStateListOf<Screen>()
+    private val _forwardQuery = mutableStateListOf<QueryParams>()
+    private val _metadata = mutableStateOf<PageMetadata>(PageMetadata())
+    val backStack: List<Screen> get() = _backStack
 
-class Navigator {
-    private val _backStack = mutableStateListOf(Route("/home"))
-    val backStack: List<Route> get() = _backStack
+    val current: Screen get() = _backStack.last()
+    val query: QueryParams get() = _query.last()
+    val metadata: PageMetadata get() = _metadata.value
 
-    val current: Route get() = _backStack.last()
+    val canGoBack get() = _backStack.size > 1
+    val canGoNext get() = _forwardStack.isNotEmpty()
 
-    fun navigate(route: String) {
-        _backStack.add(parseRoute(route))
+    fun navigate(page: Screen) {
+        _backStack.add(page)
+        _query.add(QueryParams())
+
+        _forwardStack.clear()
+        _forwardQuery.clear()
     }
 
     fun back() {
-        if(_backStack.size > 1) {
-            _backStack.removeLast()
+        if (canGoBack) {
+            _forwardStack.add(_backStack.removeLast())
+            _forwardQuery.add(_query.removeLast())
         }
     }
 
-    private fun parseRoute(route: String): Route {
-        return when {
-            route.startsWith("/") -> {
-                Route(route)
-            }
-            else -> {
-                Route("dsdsd")
-            }
+    fun next() {
+        if (canGoNext) {
+            _backStack.add(_forwardStack.removeLast())
+            _query.add(_forwardQuery.removeLast())
         }
+    }
+
+    fun setQuery(key: String, value: String?) {
+        val index = _query.lastIndex
+        val current = _query[index]
+
+        val newParams = current.params.toMutableMap().apply {
+            if (value == null) remove(key)
+            else put(key, value)
+        }
+
+        _query[index] = current.copy(params = newParams)
+    }
+
+    fun setMetadata(title: String? = null, icon: ImageVector? = null){
+        val newVal = _metadata.value.copy(
+            icon = icon,
+            title = title,
+        )
+        _metadata.value = newVal
     }
 }
 
-val LocalNavigator = staticCompositionLocalOf<Navigator> {
+data class QueryParams(
+    val params: Map<String, String> = emptyMap()
+) {
+    operator fun get(key: String): String? = params[key]
+}
+
+data class PageMetadata(
+    val icon: ImageVector? = null,
+    val title: String? = null,
+    val description: String? = null
+)
+
+class Tabs {
+    private val _tabs = mutableStateListOf(Navigator())
+    private val _currentIndex = mutableStateOf(0)
+
+    val tabs: List<Navigator> get() = _tabs
+    val current: Navigator get() = _tabs[_currentIndex.value]
+
+    fun newTab(page: Screen = Screen.Home) {
+        _tabs.add(Navigator(page))
+        _currentIndex.value = _tabs.lastIndex
+    }
+
+    fun setCurrent(nav: Navigator) {
+        _currentIndex.value = _tabs.indexOf(nav)
+    }
+}
+
+val LocalTabs = staticCompositionLocalOf<Tabs> {
     error("no Navigator found! Did you forget to provide it?")
 }
 
-val LocalNavParams = compositionLocalOf<Map<String, String>> { emptyMap() }
-
 @Composable
 fun NavSystem(content: @Composable () -> Unit) {
-    val navigator = remember { Navigator() }
-    val current = navigator.current
+    val tabs = remember { Tabs() }
 
     CompositionLocalProvider(
-        LocalNavigator provides navigator,
-        LocalNavParams provides current.params
+        LocalTabs provides tabs
     ) {
         content()
     }

@@ -5,7 +5,7 @@ data class IQotd(
     val bookHuman: String,
     val bookUfsm: String,
     val chapter: Int,
-    val verseNumber: Int,
+    val verseNumbers: List<Int> = emptyList(),
     val ReqDate: Long? = null,
     val content: String,
     val TheTable: ITheTable

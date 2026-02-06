@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS languages (
     iso_63903 TEXT NOT NULL,
     name TEXT NOT NULL,
     local_name TEXT NOT NULL,
-    tag TEXT NOT NULL,
+    tag TEXT NOT NULL UNIQUE,
     text_direction TEXT NOT NULL DEFAULT 'lt',
     has_audio BOOLEAN NOT NULL DEFAULT 1,
     has_text BOOLEAN NOT NULL DEFAULT 1,
@@ -13,4 +13,4 @@ CREATE TABLE IF NOT EXISTS languages (
     font TEXT DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+)

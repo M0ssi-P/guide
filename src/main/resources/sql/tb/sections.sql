@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS sections (
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (sermon_id) REFERENCES sermons(id) ON DELETE CASCADE
-            );
+            )

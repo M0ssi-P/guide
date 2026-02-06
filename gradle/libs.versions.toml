@@ -8,7 +8,7 @@ net = "5.17.0"
 seleniumhq = "4.34.0"
 scope = "1.10.2"
 jsoup = "1.20.1"
-lucene = "4.10.4"
+lucene = "4.7.2"
 gson = "2.13.1"
 sqlite = "3.50.3.0"
 

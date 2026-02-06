@@ -1,6 +1,7 @@
 package parsers.vgr
 
 import db.controller.table.Sermons.getThisDay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +41,7 @@ class VgrViewModel: ViewModel() {
         _uiState.value = UiState.Loading
         _thisDay.value = UiState.Loading
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val table = Table()
                 val cal = table.getCalendar()
@@ -51,10 +52,10 @@ class VgrViewModel: ViewModel() {
                 val result = table.qotd(ofDay!!)
 
                 val currentMonth = LocalDate.now().monthValue
-                val code = "$currentMonth${String.format("%02d", ofDay.day)}"
-                val dayData = db.getThisDay(code)
+                val code = "${String.format("%02d", currentMonth)}${String.format("%02d", ofDay.day)}"
                 _uiState.value = UiState.Success(result)
                 _activeDays.value = UiState.Success(cal.activeDays)
+                val dayData = db.getThisDay(code)
                 _thisDay.value = UiState.Success(dayData)
             } catch (e: Exception) {
                 _uiState.value = UiState.Error("Failed to load data")

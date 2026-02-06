@@ -21,6 +21,7 @@ fun clock(strokeColor: Color): ImageVector {
         ).apply {
             path(
                 stroke = SolidColor(strokeColor),
+                strokeLineWidth = 1.5f,
                 strokeLineCap = StrokeCap.Round,
                 strokeLineJoin = StrokeJoin.Round
             ) {

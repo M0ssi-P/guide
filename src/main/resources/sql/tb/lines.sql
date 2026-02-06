@@ -7,4 +7,4 @@ CREATE TABLE IF NOT EXISTS lines (
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (paragraph_id) REFERENCES paragraphs(id) ON DELETE CASCADE
-            );
+            )

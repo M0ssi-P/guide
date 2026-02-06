@@ -31,6 +31,7 @@ import parsers.vgr.utils.fromRoman
 import parsers.vgr.utils.languageJson
 import parsers.vgr.utils.toRoman
 import parsers.vgr.utils.toUfsmCode
+import tryWithSuspend
 import java.time.LocalDate
 import java.util.Locale
 import java.util.Locale.getDefault
@@ -70,14 +71,14 @@ class Table: TableParser() {
         return promises
     }
 
-    suspend fun getAllSermons(language: ILanguage): List<Sermon> {
+    suspend fun getAllSermons(language: ILanguage, langCode: String? = null): List<Sermon> {
         val promises: MutableList<Sermon> = mutableListOf();
 
         try {
-            val reqBody = LanguageRequest("en")
+            val reqBody = LanguageRequest(langCode ?: "en")
 
             val res = client.post("$tUrl/rest/index/allSermons", header, json = reqBody).parsed<IRepoSERMONS>()
-            val hub = client.get("${messageBaseURL}/languages/en/sermons").parsedList<IHubResponse>()
+            val hub = client.get("${messageBaseURL}/languages/${langCode ?: "en"}/sermons").parsedList<IHubResponse>()
 
             res.Result.Sermons.map { table ->
                 val isFoundHub = hub.find {
@@ -148,8 +149,10 @@ class Table: TableParser() {
         )
 
         val res = client.post("$tUrl/rest/sermons/sermonRequest", header, json = payload).parsed<ISermonResponse>()
-        val hub: IHubSermonResponse? = if(sermon.updatedAt != 12121212121212) {
-            client.get("$messageBaseURL/languages/${language?: "en"}/sermons/${sermon.dateCode}/combined/${bibleV ?: "KJV"}").parsed<IHubSermonResponse>()
+        val hub: IHubSermonResponse? = if(sermon.updatedAt != 12121212121212 && sermon.id != null) {
+            tryWithSuspend {
+                client.get("$messageBaseURL/languages/${language?: "en"}/sermons/${sermon.dateCode}/combined/${bibleV ?: "KJV"}").parsed<IHubSermonResponse>()
+            }
         } else {
             null
         }
@@ -361,7 +364,17 @@ class Table: TableParser() {
             if(it.size == 3) it[2].split(":").first().toInt() else it[1].split(":").first().toInt()
         }
         val verse = fullBibleReference.let {
-            if(it.size == 3) it[2].split(":").last().toInt() else it[1].split(":").last().toInt()
+            if(it.size == 3) {
+                if (it[2].split(":").last().contains("-")) {
+                    val versesArray = it[2].split(":").last().split("-")
+                    (versesArray.first().toInt()..versesArray.last().toInt()).toList()
+                } else listOf(it[2].split(":").last().toInt())
+            } else {
+                if (it[1].split(":").last().contains("-")) {
+                    val versesArray = it[1].split(":").last().split("-")
+                    (versesArray.first().toInt()..versesArray.last().toInt()).toList()
+                } else listOf(it[1].split(":").last().toInt())
+            }
         }
         val ufsm = "$bookUfsm.$chapter.$verse"
         val content = Jsoup.parse(el.d.split("|")[1]).text()
@@ -384,7 +397,7 @@ class Table: TableParser() {
             bookHuman = bookHuman,
             bookUfsm = bookUfsm!!,
             chapter = chapter,
-            verseNumber = verse,
+            verseNumbers = verse,
             content = content,
             TheTable = IQotd.ITheTable(
                 title,

@@ -2,6 +2,7 @@ package components
 
 import IntUiThemes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -21,10 +24,12 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.arrowLeft
 import components.global.NavigationButton
 import components.global.NavigationButtons
+import db.ConfigViewModel
 import org.jetbrains.jewel.window.DecoratedWindowScope
 import org.jetbrains.jewel.window.TitleBar
 import org.jetbrains.jewel.window.newFullscreenControls
@@ -33,14 +38,14 @@ import ui.modifier.stroke.newBorder
 import ui.theme.LocalTheme
 
 @Composable
-fun DecoratedWindowScope.titleBarView(themes: IntUiThemes) {
+fun DecoratedWindowScope.titleBarView(height: Dp, state: MutableState<Boolean>, onHovered: MutableState<Boolean>) {
     val activeBounds = remember { mutableStateOf<Rect?>(null) }
     val theme = LocalTheme.current
 
     TitleBar(
         Modifier
             .newFullscreenControls()
-            .height(36.dp)
+            .height(height)
             .drawWithContent {
                 drawContent()
 
@@ -76,7 +81,7 @@ fun DecoratedWindowScope.titleBarView(themes: IntUiThemes) {
         gradientStartColor = Color.Unspecified,
     ) {
         Box(modifier = Modifier.fillMaxSize().offset(x = 70.dp, y = 0.dp), contentAlignment = Alignment.CenterStart) {
-            NavigationButtons(activeBounds)
+            NavigationButtons(activeBounds, state, sidebarToggleHovered = onHovered)
         }
     }
 }
