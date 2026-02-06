@@ -58,6 +58,13 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "game"
             packageVersion = "1.0.0"
+            val os = org.gradle.internal.os.OperatingSystem.current()
+            javaHome = when {
+                os.isWindows -> "C:/Users/god1t/Documents/jbr/win/jbr-21.0.8"
+                os.isMacOsX -> "C:/Users/god1t/Documents/jbr/mac/jbr-21.0.8/Contents/Home"
+                os.isLinux -> "C:/Users/god1t/Documents/jbr/lin/jbr-21.0.8"
+                else -> throw GradleException("Unsupported OS")
+            }
         }
     }
 }
