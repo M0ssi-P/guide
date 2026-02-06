@@ -49,7 +49,6 @@ val jdkLevel = "21"
 kotlin {
     jvmToolchain {
         languageVersion = JavaLanguageVersion.of(jdkLevel)
-        vendor = JvmVendorSpec.JETBRAINS
     }
 }
 
