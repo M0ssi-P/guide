@@ -34,16 +34,16 @@ jobs:
       - name: Build Windows installer
         if: runner.os == 'Windows'
         run: |
-          jpackage ^
-            --type exe ^
-            --input build/libs ^
-            --main-jar The_Guide.jar ^
-            --main-class MainKt ^
-            --name "The Guide" ^
-            --app-version ${{ github.ref_name }} ^
-            --vendor "Pacifique Mossi" ^
-            --win-menu ^
-            --win-shortcut ^
+          jpackage `
+            --type exe `
+            --input build/libs `
+            --main-jar The_Guide.jar `
+            --main-class MainKt `
+            --name "The Guide" `
+            --app-version ${{ github.ref_name }} `
+            --vendor "Pacifique Mossi" `
+            --win-menu `
+            --win-shortcut `
             --dest dist
 
       # -------- MACOS --------
