@@ -36,7 +36,7 @@ jobs:
         run: |
           jpackage ^
             --type exe ^
-            --input build/compose/jars ^
+            --input build/libs ^
             --main-jar The_Guide.jar ^
             --main-class MainKt ^
             --name "The Guide" ^
@@ -52,7 +52,7 @@ jobs:
         run: |
           jpackage \
             --type dmg \
-            --input build/compose/jars \
+            --input build/libs \
             --main-jar The_Guide.jar \
             --main-class MainKt \
             --name "The Guide" \
@@ -66,7 +66,7 @@ jobs:
         run: |
           jpackage \
             --type deb \
-            --input build/compose/jars \
+            --input build/libs \
             --main-jar The_Guide.jar \
             --main-class MainKt \
             --name "The Guide" \

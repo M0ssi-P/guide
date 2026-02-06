@@ -71,4 +71,8 @@ tasks {
             setExecutable(javaLauncher.map { it.executablePath.asFile.absolutePath }.get())
         }
     }
+
+    jar {
+        archiveFileName.set("The_Guide.jar")
+    }
 }
