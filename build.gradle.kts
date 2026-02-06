@@ -39,7 +39,6 @@ dependencies {
     implementation(libs.google.gson)
     implementation(libs.xerial.sqlite)
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.0")
-    implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
 
 }
 
