@@ -84,7 +84,7 @@ jobs:
           Write-Host "Using JAVA_HOME=$Env:JAVA_HOME"
           & "$Env:JAVA_HOME\bin\java.exe" -version
           
-          jpackage `
+          "$Env:JAVA_HOME\bin\jpackage" `
             --type exe `
             --input build/compose/jars `
             --main-jar "$JAR_NAME" `
@@ -95,7 +95,6 @@ jobs:
             --win-menu `
             --win-shortcut `
             --win-console `
-            --add-modules ALL-MODULE-PATH `
             --runtime-image "$Env:JAVA_HOME" `
             --dest dist
 
@@ -103,7 +102,7 @@ jobs:
       - name: Build macOS installer
         if: runner.os == 'macOS'
         run: |
-          jpackage \
+          "$JAVA_HOME\bin\jpackage" \
             --type dmg \
             --input build/compose/jars \
             --main-jar "$JAR_NAME" \
@@ -111,14 +110,14 @@ jobs:
             --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
             --vendor "Pacifique Mossi" \
-            --add-modules ALL-MODULE-PATH \
+            --runtime-image "$JAVA_HOME" \
             --dest dist
 
       # -------- LINUX --------
       - name: Build Linux installer
         if: runner.os == 'Linux'
         run: |
-          jpackage \
+          "$JAVA_HOME\bin\jpackage" \
             --type deb \
             --input build/compose/jars \
             --main-jar "$JAR_NAME" \
@@ -126,7 +125,7 @@ jobs:
             --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
             --vendor "Pacifique Mossi" \
-            --add-modules ALL-MODULE-PATH \
+            --runtime-image "$JAVA_HOME" \
             --dest dist
 
       - name: Upload installers to Release
