@@ -55,7 +55,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Compose uber JAR
-        run: ./gradlew clean packageUberJarForCurrentOS -Dorg.gradle.java.home="$JAVA_HOME"
+        run: ./gradlew clean packageUberJarForCurrentOS "-Dorg.gradle.java.home=$env:JAVA_HOME"
 
       - name: Resolve JAR name
         shell: bash
