@@ -18,12 +18,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download JBR 21.0.8 For Mac
-        if: runner.os == 'macOs'
+        if: runner.os == 'macOS'
         run: |
           curl -L -o jbr.tar.gz https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-21.0.8-osx-x64-b895.146.tar.gz
           mkdir -p /tmp/jbr/mac
           tar -xf jbr.tar.gz -C /tmp/jbr/mac
-          echo "JAVA_HOME=/tmp/jbr/mac/jbrsdk-21.0.8/Contents/Home" >> $GITHUB_ENV
+          echo "JAVA_HOME=/tmp/jbr/mac/jbrsdk-21.0.8-osx-x64-b895.146/Contents/Home" >> $GITHUB_ENV
 
       - name: Download JBR 21.0.8 For Linux
         if: runner.os == 'Linux'
@@ -31,7 +31,7 @@ jobs:
           curl -L -o jbr.tar.gz https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-21.0.8-linux-x64-b895.146.tar.gz
           mkdir -p /tmp/jbr/lin
           tar -xf jbr.tar.gz -C /tmp/jbr/lin
-          echo "JAVA_HOME=/tmp/jbr/lin/jbrsdk-21.0.8" >> $GITHUB_ENV
+          echo "JAVA_HOME=/tmp/jbr/lin/jbrsdk-21.0.8-linux-x64-b895.146" >> $GITHUB_ENV
 
       - name: Download JBR 21.0.8 For Windows
         if: runner.os == 'Windows'
@@ -40,7 +40,18 @@ jobs:
           New-Item -ItemType Directory -Force -Path "C:\jbr\win"
           Invoke-WebRequest -Uri "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-21.0.8-windows-x64-b895.146.zip" -OutFile "C:\jbr\win\jbr.zip"
           Expand-Archive -Path "C:\jbr\win\jbr.zip" -DestinationPath "C:\jbr\win"
-          echo "JAVA_HOME=C:\jbr\win\jbrsdk-21.0.8" >> $Env:GITHUB_ENV
+          echo "JAVA_HOME=C:\jbr\win\jbrsdk-21.0.8-windows-x64-b895.146" >> $Env:GITHUB_ENV
+
+#      - name: Set up JDK 21
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: "temurin"
+#          java-version: "21"
+
+      - name: Verify Java
+        run: |
+          java -version
+          echo "JAVA_HOME=$JAVA_HOME"
 
       - name: Grant execute permission for Gradle
         if: runner.os != 'Windows'
