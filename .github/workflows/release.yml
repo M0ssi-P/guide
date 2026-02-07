@@ -82,12 +82,11 @@ jobs:
           $version = "${{ github.ref_name }}".Replace("v", "")
 
           Write-Host "Using JAVA_HOME=$Env:JAVA_HOME"
-          & "$Env:JAVA_HOME\bin\java.exe" -version
           
-          "$Env:JAVA_HOME\bin\jpackage" `
+          & "$Env:JAVA_HOME\bin\jpackage" `
             --type exe `
             --input build/compose/jars `
-            --main-jar "$JAR_NAME" `
+            --main-jar "$Env:JAR_NAME" `
             --main-class MainKt `
             --name "The Guide" `
             --app-version $version `
@@ -102,7 +101,7 @@ jobs:
       - name: Build macOS installer
         if: runner.os == 'macOS'
         run: |
-          "$JAVA_HOME/bin/jpackage" \
+          & "$JAVA_HOME/bin/jpackage" \
             --type dmg \
             --input build/compose/jars \
             --main-jar "$JAR_NAME" \
@@ -117,7 +116,7 @@ jobs:
       - name: Build Linux installer
         if: runner.os == 'Linux'
         run: |
-          "$JAVA_HOME/bin/jpackage" \
+          & "$JAVA_HOME/bin/jpackage" \
             --type deb \
             --input build/compose/jars \
             --main-jar "$JAR_NAME" \
