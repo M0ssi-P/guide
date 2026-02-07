@@ -90,9 +90,9 @@ jobs:
             --vendor "Pacifique Mossi" `
             --win-menu `
             --win-shortcut `
-            --java-home "$Env:JAVA_HOME" `
             --win-console `
             --add-modules ALL-MODULE-PATH `
+            --java-home $Env:JAVA_HOME
             --dest dist
 
       # -------- MACOS --------
