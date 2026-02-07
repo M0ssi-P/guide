@@ -102,7 +102,7 @@ jobs:
       - name: Build macOS installer
         if: runner.os == 'macOS'
         run: |
-          "$JAVA_HOME\bin\jpackage" \
+          "$JAVA_HOME/bin/jpackage" \
             --type dmg \
             --input build/compose/jars \
             --main-jar "$JAR_NAME" \
@@ -117,7 +117,7 @@ jobs:
       - name: Build Linux installer
         if: runner.os == 'Linux'
         run: |
-          "$JAVA_HOME\bin\jpackage" \
+          "$JAVA_HOME/bin/jpackage" \
             --type deb \
             --input build/compose/jars \
             --main-jar "$JAR_NAME" \
