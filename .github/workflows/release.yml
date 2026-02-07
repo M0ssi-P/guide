@@ -92,7 +92,7 @@ jobs:
             --win-shortcut `
             --win-console `
             --add-modules ALL-MODULE-PATH `
-            --java-home $Env:JAVA_HOME
+            --java-home "$Env:JAVA_HOME" `
             --dest dist
 
       # -------- MACOS --------
