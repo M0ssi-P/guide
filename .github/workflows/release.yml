@@ -54,8 +54,19 @@ jobs:
         if: runner.os != 'Windows'
         run: chmod +x gradlew
 
-      - name: Build Compose uber JAR
-        run: ./gradlew clean packageUberJarForCurrentOS "-Dorg.gradle.java.home=$env:JAVA_HOME"
+      - name: Build Compose uber JAR (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          echo "JAVA_HOME=$Env:JAVA_HOME"
+          ./gradlew clean packageUberJarForCurrentOS "-Dorg.gradle.java.home=$Env:JAVA_HOME"
+
+      - name: Build Compose uber JAR (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME"
+          ./gradlew clean packageUberJarForCurrentOS -Dorg.gradle.java.home="$JAVA_HOME"
 
       - name: Resolve JAR name
         shell: bash
