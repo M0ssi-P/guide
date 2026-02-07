@@ -80,6 +80,9 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           $version = "${{ github.ref_name }}".Replace("v", "")
+
+          Write-Host "Using JAVA_HOME=$Env:JAVA_HOME"
+          & "$Env:JAVA_HOME\bin\java.exe" -version
           jpackage `
             --type exe `
             --input build/compose/jars `
