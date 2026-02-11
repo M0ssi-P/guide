@@ -61,9 +61,6 @@ jobs:
           echo "JAVA_HOME=$Env:JAVA_HOME"
           ./gradlew clean packageUberJarForCurrentOS "-Dorg.gradle.java.home=$Env:JAVA_HOME"
 
-      - name: List files to verify path
-        run: ls -R ${{ github.workspace }}/resources/icons/
-
       - name: Build Compose uber JAR (Linux/macOS)
         if: runner.os != 'Windows'
         shell: bash
