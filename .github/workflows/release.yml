@@ -111,7 +111,7 @@ jobs:
             --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
             --vendor "Pacifique Mossi" \
-            --runtime-image "$JAVA_HOME" \
+            --runtime-image "${JAVA_HOME}" \
             --dest dist
 
       # -------- LINUX --------
