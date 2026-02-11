@@ -87,14 +87,14 @@ jobs:
             --type exe `
             --input build/compose/jars `
             --main-jar "$Env:JAR_NAME" `
-            --icon src/main/resources/icons/icon.ico" `
+            --icon src/main/resources/icons/icon.ico `
             --main-class MainKt `
             --name "The Guide" `
             --app-version $version `
             --vendor "Pacifique Mossi" `
             --win-menu `
             --win-shortcut `
-            --runtime-image "${Env:JAVA_HOME}" `
+            --runtime-image "$Env:JAVA_HOME" `
             --dest dist
 
       # -------- MACOS --------
