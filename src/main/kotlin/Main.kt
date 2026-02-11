@@ -1,6 +1,4 @@
-import androidx.compose.foundation.ComposeFoundationFlags
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,15 +14,6 @@ import backblazeb2.actions.B2Credentials
 import components.layouts.Sidebar
 import components.titleBarView
 import db.ConfigViewModel
-import db.checkIfOneExist
-import db.controller.songbooks.Books.importBook
-import db.controller.songbooks.Books.importLyrics
-import db.controller.songbooks.Books.importSong
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import models.IProviderStats
-import models.ISongDetails
 import navigation.LocalTabs
 import navigation.ModalListener
 import navigation.NavSystem
@@ -39,9 +28,6 @@ import org.jetbrains.jewel.window.styling.TitleBarColors
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 import presentation.PresentationHost
 import presentation.PresentationWindowHost
-import ui.config.DB
-import ui.config.songBooksCreateUpdatedAtTrigger
-import ui.config.startSongBookStatement
 import ui.db.DBConfig
 import ui.screens.NavHost
 import ui.theme.LocalTheme
@@ -49,7 +35,6 @@ import ui.theme.ThemeUI
 
 @OptIn(ExperimentalFoundationApi::class)
 fun main() {
-     ComposeFoundationFlags.isNonComposedClickableEnabled = false
      initialiseNetwork()
 
      application {
@@ -62,65 +47,6 @@ fun main() {
              loadData<Boolean>("should_hide_sidebar") ?: false
          ) }
          val isHideSidebarHovered = remember { mutableStateOf(false) }
-
-//         LaunchedEffect(1) {
-//             launch(Dispatchers.Main) {
-//                 val b2 = BackBlazeB2(
-//                     B2Credentials(
-//                         applicationKeyId = "00522d1ad344c240000000002",
-//                         applicationKey = "K005792uG9GXuDBM25nRpYYXQb6/Qw8"
-//                     )
-//                 )
-//
-//                 b2.authorize()
-//
-//                 val bucket = b2.bucket("the-guide")
-//                 val db = DB.connection("songbooks.db")
-//                 startSongBookStatement(db)
-//                 songBooksCreateUpdatedAtTrigger(db)
-//
-//                 listOf<String>("only-believe.zip", "collection-de-cantiques.zip", "nyimbo-za-wokovu.zip", "nyimbo-za-mungu.zip").forEach { saveName ->
-//                     val f = bucket.file("songbooks/$saveName")
-//                     val stream = f.createReadStream()
-//
-//                     val zipBytes = stream.readBytes()
-//
-//                     val extractedJsonFiles = extractZipToMemory(zipBytes)
-//
-//                     var id: String? = null;
-//
-//                     for ((name, content) in extractedJsonFiles) {
-//                         if (name.startsWith("stat")) {
-//                             val data = Json.decodeFromString<IProviderStats>(content)
-//
-//                             val isFound = db.checkIfOneExist(
-//                                 """
-//                                 SELECT 1 FROM books WHERE save_name = ? LIMIT 1
-//                                 """.trimIndent(),
-//                                 saveName.replace(".zip", "")
-//                             )
-//
-//                             if(!isFound) {
-//                                 db.importBook(data) {
-//                                     id = it
-//                                     println(it)
-//                                 }
-//                             }
-//                         } else {
-//                             if(!id.isNullOrEmpty()) {
-//                                 val data = Json.decodeFromString<List<ISongDetails>>(content)
-//
-//                                 data.forEach { song ->
-//                                     db.importSong(song, id!!) { songId, lyrics ->
-//                                         db.importLyrics(lyrics, songId)
-//                                     }
-//                                 }
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
-//         }
 
          val themeDefinition =
              if (ui.isDark()) {

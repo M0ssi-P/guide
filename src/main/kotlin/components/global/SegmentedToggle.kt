@@ -72,7 +72,7 @@ fun SegmentedToggle() {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if(isSelected) option.toUpperCase() else option,
+                        text = if(isSelected) option.uppercase() else option,
                         style = TextStyle(
                             fontFamily = Inter,
                             fontSize = 14.sp,

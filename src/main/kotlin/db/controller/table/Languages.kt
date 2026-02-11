@@ -34,6 +34,33 @@ object Languages {
         )
     }
 
+    fun Connection.importTables(languageData: ILanguage): String {
+        val generatedId = generateId()
+
+        run(
+            """
+                INSERT INTO tables (
+                    id,
+                    lang_id,
+                    iso_63901,
+                    iso_63903,
+                    name,
+                    local_name,
+                    tag
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            generatedId,
+            languageData.id,
+            languageData.iso63901,
+            languageData.iso63903,
+            languageData.name,
+            languageData.localName,
+            languageData.tag
+        )
+
+        return generatedId
+    }
+
     fun Connection.getLanguageDbID(languageCode: String): String? {
         var id: String? = null;
 

@@ -34,13 +34,15 @@ fun HymnsPresentationSidebar(
         Column {
             Text("Song book", style = theme.typography.semiText, color = theme.colors.text)
             Spacer(Modifier.height(6.dp))
-            SelectMenu(
-                data = books.value.map { Items(key = it.name, value = it) },
-                default = Items( key = currentBook.value.name, value = currentBook.value ),
-                onValueChange = {
-                    model.selectBook(it.value)
-                }
-            )
+            if(currentBook.value != null) {
+                SelectMenu(
+                    data = books.value.map { Items(key = it.name, value = it) },
+                    default = Items( key = currentBook.value?.name!!, value = currentBook.value ),
+                    onValueChange = {
+                        model.selectBook(it.value!!)
+                    }
+                )
+            }
         }
         Column {
             Text("Select a Song", style = theme.typography.semiText, color = theme.colors.text)

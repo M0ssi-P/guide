@@ -39,18 +39,14 @@ fun createUpdatedAtTrigger(conn: Connection) {
                 BEGIN
                 UPDATE lines SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
             END;  
-            """.trimIndent()
-        )
-
-        sql.forEach {
-            stmt.execute(it)
-        }
-    }
-}
-
-fun songBooksCreateUpdatedAtTrigger(conn: Connection) {
-    conn.createStatement().use { stmt ->
-        val sql = listOf<String>(
+            """.trimIndent(),
+            """
+              CREATE TRIGGER IF NOT EXISTS update_tables_updated_at
+            AFTER UPDATE ON tables
+                BEGIN
+                UPDATE tables SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;  
+            """.trimIndent(),
             """
                 CREATE TRIGGER IF NOT EXISTS update_books_updated_at
                 AFTER UPDATE ON books

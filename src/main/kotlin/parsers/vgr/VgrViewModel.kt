@@ -31,7 +31,7 @@ class VgrViewModel: ViewModel() {
     val uiSettings = loadData<UserInterfaceSettings>("ui_settings") ?: UserInterfaceSettings().apply {
         saveData("ui_settings", data = this)
     }
-    val db = DB.connection("table_${uiSettings.contentLanguage}.db");
+    val db = DB.connection("main.db");
 
     init {
         loadCalendar()

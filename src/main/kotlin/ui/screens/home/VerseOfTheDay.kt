@@ -182,7 +182,7 @@ fun VerseOfTheDay() {
                                     Text(
                                         text = vgrVM.uiSettings.downloadedLanguages.find {
                                             it.second == vgrVM.uiSettings.contentLanguage
-                                        }?.second?.toUpperCase() ?: "ENG", color = theme.colors.activeTab, style = theme.typography.subs
+                                        }?.second?.uppercase() ?: "ENG", color = theme.colors.activeTab, style = theme.typography.subs
                                     )
                                 }
                             }

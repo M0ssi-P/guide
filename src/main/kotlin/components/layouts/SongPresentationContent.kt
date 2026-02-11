@@ -192,7 +192,7 @@ fun SongPresentationContent(model: SongBookViewModal) {
             }
 
             VerticalScrollbar(
-                adapter = rememberScrollbarAdapter(scrollState),
+                scrollState = scrollState,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .fillMaxHeight()

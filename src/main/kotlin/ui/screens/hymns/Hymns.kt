@@ -56,7 +56,9 @@ import ui.theme.LocalTheme
 fun Hymns() {
     val theme = LocalTheme.current
     val focusManager = LocalFocusManager.current
-    val model = remember { SongBookViewModal() }
+    val model = remember { SongBookViewModal().apply {
+        this.initilize()
+    } }
     val isPresentationMode = model.isPresentationMode.collectAsState()
     val songList = model.songs.collectAsState()
     var query by remember { mutableStateOf("") }

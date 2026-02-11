@@ -106,7 +106,7 @@ fun DBConfig(model: ConfigViewModel) {
                             }
                         }
                         VerticalScrollbar(
-                            adapter = rememberScrollbarAdapter(scrollState),
+                            scrollState = scrollState,
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
                                 .fillMaxHeight()

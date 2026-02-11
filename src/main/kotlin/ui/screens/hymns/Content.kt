@@ -103,6 +103,7 @@ fun HymnsContent(model: SongBookViewModal) {
                                 onClick = {
                                     windowController.openPresentation()
                                     model.setPresentationMode(true)
+                                    model.setCurrentLine(currentSong.value?.lyrics?.first()!!)
                                 }
                             ) {
                                 Icon(
@@ -348,7 +349,7 @@ fun HymnsContent(model: SongBookViewModal) {
                 }
             }
             VerticalScrollbar(
-                adapter = rememberScrollbarAdapter(scrollState),
+                scrollState = scrollState,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .fillMaxHeight()

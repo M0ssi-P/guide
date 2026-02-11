@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS sermons (
                 id TEXT PRIMARY KEY,
                 language_id TEXT NOT NULL,
                 date TEXT NOT NULL,
-                date_code TEXT UNIQUE NOT NULL,
+                date_code TEXT NOT NULL,
                 language TEXT NOT NULL,
                 location TEXT NOT NULL,
                 next_sermon_date TEXT,
@@ -17,5 +17,5 @@ CREATE TABLE IF NOT EXISTS sermons (
                 ct TEXT NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (language_id) REFERENCES languages(id) ON DELETE CASCADE
+                FOREIGN KEY (language_id) REFERENCES tables(id) ON DELETE CASCADE
             )

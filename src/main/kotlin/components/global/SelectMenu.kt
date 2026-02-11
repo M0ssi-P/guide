@@ -176,7 +176,7 @@ fun <T> SelectMenu(data: List<Items<T>>, fill: Boolean = true, default: Items<T>
                 }
 
                 VerticalScrollbar(
-                    adapter = rememberScrollbarAdapter(scrollState),
+                    scrollState = scrollState,
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
                         .fillMaxHeight()

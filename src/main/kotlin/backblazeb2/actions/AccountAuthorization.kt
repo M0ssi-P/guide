@@ -74,8 +74,6 @@ suspend fun authorization(B2: BackBlazeB2, applicationKeyId: String, application
             header,
         ).parsed<IAuthResponse>()
 
-        println(res)
-
         return res
     } catch (err: Exception) {
         logError(err)
