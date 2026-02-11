@@ -126,7 +126,7 @@ jobs:
             --input build/compose/jars \
             --main-jar "$JAR_NAME" \
             --main-class MainKt \
-            --icon sr/main/resources/icons/logo.png \
+            --icon src/main/resources/icons/logo.png \
             --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
             --vendor "Pacifique Mossi" \
