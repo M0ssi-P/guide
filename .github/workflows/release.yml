@@ -90,7 +90,7 @@ jobs:
             --type exe `
             --input build/compose/jars `
             --main-jar "$Env:JAR_NAME" `
-            --icon "$Env:GITHUB_WORKSPACE/resources/icons/icon.ico" `
+            --icon src/main/resources/icons/icon.ico" `
             --main-class MainKt `
             --name "The Guide" `
             --app-version $version `
@@ -109,7 +109,7 @@ jobs:
             --type dmg \
             --input build/compose/jars \
             --main-jar "$JAR_NAME" \
-            --icon ${{ github.workspace }}/resources/icons/icon.icns \
+            --icon src/main/resources/icons/icon.icns \
             --main-class MainKt \
             --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
@@ -126,7 +126,7 @@ jobs:
             --input build/compose/jars \
             --main-jar "$JAR_NAME" \
             --main-class MainKt \
-            --icon ${{ github.workspace }}/resources/icons/logo.png \
+            --icon src/main/resources/icons/logo.png \
             --name "The Guide" \
             --app-version ${GITHUB_REF_NAME#v} \
             --vendor "Pacifique Mossi" \
