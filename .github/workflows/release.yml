@@ -61,6 +61,9 @@ jobs:
           echo "JAVA_HOME=$Env:JAVA_HOME"
           ./gradlew clean packageUberJarForCurrentOS "-Dorg.gradle.java.home=$Env:JAVA_HOME"
 
+      - name: List files to verify path
+        run: ls -R ${{ github.workspace }}/resources/icons/
+
       - name: Build Compose uber JAR (Linux/macOS)
         if: runner.os != 'Windows'
         shell: bash
@@ -87,7 +90,7 @@ jobs:
             --type exe `
             --input build/compose/jars `
             --main-jar "$Env:JAR_NAME" `
-            --icon ${{ github.workspace }}/resources/icons/icon.ico `
+            --icon "$Env:GITHUB_WORKSPACE/resources/icons/icon.ico" `
             --main-class MainKt `
             --name "The Guide" `
             --app-version $version `
