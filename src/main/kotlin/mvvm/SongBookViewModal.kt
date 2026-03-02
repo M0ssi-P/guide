@@ -1,5 +1,7 @@
 package mvvm
 
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.collectAsState
 import db.controller.songbooks.Books.getBooks
 import db.controller.songbooks.Books.getSongs
@@ -9,9 +11,10 @@ import kotlinx.coroutines.flow.first
 import models.IProviderStats
 import models.ISongDetails
 import models.ISongLyricLine
+import presentation.ProjectionViewModel
 import ui.config.DB
 
-class SongBookViewModal: ViewModel() {
+class SongBookViewModal: ViewModel(), ProjectionViewModel {
     private val _db by lazy { DB.connection(dbNames.global) };
     private val _songBooks = MutableStateFlow<List<IProviderStats>>(emptyList())
     val songBooks = _songBooks.asStateFlow()
@@ -30,8 +33,13 @@ class SongBookViewModal: ViewModel() {
 
     private val _isPresentationMode = MutableStateFlow(false)
     val isPresentationMode = _isPresentationMode.asStateFlow()
+    var hasInitialised: Boolean = false
+    val scrollState = ScrollState(0)
+    val lazyScrollState = LazyListState()
 
     fun initilize() {
+        if (hasInitialised) return;
+        hasInitialised = true
         _songBooks.value = loadBooks()
         _currentBook.value = _songBooks.value.first()
         _songs.value = loadSongsFrom(_songBooks.value.first())

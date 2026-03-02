@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -44,10 +45,9 @@ fun CalendarGrid(currentMonth: YearMonth, today: LocalDate, model: VgrViewModel)
     val theme = LocalTheme.current
     val density = LocalDensity.current
     val calendarData = model.activeDays.collectAsState()
-    val interactionSource = remember { MutableInteractionSource() }
     val firstDayOfMonth = currentMonth.atDay(1)
     val lastDayOfMonth = currentMonth.atEndOfMonth()
-    val firstDayOfWeek = (firstDayOfMonth.dayOfWeek.value + 6) % 7 // Sunday = 7
+    val firstDayOfWeek = (firstDayOfMonth.dayOfWeek.value + 6) % 7
     val totalDays = lastDayOfMonth.dayOfMonth
     val totalCells = firstDayOfWeek + totalDays
     val weeks = (totalCells / 7) + if (totalCells % 7 > 0) 1 else 0
@@ -59,12 +59,13 @@ fun CalendarGrid(currentMonth: YearMonth, today: LocalDate, model: VgrViewModel)
                 horizontalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 for (dayOfWeek in 0..6) {
+                    val interactionSource = remember { MutableInteractionSource() }
                     val cellIndex = week * 7 + dayOfWeek
                     val dayNumber = cellIndex - firstDayOfWeek + 1
                     if (dayNumber in 1..totalDays) {
                         val date = currentMonth.atDay(dayNumber)
                         val isToday = date == today
-                        val bgColor = Color(0xFFFAFAFA)
+                        val bgColor = theme.colors.popup
                         val textColor = theme.colors.text
                         val recordedQotd = if(calendarData.value is UiState.Success) {
                             val cal = calendarData.value as UiState.Success<List<Calendar.ActiveDay>>
@@ -75,10 +76,14 @@ fun CalendarGrid(currentMonth: YearMonth, today: LocalDate, model: VgrViewModel)
                             modifier = Modifier
                                 .weight(1f)
                                 .aspectRatio(0.9f)
-                                .background(bgColor, RoundedCornerShape(14.dp))
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(bgColor)
                                 .clickable(
-                                    interactionSource = interactionSource
+                                    interactionSource = interactionSource,
+                                    indication = if(recordedQotd != null) ripple() else null
                                 ) {
+                                    if(recordedQotd == null && !isToday) return@clickable
+
                                     model.loadCalendar(recordedQotd?.day ?: LocalDate.now().dayOfMonth )
                                 }
                                 .zIndex(1f)
@@ -125,13 +130,12 @@ fun CalendarGrid(currentMonth: YearMonth, today: LocalDate, model: VgrViewModel)
                                             val width = placeable.width + (gapPx * 2).toInt()
                                             val height = placeable.height + (gapPx * 2).toInt()
                                             layout(width, height) {
-                                                // Center it by placing offset = half of added size
                                                 placeable.place(gapPx.toInt(), gapPx.toInt())
                                             }
                                         }
                                         .border(2.dp, theme.colors.primary, RoundedCornerShape(14.dp))
-                                        .zIndex(20f) // ensures it renders above all neighbors
-                                        .pointerInput(Unit) {} // click-through
+                                        .zIndex(20f)
+                                        .pointerInput(Unit) {}
                                 )
                             }
                         }
@@ -141,7 +145,7 @@ fun CalendarGrid(currentMonth: YearMonth, today: LocalDate, model: VgrViewModel)
                 }
             }
             if (week < weeks - 1) {
-                Spacer(modifier = Modifier.height(1.dp)) // 1px vertical gap between weeks
+                Spacer(modifier = Modifier.height(1.dp))
             }
         }
     }

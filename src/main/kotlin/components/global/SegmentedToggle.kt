@@ -2,6 +2,7 @@ package components.global
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -31,12 +32,11 @@ import ui.theme.Inter
 import ui.theme.LocalTheme
 
 @Composable
-fun SegmentedToggle() {
+fun SegmentedToggle(onChange: (String) -> Unit = {}) {
     val theme = LocalTheme.current
     var selected by remember { mutableStateOf("Songs") }
     val options = listOf("Songs", "Posts")
 
-    // Container background pill
     Box(
         modifier = Modifier
             .wrapContentWidth()
@@ -54,20 +54,26 @@ fun SegmentedToggle() {
                         .fillMaxHeight()
                         .then(if (isSelected) {
                             Modifier.dropShadow(
-                                shape = RoundedCornerShape(4.dp),
+                                shape = RoundedCornerShape(6.dp),
                                 block = {
-                                    color = Color.Gray
-                                    alpha = 0.15f
-                                    radius = 10f
-                                    offset = Offset(5f, 5f)
+                                    color = Color.Black.copy(alpha = 0.12f)
+                                    alpha = 1f
+                                    spread = -6f
+                                    radius = 28f
+                                    offset = Offset(0f, 14f)
                                 }
                             )
                         } else Modifier)
                         .background(
-                            color = if (isSelected) theme.colors.light else Color.Transparent,
+                            color = if (isSelected) theme.colors.surface else Color.Transparent,
                             shape = RoundedCornerShape(4.dp)
                         )
-                        .clickable { selected = option }
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                        ) {
+                            selected = option
+                            onChange(selected)
+                        }
                         .padding(horizontal = 16.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {

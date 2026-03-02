@@ -39,6 +39,8 @@ dependencies {
     implementation(libs.google.gson)
     implementation(libs.xerial.sqlite)
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.0")
+    implementation("org.commonmark:commonmark:0.21.0")
+    implementation("io.github.abhisheksaxena:kmp-video:1.0.0")
 
 }
 

@@ -18,6 +18,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
@@ -39,6 +40,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.composables.arrowLeft
 import com.composables.arrowRight
+import com.composables.closeIcon
 import com.composables.plusIcon
 import com.composables.safeHome
 import com.composables.tabIcon
@@ -79,13 +81,6 @@ fun NavigationButton(
 
         onHover(bool)
     }.then(modifier)
-        .clickable(
-            interactionSource = interactionSource,
-        ) {
-            if (disabled) return@clickable
-
-            onClick()
-        }
         .pointerHoverIcon(
             PointerIcon(
                 if (disabled) {
@@ -94,7 +89,14 @@ fun NavigationButton(
                     Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
                 }
             )
-        ), contentColor = contentColor, padding = padding) {
+        )
+        .clickable(
+            interactionSource = interactionSource,
+        ) {
+            if (disabled) return@clickable
+
+            onClick()
+        }, contentColor = contentColor, padding = padding) {
         content()
     }
 };
@@ -148,6 +150,7 @@ fun NavigationButtons(state: MutableState<Rect?>, stat: MutableState<Boolean>, s
         Spacer(modifier = Modifier.width(10.dp))
         NavigationButton(
             disabled = !navigation.canGoBack,
+            animateBg = false,
             contentColor = theme.colors.text, modifier = Modifier.size(25.dp),
             onClick = { navigation.back() }
         ) {
@@ -160,6 +163,7 @@ fun NavigationButtons(state: MutableState<Rect?>, stat: MutableState<Boolean>, s
         }
         NavigationButton(
             disabled = !navigation.canGoNext,
+            animateBg = false,
             contentColor = theme.colors.text, modifier = Modifier.size(25.dp),
             onClick = { navigation.next() }
         ) {
@@ -177,6 +181,12 @@ fun NavigationButtons(state: MutableState<Rect?>, stat: MutableState<Boolean>, s
 
         // Fixed home button
         main.tabs.forEachIndexed { index, navigator ->
+            val bg by remember(main.current.id, theme) {
+                derivedStateOf {
+                    if (main.current.id == navigator.id) theme.colors.surface else theme.colors.menu
+                }
+            }
+            
             key(main.current) {
                 NavigationButton(max = false, modifier = Modifier
                     .newBorder(theme.colors.border, 1.dp, InsetX)
@@ -192,7 +202,7 @@ fun NavigationButtons(state: MutableState<Rect?>, stat: MutableState<Boolean>, s
                         }
                     }
                     .padding(horizontal = 20.dp),
-                    backgroundColor = if (main.current.id === navigator.id) theme.colors.activeTab else theme.colors.menu,
+                    backgroundColor = bg,
                     contentColor = theme.colors.text,
                     disabled = main.current.id === navigator.id,
                     secondModifier = Modifier.fillMaxHeight(),
@@ -227,19 +237,26 @@ fun NavigationButtons(state: MutableState<Rect?>, stat: MutableState<Boolean>, s
                 .dropShadow(
                     shape = RoundedCornerShape(6.dp),
                     block = {
-                        color = Color.Black
-                        alpha = 0.15f
-                        radius = 10f
+                        color = theme.colors.border
+                        spread = 1f
                         offset = Offset(0f, 0f)
                     }
                 )
-                .background(
-                    Color.White,
-                    shape = RoundedCornerShape(6.dp)
+                .dropShadow(
+                    shape = RoundedCornerShape(6.dp),
+                    block = {
+                        color = Color.Black.copy(alpha = 0.12f)
+                        alpha = 1f
+                        spread = -6f
+                        radius = 28f
+                        offset = Offset(0f, 14f)
+                    }
                 )
-                .border(1.dp, color = Color(0xFFEFEFEF), shape = RoundedCornerShape(
-                    6.dp
-                )),
+                .background(
+                    theme.colors.popup,
+                    shape = RoundedCornerShape(6.dp)
+                ),
+            hoverEnabled = true,
             popup = {
                 TabOptions()
             }

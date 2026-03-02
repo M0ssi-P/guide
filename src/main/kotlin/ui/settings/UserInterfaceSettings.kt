@@ -1,12 +1,13 @@
 package ui.settings
 
+import IntUiThemes
 import parsers.bible.models.ILanguage
 import java.io.Serializable
 
 data class UserInterfaceSettings(
     var mainLanguage: String = "en",
     var contentLanguage: String = "en",
-    var darkMode: Boolean? = null,
+    var darkMode: IntUiThemes = IntUiThemes.System,
     var showYtButton: Boolean = true,
     var animeDefaultView: Int = 0,
     var mangaDefaultView: Int = 0,

@@ -8,6 +8,7 @@ data class Colors(
     val text: Color,
     val primaryText: Color,
     val secondaryText: Color,
+    val popup: Color,
     val surface: Color,
     val light: Color,
     val activeTab: Color,
@@ -26,5 +27,6 @@ data class Colors(
     val borderTwo: Color,
     val gray2nd: Color,
     val deeming: Color,
-    val periwinkle: Color
+    val periwinkle: Color,
+    val popupLayer: Color
 )

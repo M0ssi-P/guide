@@ -34,7 +34,6 @@ class File {
                         res.body.use { body ->
                             val inputStream = ProgressInputStream(body.byteStream(), totalBytes, onProgress)
                             inputStream.use { inputStream ->
-                                inputStream.copyTo(pipeOut)
                             }
                         }
                     } catch (e: Exception) {

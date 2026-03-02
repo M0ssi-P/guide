@@ -9,7 +9,21 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.vector.ImageVector
 import java.util.UUID
 
-class Navigator(page: Screen = Screen.Library(LibraryScreen.Hymns())) {
+class ViewModelStore {
+    private val map = mutableMapOf<String, Any>()
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getOrCreate(key: String, factory: () -> T): T {
+        return map.getOrPut(key) { factory() as Any } as T
+    }
+
+    fun clear() {
+        map.clear()
+    }
+}
+
+
+class Navigator(page: Screen = Screen.Home) {
     val id: String = UUID.randomUUID().toString()
     private val _backStack = mutableStateListOf<Screen>(page)
     private val _query = mutableStateListOf(QueryParams())
@@ -21,6 +35,7 @@ class Navigator(page: Screen = Screen.Library(LibraryScreen.Hymns())) {
     val current: Screen get() = _backStack.last()
     val query: QueryParams get() = _query.last()
     val metadata: PageMetadata get() = _metadata.value
+    val viewModelStore: ViewModelStore = ViewModelStore()
 
     val canGoBack get() = _backStack.size > 1
     val canGoNext get() = _forwardStack.isNotEmpty()
@@ -98,7 +113,7 @@ class Tabs {
 }
 
 val LocalTabs = staticCompositionLocalOf<Tabs> {
-    error("no Navigator found! Did you forget to provide it?")
+    error("no Tabs found! Did you forget to provide it?")
 }
 
 @Composable

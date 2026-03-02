@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -27,8 +28,10 @@ import androidx.compose.ui.unit.sp
 import com.composables.bookSquare
 import components.global.FlexDotText
 import components.global.FlexIconText
+import navigation.LocalTabs
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.VerticalScrollbar
+import parsers.vgr.VgrViewModel
 import ui.theme.Inter
 import ui.theme.LocalTheme
 import java.time.LocalDate
@@ -38,7 +41,11 @@ import java.util.Locale
 @Composable
 fun Home(){
     val theme = LocalTheme.current
-    val scrollState = rememberScrollState()
+    val currentTab = LocalTabs.current.current
+    val vgrVM = currentTab.viewModelStore.getOrCreate("HomeVM-${currentTab.id}", {
+        VgrViewModel()
+    })
+    val scrollState = vgrVM.scrollState
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         BoxWithConstraints(
@@ -78,6 +85,8 @@ fun Home(){
                 }
 
                 VerseOfTheDay()
+
+                Spacer(modifier = Modifier.height(80.dp))
             }
         }
 

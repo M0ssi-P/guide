@@ -12,6 +12,7 @@ fun startTableStatement(conn: Connection) {
             loadSql("sections.sql"),
             loadSql("paragraphs.sql"),
             loadSql("lines.sql"),
+            loadSql("images.sql", forDb = "user"),
             loadSql(resource = "books.sql", forDb = "songbooks"),
             loadSql(resource = "songs.sql", forDb = "songbooks"),
             loadSql(resource = "lyrics.sql", forDb = "songbooks"),

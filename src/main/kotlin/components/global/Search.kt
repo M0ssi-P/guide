@@ -49,7 +49,7 @@ fun Search(filled: Boolean = false, onValueChange: (e: String) -> Unit = {}) {
     var text by remember { mutableStateOf("") }
 
     val smoothBorder = animateColorAsState(
-        targetValue = if(isFocused) theme.colors.periwinkle else theme.colors.light
+        targetValue = if(isFocused) theme.colors.periwinkle else theme.colors.surface
     )
 
     Column {

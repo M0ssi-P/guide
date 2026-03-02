@@ -1,5 +1,7 @@
 package parsers.vgr
 
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.rememberScrollState
 import db.controller.table.Sermons.getThisDay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -9,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import loadData
+import mvvm.ShareViewModels
 import mvvm.ViewModel
 import parsers.vgr.models.Calendar
 import parsers.vgr.models.IQotd
@@ -32,12 +35,32 @@ class VgrViewModel: ViewModel() {
         saveData("ui_settings", data = this)
     }
     val db = DB.connection("main.db");
+    val scrollState = ScrollState(0);
 
     init {
         loadCalendar()
     }
 
     fun loadCalendar(day: Int = LocalDate.now().dayOfMonth) {
+        val isStored = ShareViewModels.verseOfTheDay.getOrElse(day) {
+            0
+        }
+
+        if(isStored != 0) {
+            val cal = ShareViewModels.cal.value
+            val ofDay = cal?.activeDays?.find {
+                val lastDay = cal.activeDays.last().day
+                it.day == day || it.day == lastDay && day == lastDay + 1
+            }
+            val currentMonth = LocalDate.now().monthValue
+            val code = "${String.format("%02d", currentMonth)}${String.format("%02d", ofDay!!.day)}"
+            val dayData = db.getThisDay(code)
+            _uiState.value = UiState.Success(isStored as IQotd)
+            _activeDays.value = UiState.Success(cal.activeDays)
+            _thisDay.value = UiState.Success(dayData)
+            return
+        }
+
         _uiState.value = UiState.Loading
         _thisDay.value = UiState.Loading
 
@@ -45,6 +68,7 @@ class VgrViewModel: ViewModel() {
             try {
                 val table = Table()
                 val cal = table.getCalendar()
+                ShareViewModels.cal.value = cal
                 val ofDay = cal.activeDays.find {
                     val lastDay = cal.activeDays.last().day
                     it.day == day || it.day == lastDay && day == lastDay + 1
@@ -55,6 +79,7 @@ class VgrViewModel: ViewModel() {
                 val code = "${String.format("%02d", currentMonth)}${String.format("%02d", ofDay.day)}"
                 _uiState.value = UiState.Success(result)
                 _activeDays.value = UiState.Success(cal.activeDays)
+                ShareViewModels.verseOfTheDay[day] = result
                 val dayData = db.getThisDay(code)
                 _thisDay.value = UiState.Success(dayData)
             } catch (e: Exception) {

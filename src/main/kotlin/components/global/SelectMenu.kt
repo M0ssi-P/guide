@@ -86,10 +86,10 @@ fun <T> SelectMenu(data: List<Items<T>>, fill: Boolean = true, default: Items<T>
                     .onSizeChanged {
                         widthPx = it.width
                     }.pointerHoverIcon(
-                    PointerIcon(
-                        Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-                    )
-                ),
+                        PointerIcon(
+                            Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+                        )
+                    ),
 
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween

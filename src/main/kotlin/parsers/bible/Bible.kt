@@ -7,15 +7,8 @@ import client
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jsoup.Jsoup
-import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.chrome.ChromeOptions
-import org.openqa.selenium.devtools.DevTools
-import org.openqa.selenium.devtools.v137.network.Network
 import parsers.BibleParser
 import parsers.bible.models.*
-import java.util.*
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 class Bible: BibleParser() {
     override val name: String = "YouVersion"
@@ -112,7 +105,7 @@ class Bible: BibleParser() {
     }
 
     suspend fun getChapterDoc(version: IBibleVersion, book: String, chapter: Int): IChapterContent {
-        val promises: IChapterContent = IChapterContent(
+        val promises = IChapterContent(
             version = version,
         );
 
@@ -132,6 +125,21 @@ class Bible: BibleParser() {
 
         val url = "$hostUrl/_next/data/$key/en/audio-bible/${version.id}/${book.uppercase()}.$chapter.${version.localAbbreviation}.json?versionId=${version.id}&usfm=${book.uppercase()}.$chapter.${version.localAbbreviation}"
         val res = client.get(url, header).parsed<PageProps>()
+
+        val audioInfo = res.pageProps.chapterInfo.chapterAudio?.map {
+            ChapterAud(
+                id = it.id,
+                title = it.title,
+                versionId = it.versionId,
+                hasTiming = it.hasTiming,
+                dramatized = it.dramatized,
+                default = it.default,
+                playOrDwnLoad = ChapterAud.DownloadUrls(
+                    it.playOrDwnLoad.formattedMp3,
+                    it.playOrDwnLoad.formattedHls
+                )
+            )
+        }
 
         val body = Jsoup.parse(res.pageProps.chapterInfo.content.trim())
         val element = body.select("div.version > div.book > div.chapter");
@@ -170,10 +178,12 @@ class Bible: BibleParser() {
                     val paragraph: ChapterSection.IParagraph = ChapterSection.IParagraph();
 
                     el.select("> span.verse").forEach { d ->
-                        val number = d.select("> span.label").text().trim().toInt()
+                        val number = d.select("> span.label").text().trim().toIntOrNull()
+                        val cypherNumber = d.attribute("data-usfm")!!.value.split('.').last().toInt()
 
                         val verse = ChapterSection.IBibleVerse(
-                            number = number,
+                            number = number ?: cypherNumber,
+                            displayNumber = number != null,
                             content = mutableListOf()
                         )
 
@@ -208,6 +218,30 @@ class Bible: BibleParser() {
                                     display = VerseLineDisplay.Italic,
                                     content = text
                                 ))
+                            }
+
+                            if(p.classNames().first() == "sc") {
+                                for(element in p.select("> span")) {
+                                    if(element.classNames().first() == "content") {
+                                        val text = element.text()
+                                        verse.content.add(ChapterSection.IBibleVerseLine(
+                                            type = VerseLineEnum.Word,
+                                            isJesus = false,
+                                            display = VerseLineDisplay.SmallCaps,
+                                            content = text
+                                        ))
+                                    }
+
+                                    if(element.classNames().first() == "bd") {
+                                        val text = element.select("> span.content").text()
+                                        verse.content.add(ChapterSection.IBibleVerseLine(
+                                            type = VerseLineEnum.Word,
+                                            isJesus = false,
+                                            display = VerseLineDisplay.BdSmallCaps,
+                                            content = text
+                                        ))
+                                    }
+                                }
                             }
 
                             if(p.classNames().first() == "wj") {
@@ -265,16 +299,18 @@ class Bible: BibleParser() {
                     promises.chapter?.last()?.content?.add(paragraph)
                 }
 
-                if(el.classNames().first() == "q1") {
+                if(el.classNames().first() == "pc") {
                     val paragraph: ChapterSection.IParagraph = ChapterSection.IParagraph(
-                        type = Paragraph.Q1
+                        type = Paragraph.PC
                     );
 
                     el.select("> span.verse").forEach { d ->
-                        val number = d.select("> span.label").text().trim().toInt()
+                        val number = d.select("> span.label").text().trim().toIntOrNull()
+                        val cypherNumber = d.attribute("data-usfm")!!.value.split('.').last().toInt()
 
                         val verse = ChapterSection.IBibleVerse(
-                            number = number,
+                            number = number ?: cypherNumber,
+                            displayNumber = number != null,
                             content = mutableListOf()
                         )
 
@@ -288,6 +324,30 @@ class Bible: BibleParser() {
                                         display = VerseLineDisplay.Normal,
                                         content = text,
                                     ))
+                                }
+                            }
+
+                            if(p.classNames().first() == "sc") {
+                                for(element in p.select("> span")) {
+                                    if(element.classNames().first() == "content") {
+                                        val text = element.text()
+                                        verse.content.add(ChapterSection.IBibleVerseLine(
+                                            type = VerseLineEnum.Word,
+                                            isJesus = false,
+                                            display = VerseLineDisplay.SmallCaps,
+                                            content = text
+                                        ))
+                                    }
+
+                                    if(element.classNames().first() == "bd") {
+                                        val text = element.select("> span.content").text()
+                                        verse.content.add(ChapterSection.IBibleVerseLine(
+                                            type = VerseLineEnum.Word,
+                                            isJesus = false,
+                                            display = VerseLineDisplay.BdSmallCaps,
+                                            content = text
+                                        ))
+                                    }
                                 }
                             }
 
@@ -360,25 +420,24 @@ class Bible: BibleParser() {
                             }
                         }
 
-                        paragraph.verses.add(verse)
+                        if(verse.content.isNotEmpty()) paragraph.verses.add(verse)
                     }
 
                     promises.chapter?.last()?.content?.add(paragraph)
                 }
 
-                if(el.classNames().first() == "q2") {
+                if(el.classNames().first() == "q1") {
                     val paragraph: ChapterSection.IParagraph = ChapterSection.IParagraph(
-                        type = Paragraph.Q2
+                        type = Paragraph.Q1
                     );
 
                     el.select("> span.verse").forEach { d ->
-                        val number = d.select("> span.label").text().trim()
-                        val currentVerse = d.attribute("data-usfm")!!.value.split(".")[2].toInt()
-
-                        val hasNumber = number.isNotEmpty()
+                        val number = d.select("> span.label").text().trim().toIntOrNull()
+                        val cypherNumber = d.attribute("data-usfm")!!.value.split('.').last().toInt()
 
                         val verse = ChapterSection.IBibleVerse(
-                            number = if (hasNumber) number.toInt() else currentVerse,
+                            number = number ?: cypherNumber,
+                            displayNumber = number != null,
                             content = mutableListOf()
                         )
 
@@ -392,6 +451,157 @@ class Bible: BibleParser() {
                                         display = VerseLineDisplay.Normal,
                                         content = text,
                                     ))
+                                }
+                            }
+
+                            if(p.classNames().first() == "note") {
+                                val reference = p.select("> span.body").text()
+                                verse.content.add(ChapterSection.IBibleVerseLine(
+                                    type = VerseLineEnum.Reference,
+                                    isJesus = false,
+                                    display = VerseLineDisplay.Normal,
+                                    reference = reference
+                                ))
+                            }
+
+                            if(ItalicList.any { it == p.classNames().first()}) {
+                                val text = p.select("> span.content").text()
+                                verse.content.add(ChapterSection.IBibleVerseLine(
+                                    type = VerseLineEnum.Word,
+                                    isJesus = false,
+                                    display = VerseLineDisplay.Italic,
+                                    content = text
+                                ))
+                            }
+
+                            if(p.classNames().first() == "sc") {
+                                for(element in p.select("> span")) {
+                                    if(element.classNames().first() == "content") {
+                                        val text = element.text()
+                                        verse.content.add(ChapterSection.IBibleVerseLine(
+                                            type = VerseLineEnum.Word,
+                                            isJesus = false,
+                                            display = VerseLineDisplay.SmallCaps,
+                                            content = text
+                                        ))
+                                    }
+
+                                    if(element.classNames().first() == "bd") {
+                                        val text = element.select("> span.content").text()
+                                        verse.content.add(ChapterSection.IBibleVerseLine(
+                                            type = VerseLineEnum.Word,
+                                            isJesus = false,
+                                            display = VerseLineDisplay.BdSmallCaps,
+                                            content = text
+                                        ))
+                                    }
+                                }
+                            }
+
+                            if(p.classNames().first() == "wj") {
+                                for (elem in p.select("> span")) {
+                                    if(elem.classNames().first() == "content") {
+                                        val text = elem.text()
+                                        verse.content.add(ChapterSection.IBibleVerseLine(
+                                            type = VerseLineEnum.Word,
+                                            isJesus = true,
+                                            display = VerseLineDisplay.Normal,
+                                            content = text
+                                        ))
+                                    }
+
+                                    if(ItalicList.any { it == elem.classNames().first()}) {
+                                        val text = elem.select("> span.content").text()
+                                        verse.content.add(ChapterSection.IBibleVerseLine(
+                                            type = VerseLineEnum.Word,
+                                            isJesus = true,
+                                            display = VerseLineDisplay.Italic,
+                                            content = text
+                                        ))
+                                    }
+
+                                    if(elem.classNames().first() == "sc") {
+                                        for(eleme in elem.select("> span")) {
+                                            if(eleme.classNames().first() == "content") {
+                                                val text = eleme.text()
+                                                verse.content.add(ChapterSection.IBibleVerseLine(
+                                                    type = VerseLineEnum.Word,
+                                                    isJesus = true,
+                                                    display = VerseLineDisplay.SmallCaps,
+                                                    content = text
+                                                ))
+                                            }
+
+                                            if(eleme.classNames().first() == "bd") {
+                                                val text = eleme.select("> span.content").text()
+                                                verse.content.add(ChapterSection.IBibleVerseLine(
+                                                    type = VerseLineEnum.Word,
+                                                    isJesus = true,
+                                                    display = VerseLineDisplay.BdSmallCaps,
+                                                    content = text
+                                                ))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        paragraph.verses.add(verse)
+                    }
+
+                    promises.chapter?.last()?.content?.add(paragraph)
+                }
+
+                if(el.classNames().first() == "q2") {
+                    val paragraph: ChapterSection.IParagraph = ChapterSection.IParagraph(
+                        type = Paragraph.Q2
+                    );
+
+                    el.select("> span.verse").forEach { d ->
+                        val number = d.select("> span.label").text().trim().toIntOrNull()
+                        val cypherNumber = d.attribute("data-usfm")!!.value.split('.').last().toInt()
+
+                        val verse = ChapterSection.IBibleVerse(
+                            number = number ?: cypherNumber,
+                            displayNumber = number != null,
+                            content = mutableListOf()
+                        )
+
+                        d.select("> span").forEach { p ->
+                            if(p.classNames().first() == "content") {
+                                val text = p.text()
+                                if(!text.isNullOrEmpty()) {
+                                    verse.content.add(ChapterSection.IBibleVerseLine(
+                                        type = VerseLineEnum.Word,
+                                        isJesus = false,
+                                        display = VerseLineDisplay.Normal,
+                                        content = text,
+                                    ))
+                                }
+                            }
+
+                            if(p.classNames().first() == "sc") {
+                                for(element in p.select("> span")) {
+                                    if(element.classNames().first() == "content") {
+                                        val text = element.text()
+                                        verse.content.add(ChapterSection.IBibleVerseLine(
+                                            type = VerseLineEnum.Word,
+                                            isJesus = false,
+                                            display = VerseLineDisplay.SmallCaps,
+                                            content = text
+                                        ))
+                                    }
+
+                                    if(element.classNames().first() == "bd") {
+                                        val text = element.select("> span.content").text()
+                                        verse.content.add(ChapterSection.IBibleVerseLine(
+                                            type = VerseLineEnum.Word,
+                                            isJesus = false,
+                                            display = VerseLineDisplay.BdSmallCaps,
+                                            content = text
+                                        ))
+                                    }
                                 }
                             }
 
@@ -475,13 +685,12 @@ class Bible: BibleParser() {
                     );
 
                     el.select("> span.verse").forEach { d ->
-                        val number = d.select("> span.label").text().trim()
-                        val currentVerse = d.attribute("data-usfm")!!.value.split(".")[2].toInt()
-
-                        val hasNumber = number.isNotEmpty()
+                        val number = d.select("> span.label").text().trim().toIntOrNull()
+                        val cypherNumber = d.attribute("data-usfm")!!.value.split('.').last().toInt()
 
                         val verse = ChapterSection.IBibleVerse(
-                            number = if (hasNumber) number.toInt() else currentVerse,
+                            number = number ?: cypherNumber,
+                            displayNumber = number != null,
                             content = mutableListOf()
                         )
 
@@ -575,50 +784,25 @@ class Bible: BibleParser() {
             }
         }
 
-        return promises
+        return promises.copy(audio = audioInfo)
     }
 
     override fun search(q: String) {
         TODO("Not yet implemented")
     }
 
-    private fun getKey(): String? {
-        var key: String? = null
-        val latch = CountDownLatch(1)
+    private suspend fun getKey(): String? {
+        val html = client.get("https://www.bible.com/bible/111/GEN.INTRO1.NIV").text
 
-        val options = ChromeOptions()
-        options.addArguments("--headless=new") // Use `--headless=new` for Chrome 109+
-        options.addArguments("--disable-gpu")  // Optional: improves stability
-        options.addArguments("--window-size=1920,1080")
+        val scriptRegex =
+            """<script id="__NEXT_DATA__" type="application/json">(.*?)</script>"""
+                .toRegex(RegexOption.DOT_MATCHES_ALL)
 
-        val driver = ChromeDriver(options)
-        val devTools: DevTools = driver.devTools
-        devTools.createSession()
+        val match = scriptRegex.find(html)
+        val json = match?.groupValues?.get(1) ?: return null
 
-        devTools.send(
-            Network.enable(
-            Optional.of(1000000),
-            Optional.of(500000),
-            Optional.of(262144)
-        ))
-
-        devTools.addListener(Network.requestWillBeSent()) { fetch ->
-            if(fetch.request.url.contains("_next/data")) {
-                if(key.isNullOrEmpty()) {
-                    val parts = fetch.request.url.split("/")
-                    if(parts.size > 5) {
-                        key = parts[5]
-                        latch.countDown() // 🔑 Signal that we're done
-                    }
-                }
-            }
-        }
-
-        driver.get("https://www.bible.com/bible/111/GEN.INTRO1.NIV")
-
-        latch.await(15, TimeUnit.SECONDS)
-
-        driver.quit()
+        val buildIdRegex = """"buildId":"(.*?)"""".toRegex()
+        val key = buildIdRegex.find(json)?.groupValues?.get(1)
 
         return key
     }
@@ -763,7 +947,7 @@ data class IBibleVersionResponse(
         val id: Int,
         val name: String,
         @SerialName("local_name") val localName: String?,
-        val url: String,
+        val url: String?,
         val description: String?,
     )
 }

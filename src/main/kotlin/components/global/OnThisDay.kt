@@ -53,8 +53,8 @@ fun OnThisDay(model: VgrViewModel) {
                         for (sermon in state.data) {
                             Box(
                                 modifier = Modifier.fillMaxWidth()
-                                    .background(theme.colors.secondaryHighlight)
                                     .clip(RoundedCornerShape(6.dp))
+                                    .background(theme.colors.popup)
                                     .padding(20.dp)
                             ) {
                                 Column {
@@ -148,7 +148,7 @@ fun OnThisDay(model: VgrViewModel) {
                 }
                 is UiState.Loading -> {
                     Column( modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.Center ){
-                        Text("Loading...", color = Color.Black)
+                        Text("Loading...", color = theme.colors.text)
                     }
                 }
                 is UiState.Error -> {

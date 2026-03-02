@@ -1,5 +1,7 @@
 package parsers.bible.models
 
+import java.io.Serializable
+
 data class IBibleVersion(
     val id: Int,
     val abbreviation: String,
@@ -15,11 +17,11 @@ data class IBibleVersion(
     val readerFooter: HTMLorText? = null,
     val publisher: Publisher? = null,
     val books: List<Book>? = null
-) {
+): Serializable {
     data class HTMLorText(
         val html: String?,
         val text: String?
-    )
+    ): Serializable
 
     data class Book(
         val hasText: Boolean,
@@ -30,20 +32,20 @@ data class IBibleVersion(
         val humanLong: String,
         val abbreviation: String,
         val chapters: List<Chapter>,
-    )
+    ):Serializable
 
     data class Chapter(
         val toc: Boolean,
         val usfm: String,
         val human: String,
         val canonical: Boolean,
-    )
+    ): Serializable
 
     data class Publisher(
         val id: Int,
         val name: String,
         val localName: String?,
-        val url: String,
-        val description: Any?,
-    )
+        val url: String?,
+        val description: String?,
+    ): Serializable
 }

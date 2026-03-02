@@ -149,12 +149,12 @@ class ConfigViewModel: ViewModel() {
 
                 tempDir.deleteRecursively()
 
-                listOf<String>("only-believe.zip", "collection-de-cantiques.zip", "nyimbo-za-wokovu.zip", "nyimbo-za-mungu.zip").forEach { saveName ->
+                listOf<String>("only-believe.zip", "collection-de-cantiques.zip", "nyimbo-za-wokovu.zip", "nyimbo-za-mungu.zip").forEachIndexed { i, saveName ->
                     val f = bucket.file("songbooks/$saveName")
                     val stream = f.createReadStream(
                         onProgress = { read, total ->
                             val percent = ((read.toDouble() / total.toDouble()) * 100).roundToInt()
-                            _installationStatus.value = "Installation progress: downloading songs Infobase $percent% / 100%"
+                            _installationStatus.value = "Installation songBooks: [${i + 1}] : [4] Progress $percent% / 100%"
                         }
                     )
 
@@ -199,9 +199,10 @@ class ConfigViewModel: ViewModel() {
         }
     }
 
-    fun mergeDb(incomingDb: Path, languageId: String) {
+    suspend fun mergeDb(incomingDb: Path, languageId: String) {
         _db.value.autoCommit = false
         try {
+            _installationStatus.value = "Please be patient while we prepare the Infobase."
             _db.value.createStatement(
             ).use { stmt ->
                 stmt.execute("ATTACH DATABASE '${incomingDb.toAbsolutePath()}' AS incoming")
@@ -267,6 +268,8 @@ class ConfigViewModel: ViewModel() {
                 _db.value.commit()
 
                 stmt.execute("DETACH DATABASE incoming")
+                _installationStatus.value = "Infobase complete."
+                delay(100)
             }
         } catch (e: Exception) {
             _db.value.rollback()

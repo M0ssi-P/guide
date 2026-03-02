@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import components.global.Button
 import components.global.Calendar
 import components.global.OnThisDay
+import navigation.LocalTabs
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.skiko.Cursor
 import parsers.vgr.VgrViewModel
@@ -41,14 +43,19 @@ import ui.modifier.stroke.BorderSide
 import ui.modifier.stroke.newBorder
 import ui.theme.Inter
 import ui.theme.LocalTheme
+import ui.theme.LocalUi
 import ui.toOrdinal
 import java.time.Month
 
 @Composable
 @Preview
 fun VerseOfTheDay() {
-    val vgrVM = remember { VgrViewModel() }
+    val currentTab = LocalTabs.current.current
+    val vgrVM = currentTab.viewModelStore.getOrCreate("HomeVM-${currentTab.id}", {
+        VgrViewModel()
+    })
     val uiState = vgrVM.uiState.collectAsState()
+    val ui = LocalUi.current
 
     val theme = LocalTheme.current
 
@@ -66,11 +73,13 @@ fun VerseOfTheDay() {
                     Column {
                         Box(
                             modifier = Modifier.fillMaxWidth()
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(theme.colors.popup)
                                 .newBorder(
-                                    theme.colors.border,
+                                    color = if(ui.value.isDark()) theme.colors.popup else theme.colors.border,
                                     1.dp,
                                     setOf(BorderSide.Top, BorderSide.Bottom, BorderSide.Left, BorderSide.Right),
-                                    shape = RoundedCornerShape(7.dp)
+                                    shape = RoundedCornerShape(6.dp)
                                 )
                         ){
                             Column(
@@ -111,7 +120,7 @@ fun VerseOfTheDay() {
                                     ) {
                                         Text(
                                             state.data.content,
-                                            color = theme.colors.primaryText,
+                                            color = if(ui.value.isDark()) theme.colors.text else theme.colors.primaryText,
                                             style = theme.typography.h3,
                                             lineHeight = 24.sp,
                                             letterSpacing = 0.5.sp,
@@ -215,10 +224,10 @@ fun VerseOfTheDay() {
                 }
                 is UiState.Loading -> {
                     Column( modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.Center ){
-                        Text("Loading...", color = Color.Black)
+                        Text("Loading...", color = theme.colors.text)
                     }
                 } is UiState.Error -> {
-                Text("Error... ${state.message}", color = Color.White)
+                Text("Error... ${state.message}", color = theme.colors.text)
             }
             }
         }

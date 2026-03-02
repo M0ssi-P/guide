@@ -74,6 +74,13 @@ fun createUpdatedAtTrigger(conn: Connection) {
             BEGIN
                 UPDATE favourites SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
             END;
+            """.trimIndent(),
+            """
+                CREATE TRIGGER IF NOT EXISTS update_images_updated_at
+            AFTER UPDATE ON images
+            BEGIN
+                UPDATE images SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
             """.trimIndent()
         )
 

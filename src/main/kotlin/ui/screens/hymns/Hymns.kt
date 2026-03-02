@@ -43,10 +43,13 @@ import components.global.Search
 import components.global.SongBookSelector
 import components.global.SongCard
 import components.layouts.HymnsPresentationSidebar
+import components.layouts.PresentationRightBar
 import components.layouts.SongPresentationContent
 import kotlinx.coroutines.launch
 import mvvm.SongBookViewModal
+import navigation.LocalTabs
 import org.jetbrains.jewel.ui.component.Text
+import presentation.LocalWindowController
 import searchSongs
 import ui.modifier.stroke.BorderSide
 import ui.modifier.stroke.newBorder
@@ -55,17 +58,21 @@ import ui.theme.LocalTheme
 @Composable
 fun Hymns() {
     val theme = LocalTheme.current
+    val windowController = LocalWindowController.current
     val focusManager = LocalFocusManager.current
-    val model = remember { SongBookViewModal().apply {
-        this.initilize()
-    } }
+    val currentTab = LocalTabs.current.current
+    val model = currentTab.viewModelStore.getOrCreate("SongBookVM-${currentTab.id}", {
+            SongBookViewModal().apply {
+                this.initilize()
+            }
+        })
     val isPresentationMode = model.isPresentationMode.collectAsState()
     val songList = model.songs.collectAsState()
     var query by remember { mutableStateOf("") }
     val searchBasedSongs = remember { mutableStateOf(
         songList.value
     ) }
-    val scrollState = rememberLazyListState()
+    val scrollState = model.lazyScrollState
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(query, songList.value) {
@@ -74,6 +81,10 @@ fun Hymns() {
         } else {
             searchBasedSongs.value = searchSongs(query, songList.value)
         }
+    }
+
+    LaunchedEffect(windowController.presentation) {
+        model.setPresentationMode(windowController.presentation)
     }
 
     Column(
@@ -86,10 +97,10 @@ fun Hymns() {
                     .dropShadow(
                         shape = RoundedCornerShape(0.dp),
                         block = {
-                            color = Color.Gray
-                            alpha = 0.15f
-                            radius = 10f
-                            offset = Offset(5f, 5f)
+                            color = theme.colors.border
+                            radius = 0f
+                            spread = 0f
+                            offset = Offset(-1f, 0f)
                         }
                     )
                     .pointerInput(Unit) {
@@ -188,7 +199,7 @@ fun Hymns() {
                         .background(theme.colors.surface)
                         .padding(20.dp)
                 ) {
-                    Text("hi")
+                    PresentationRightBar()
                 }
             }
         }
@@ -199,6 +210,7 @@ fun Hymns() {
                     .height(239.dp)
                     .newBorder(width = 1.dp, sides = setOf(BorderSide.Top), color = theme.colors.border)
                     .background(theme.colors.surface)
+                    .padding(16.dp)
             ) {
                 Text("hi")
             }

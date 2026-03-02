@@ -73,35 +73,40 @@ fun SongBookSelector(model: SongBookViewModal) {
     ) {
         Column(
             modifier = Modifier
-                .width(300.dp)
                 .dropShadow(
                     shape = RoundedCornerShape(6.dp),
                     block = {
-                        color = Color.Black
-                        alpha = 0.10f
-                        radius = 10f
+                        color = theme.colors.border
+                        spread = 1f
                         offset = Offset(0f, 0f)
                     }
                 )
+                .dropShadow(
+                    shape = RoundedCornerShape(6.dp),
+                    block = {
+                        color = Color.Black.copy(alpha = 0.12f)
+                        alpha = 1f
+                        spread = -6f
+                        radius = 28f
+                        offset = Offset(0f, 14f)
+                    }
+                )
+                .width(300.dp)
                 .clip(RoundedCornerShape(6.dp))
-                .background(theme.colors.surface)
+                .background(theme.colors.popup)
                 .padding(10.dp)
         ) {
             books.value.mapIndexed { index, stats ->
                 val hovered = remember(index) { mutableStateOf(false) }
-
-                val bgOnHover = animateColorAsState(
-                    targetValue = if(hovered.value) theme.colors.gray2nd else if (stats.name == selectedBook.value.name) {
-                        theme.colors.gray2nd
-                    } else theme.colors.surface
-                )
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(4.dp))
                         .background(
-                            bgOnHover.value
+                            if(hovered.value) theme.colors.menuHoverColor else if (stats.name == selectedBook.value.name) {
+                                theme.colors.menuHoverColor
+                            } else theme.colors.popup
                         )
                         .pointerHoverIcon(
                             PointerIcon(

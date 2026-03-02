@@ -84,18 +84,10 @@ fun TabOptions() {
                 var isHovered by remember(key) { mutableStateOf(false) }
                 val interactionSource = remember { MutableInteractionSource() }
 
-                val animatedBgColor by animateColorAsState(
-                    targetValue = if (isHovered) theme.colors.menuHoverColor else theme.colors.background,
-                    animationSpec = tween(
-                        durationMillis = 50,
-                        easing = EaseIn
-                    )
-                )
-
                 Row(
                     modifier = Modifier.fillMaxWidth()
                         .clip(RoundedCornerShape(6.dp))
-                        .background(animatedBgColor)
+                        .background(if (isHovered) theme.colors.menuHoverColor else theme.colors.popup)
                         .onHover{ bool ->
                             isHovered = bool
                         }
@@ -165,7 +157,7 @@ fun TabOptions() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .newBorder(width = 1.dp, sides = setOf(BorderSide.Top), color = Color(0xFFEFEFEF))
+                .newBorder(width = 1.dp, sides = setOf(BorderSide.Top), color = theme.colors.border)
                 .padding(horizontal = 12.dp, vertical = 10.dp)
         ) {
             Text("If you can’t find the song, try adding it from book store.", style = theme.typography.tab, color = theme.colors.text)

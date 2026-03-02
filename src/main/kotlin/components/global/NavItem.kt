@@ -28,25 +28,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.skiko.Cursor
 import ui.theme.LocalTheme
 
 @Composable
-fun NavItem(isActive: Boolean, key: Int, name: String, icon: (Color) -> ImageVector, onClick: () -> Unit) {
+fun NavItem(isActive: Boolean, key: Int, name: String, icon: ((Color) -> ImageVector)? = null, iconString: String = "",  onClick: () -> Unit) {
     val theme = LocalTheme.current
 
     var isHovered by remember(key) { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
-
-    val animatedColor by animateColorAsState(
-        targetValue = if (isActive || isHovered) theme.colors.menuHoverColor else theme.colors.menu,
-        animationSpec = tween(
-            durationMillis = 50,
-            easing = EaseIn
-        )
-    )
 
     val animatedTextColor by animateColorAsState(
         targetValue = if (isActive || isHovered) theme.colors.primaryText else theme.colors.text,
@@ -63,7 +56,7 @@ fun NavItem(isActive: Boolean, key: Int, name: String, icon: (Color) -> ImageVec
                 isHovered = hovered
                 false
             }
-            .background(animatedColor)
+            .background(if (isActive || isHovered) theme.colors.menuHoverColor else theme.colors.menu)
             .pointerHoverIcon(
                 PointerIcon(
                     Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
@@ -78,12 +71,21 @@ fun NavItem(isActive: Boolean, key: Int, name: String, icon: (Color) -> ImageVec
             .padding(8.dp, 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = icon(animatedTextColor),
-            contentDescription = null,
-            tint = Color.Unspecified,
-            modifier = Modifier.size(20.dp)
-        )
+        if(icon != null) {
+            Icon(
+                imageVector = icon(animatedTextColor),
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier.size(20.dp)
+            )
+        } else {
+            Icon(
+                painter = painterResource(iconString),
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier.size(20.dp)
+            )
+        }
         Spacer(Modifier.width(8.dp))
         Text(name, style = theme.typography.tab, color = animatedTextColor)
     }

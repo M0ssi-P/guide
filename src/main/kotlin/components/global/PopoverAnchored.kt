@@ -1,7 +1,11 @@
 package components.global
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -13,15 +17,23 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.IntOffset
 import org.jetbrains.jewel.foundation.modifier.onHover
+import org.jetbrains.jewel.ui.component.Text
 
 @Composable
 fun PopoverAnchored(
     modifier: Modifier = Modifier,
-    popup: @Composable () -> Unit,
-    content: @Composable () -> Unit
+    hoverEnabled: Boolean = false,
+    onChange: ( e: MutableState<Boolean>) -> Unit = {},
+    popup: @Composable ( e: MutableState<Boolean>) -> Unit,
+    content: @Composable (e: Boolean) -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     val showTooltip = remember { mutableStateOf(false) }
     var anchorPosition by remember { mutableStateOf(IntOffset.Zero) }
+
+    LaunchedEffect(showTooltip.value) {
+        onChange(showTooltip)
+    }
 
     Box {
         Box(
@@ -29,24 +41,35 @@ fun PopoverAnchored(
                 .onGloballyPositioned { coords ->
                     val pos = coords.boundsInParent()
                     anchorPosition = IntOffset(
-                        pos.right.toInt(),
-                        pos.top.toInt()
+                        pos.left.toInt(),
+                        pos.bottom.toInt()
                     )
                 }
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = {
+                        if(!hoverEnabled) {
+                            showTooltip.value = !showTooltip.value
+                        }
+                    }
+                )
                 .onHover { hovered ->
+                    if(!hoverEnabled) return@onHover
                     showTooltip.value = hovered
                     false
                 }
         ) {
-            content()
+            content(showTooltip.value)
         }
 
         AnimatedTooltip(
             modifier,
             visible = showTooltip,
-            offset = anchorPosition + IntOffset(0, 32)
+            hoverEnabled,
+            offset = anchorPosition + IntOffset(0, 10)
         ) {
-            popup()
+            popup(showTooltip)
         }
     }
 }

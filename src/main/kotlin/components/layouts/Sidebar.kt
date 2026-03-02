@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -37,10 +38,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.composables.safeHome
 import com.composables.savedIcon
 import com.composables.searchIcon
+import com.composables.settingsIcon
 import com.composables.statsIcon
 import com.composables.tabIcon
 import components.global.NavItem
@@ -58,10 +61,16 @@ data class MenuItem(
     val imageVector: (Color) -> ImageVector
 )
 
+data class BooksItem(
+    val name: String,
+    val matchPath: Screen,
+    val imageVector: String
+)
+
 val menuBarItems = mutableListOf<MenuItem>(
     MenuItem(
         name = "Search",
-        matchPath = Screen.Library(LibraryScreen.Bible()),
+        matchPath = Screen.Library(LibraryScreen.Table()),
         imageVector = ::searchIcon
     ),
     MenuItem(
@@ -81,6 +90,24 @@ val menuBarItems = mutableListOf<MenuItem>(
     ),
 )
 
+val bookItems = mutableListOf<BooksItem>(
+    BooksItem(
+        name = "The Table",
+        matchPath = Screen.Library(LibraryScreen.Table()),
+        imageVector = "src/the_table.png"
+    ),
+    BooksItem(
+        name = "Bible",
+        matchPath = Screen.Library(LibraryScreen.Bible()),
+        imageVector = "src/the_bible.png"
+    ),
+    BooksItem(
+        name = "Song Books",
+        matchPath = Screen.Library(LibraryScreen.Hymns()),
+        imageVector = "src/jesus_cloud.png"
+    )
+)
+
 @Composable
 fun Sidebar(shouldHideSidebar: MutableState<Boolean>, shouldHide: Boolean, onHoveredSidebar: MutableState<Boolean>) {
     val theme = LocalTheme.current
@@ -90,14 +117,14 @@ fun Sidebar(shouldHideSidebar: MutableState<Boolean>, shouldHide: Boolean, onHov
     val paddingTop by animateDpAsState(
         targetValue = if (!shouldHideSidebar.value) 0.dp else 100.dp,
         animationSpec = tween(
-            durationMillis = 500, // <- your custom duration in ms
+            durationMillis = 500,
             easing = LinearOutSlowInEasing
         )
     )
     val paddingBottom by animateDpAsState(
         targetValue = if (!shouldHideSidebar.value) 0.dp else 60.dp,
         animationSpec = tween(
-            durationMillis = 500, // <- your custom duration in ms
+            durationMillis = 500,
             easing = LinearOutSlowInEasing
         )
     )
@@ -138,17 +165,18 @@ fun Sidebar(shouldHideSidebar: MutableState<Boolean>, shouldHide: Boolean, onHov
                 .then(if (shouldHideSidebar.value) Modifier.dropShadow(
                     shape = RoundedCornerShape(6.dp),
                     block = {
-                        color = Color.Black
-                        alpha = 0.15f
-                        radius = 10f
-                        offset = Offset(0f, 0f)
+                        color = Color.Black.copy(alpha = 0.12f)
+                        alpha = 1f
+                        spread = -6f
+                        radius = 28f
+                        offset = Offset(0f, 14f)
                     }
                 ) else Modifier)
                 .background(
                     theme.colors.menu,
                     shape
                 )
-                .border(2.dp, color = theme.colors.border, shape)
+                .border(1.dp, color = theme.colors.border, shape)
                 .onHover { hover ->
                     onHoveredSidebar.value = hover
                     false
@@ -213,13 +241,28 @@ fun Sidebar(shouldHideSidebar: MutableState<Boolean>, shouldHide: Boolean, onHov
                                 }
                             )
                         }
+
+                        Spacer(Modifier.height(10.dp))
+                        Text("Books", style = theme.typography.tab, color = theme.colors.text, fontSize = 10.sp, modifier = Modifier.padding(vertical = 10.dp))
+                        bookItems.mapIndexed { i, item ->
+                            val isActive = navigation.current == item.matchPath
+                            NavItem(
+                                isActive,
+                                key = i,
+                                name = item.name,
+                                iconString = item.imageVector,
+                                onClick = {
+                                    navigation.navigate(item.matchPath)
+                                }
+                            )
+                        }
                     }
 
                     NavItem(
                         isActive = navigation.current == Screen.Setting,
                         key = 4,
                         name = "Setting",
-                        icon = ::searchIcon,
+                        icon = ::settingsIcon,
                         onClick = {
                             navigation.navigate(Screen.Setting)
                         }

@@ -15,4 +15,4 @@ data class ILanguage(
     val totalVersions: Int?,
     val textDirection: String,
     val font: String?,
-) : Serializable
+): Serializable

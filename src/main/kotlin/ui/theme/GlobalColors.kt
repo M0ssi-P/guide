@@ -31,8 +31,9 @@ val LightColors = Colors(
     primaryText = Color(0xFF071108),
     secondaryText = Color(0xFFE5A4CB),
     surface = Color(0xFFFFFFFF),
+    popup = Color(0xFFFAFAFA),
     light = Color(0xFFFFFFFF),
-    border = Color(0xFFEEEEEC),
+    border = Color(0xFFEEEEEE),
     menu = Color(0xFFFAFAFA),
     crimson = Color(0xFFD72638),
     aquamarine = Color(0xFF7FFFD4),
@@ -48,7 +49,37 @@ val LightColors = Colors(
     gray2nd = Color(0xFFEDF1F5),
     deeming = Color(0xFF8BA0B2),
     periwinkle = Color(0xFFD8DCFF),
-    night = Color(0xFF000000)
+    night = Color(0xFF000000),
+    popupLayer = Color(0xFFFFFFFF)
+)
+
+val DarkColors = Colors(
+    primary = Color(0xFF006BFF),
+    background = Color(0xFFFFFFFF),
+    text = Color(0xFF8E8E93),
+    primaryText = Color(0xFFFFFFFF),
+    secondaryText = Color(0xFFE5A4CB),
+    surface = Color(0xFF191919),
+    light = Color(0xFFFFFFFF),
+    border = Color(0xFF2A2A2A),
+    menu = Color(0xFF202020),
+    crimson = Color(0xFFD72638),
+    aquamarine = Color(0xFF7FFFD4),
+    activeTab = Color(0xFFFFFFFF),
+    popup = Color(0xE6202020),
+    primaryHighlight = Color(0xFFFFD23F),
+    secondaryHighlight = Color(0xFFFAFAFA),
+    blue = Color(0xFF006BFF),
+    blue3 = Color(0xFF2471DB),
+    blue100 = Color(0xFFE0F2FE).copy(alpha = 0.055f),
+    menuHoverColor = Color(0x0EFFFFFF),
+    disabledOne = Color(0xFF2A2A2A),
+    borderTwo = Color(0xFFEFEFEF),
+    gray2nd = Color(0x08FFFFFF),
+    deeming = Color(0xFF8BA0B2),
+    periwinkle = Color(0xFF213041),
+    night = Color(0xFFFFFFFF),
+    popupLayer = Color(0xFF252525)
 )
 
 val CustomTypography = Typography(

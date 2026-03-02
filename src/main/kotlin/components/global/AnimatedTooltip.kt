@@ -24,10 +24,16 @@ import org.jetbrains.jewel.foundation.modifier.onHover
 fun AnimatedTooltip(
     modifier: Modifier = Modifier,
     visible: MutableState<Boolean>,
+    hoverEnabled: Boolean = false,
     offset: IntOffset,
     content: @Composable () -> Unit
 ) {
-    Popup(offset = offset) {
+    Popup(
+        offset = offset,
+        onDismissRequest = {
+            visible.value = false
+        }
+    ) {
         AnimatedVisibility(
             visible = visible.value,
             enter = fadeIn() + scaleIn(initialScale = 0.95f),
@@ -39,7 +45,11 @@ fun AnimatedTooltip(
         ) {
             Box(
                 modifier = modifier
-                    .onHover { hovered -> visible.value = hovered }
+                    .onHover { hovered ->
+                        if(hoverEnabled) {
+                            visible.value = hovered
+                        }
+                    }
             ) {
                 content()
             }

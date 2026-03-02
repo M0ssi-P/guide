@@ -58,7 +58,7 @@ import ui.theme.LocalTheme
 fun HymnsContent(model: SongBookViewModal) {
     val theme = LocalTheme.current
     val windowController = LocalWindowController.current
-    val scrollState = rememberScrollState()
+    val scrollState = model.scrollState
     val scope = rememberCoroutineScope()
     var trackHeightPx by remember { mutableIntStateOf(0) }
     val currentSong = model.currentSong.collectAsState()
