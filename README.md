@@ -2,7 +2,7 @@
 
 **The Guide** is a cross‑platform desktop application built with Kotlin and Jetpack Compose, designed to help believers (The Bride) access, read, and present spiritual content easily. It brings together key resources such as songs, Bible reading, structured tables, read-along letters, and presentation features in a seamless desktop experience.
 
-⚠️ *Media playback is powered by the reusable `AuraPlayer` media library.*
+⚠️ *Media playback is powered by the reusable [`AuraPlayer`](https://github.com/M0ssi-P/AuraPlayer) media library.*
 
 ---
 
