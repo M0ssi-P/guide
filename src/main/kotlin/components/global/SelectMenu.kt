@@ -118,7 +118,6 @@ fun <T> SelectMenu(data: List<Items<T>>, fill: Boolean = true, default: Items<T>
                 LazyColumn(
                     state = scrollState,
                     modifier = Modifier
-                        .fillMaxWidth()
                         .dropShadow(
                             shape = RoundedCornerShape(6.dp),
                             block = {
@@ -128,8 +127,9 @@ fun <T> SelectMenu(data: List<Items<T>>, fill: Boolean = true, default: Items<T>
                                 offset = Offset(0f, 0f)
                             }
                         )
+                        .fillMaxWidth()
                         .clip(RoundedCornerShape(6.dp))
-                        .background(theme.colors.surface)
+                        .background(theme.colors.popup)
                         .padding(10.dp)
                         .draggable(
                             orientation = Orientation.Vertical,
@@ -143,18 +143,14 @@ fun <T> SelectMenu(data: List<Items<T>>, fill: Boolean = true, default: Items<T>
                     itemsIndexed(data) { index, item ->
                         val hovered = remember(index) { mutableStateOf(false) }
 
-                        val bgOnHover = animateColorAsState(
-                            targetValue = if(hovered.value) theme.colors.gray2nd else if (item.key == selected.value.key) {
-                                theme.colors.gray2nd
-                            } else theme.colors.surface
-                        )
-
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(4.dp))
                                 .background(
-                                    bgOnHover.value
+                                    if(hovered.value) theme.colors.gray2nd else if (item.key == selected.value.key) {
+                                        theme.colors.gray2nd
+                                    } else theme.colors.popup
                                 )
                                 .pointerHoverIcon(
                                     PointerIcon(

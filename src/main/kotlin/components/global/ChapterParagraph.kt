@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mvvm.ShareViewModels
 import org.jetbrains.jewel.ui.component.Text
 import parsers.bible.models.ChapterSection
 import parsers.bible.models.Paragraph
@@ -42,11 +44,13 @@ fun ChapterContent(
     onVerseClick: (Int) -> Unit = {}
 ) {
     val theme = LocalTheme.current
+    val globalModel = ShareViewModels.globalViewModel
+    val localFullscreen = globalModel.localFullscreen.collectAsState()
 
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {
-        if (sections.hasHeading && sections.heading != null) {
+        if (sections.hasHeading && sections.heading != null && !localFullscreen.value) {
             Row(modifier = Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 12.dp)) {
                 Text("${sections.heading.heading}", style = theme.typography.h2, color = theme.colors.night, fontSize = 28.sp)
             }
@@ -112,8 +116,8 @@ fun ChapterContent(
                 style = TextStyle(
                     fontFamily = Inter,
                     textDecoration = decoration,
-                    fontSize = 26.sp,
-                    lineHeight = 26.sp * 2,
+                    fontSize = if(localFullscreen.value) 53.sp else 26.sp,
+                    lineHeight = (if (localFullscreen.value) 53.sp else 26.sp) * 2,
                     textIndent = when(paragraph.type) {
                         Paragraph.Normal -> TextIndent(firstLine = 20.sp)
                         Paragraph.Q2 -> TextIndent(firstLine = 16.sp)

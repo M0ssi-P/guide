@@ -38,9 +38,9 @@ dependencies {
     implementation(libs.jsoup)
     implementation(libs.google.gson)
     implementation(libs.xerial.sqlite)
+    implementation("com.mossip:auraplayer-compose:0.1.3")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.0")
     implementation("org.commonmark:commonmark:0.21.0")
-    implementation("io.github.abhisheksaxena:kmp-video:1.0.0")
 
 }
 
@@ -59,7 +59,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "game"
-            packageVersion = "1.0.0"
+            packageVersion = "1.0.1"
             includeAllModules = true
             val os = org.gradle.internal.os.OperatingSystem.current()
             javaHome = when {

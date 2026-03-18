@@ -3,13 +3,14 @@ serilization = "1.8.1"
 sp = "2.1.20"
 nicehttp = "0.4.13"
 okhttp3 = "4.12.0"
-foundation = "0.33.0-253.29795"
+foundation = "0.34.0-253.31033.149"
 net = "5.17.0"
 seleniumhq = "4.34.0"
 scope = "1.10.2"
 jsoup = "1.20.1"
 gson = "2.13.1"
 sqlite = "3.50.3.0"
+auraplayer = "v0.1.1"
 
 
 [libraries]
@@ -24,7 +25,6 @@ kotlinx-coroutines-swing = { group = "org.jetbrains.kotlinx", name = "kotlinx-co
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup"}
 google-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson"}
 xerial-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version.ref = "sqlite"}
-
 
 [plugins]
 kotlinx-serilization-pg = { id = "plugin.serialization", version.ref = "sp" }

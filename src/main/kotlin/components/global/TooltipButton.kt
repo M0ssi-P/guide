@@ -4,6 +4,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.TooltipPlacement
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -95,6 +97,11 @@ fun TooltipIconButton(
                     PointerIcon(
                         Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
                     )
+                ).clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    onClick = {
+                        onClick()
+                    },
                 ))
             {
             Icon(

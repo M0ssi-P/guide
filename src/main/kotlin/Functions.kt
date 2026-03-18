@@ -6,6 +6,8 @@ import androidx.compose.ui.unit.sp
 import models.ISongDetails
 import org.commonmark.node.*
 import org.commonmark.parser.Parser
+import parsers.bible.models.ChapterSection
+import player.Lyric
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -94,6 +96,50 @@ fun extractZipToMemory(zipBytes: ByteArray): Map<String, String> {
     }
 
     return extractedFiles
+}
+
+fun perVerseMode(chapters: MutableList<ChapterSection>?): List<ChapterSection.IBibleVerse> {
+    val promise = mutableMapOf<Int, ChapterSection.IBibleVerse>()
+
+    if (chapters == null) return emptyList()
+
+    for (chapter in chapters) {
+        if (!chapter.content.isNullOrEmpty()) {
+            chapter.content.forEach { chapterContent ->
+                chapterContent.verses.forEach { verse ->
+
+                    val existing = promise[verse.number]
+
+                    if (existing != null) {
+                        existing.content.addAll(verse.content)
+                    } else {
+                        promise[verse.number] = ChapterSection.IBibleVerse(
+                            number = verse.number,
+                            content = verse.content.toMutableList()
+                        )
+                    }
+
+                }
+            }
+        }
+    }
+
+    return promise.values.toList()
+}
+
+fun getCurrentVerseSafe(currentTime: Double, lyrics: List<Lyric>?): Lyric? {
+    if(lyrics == null) return null
+    return lyrics.firstOrNull { it.timing.end > 0 && currentTime in it.timing.start..it.timing.end }
+}
+
+fun formatTime(secondsDouble: Double): String {
+    val totalSeconds = secondsDouble.toLong()
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+
+    return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+    else "%d:%02d".format(minutes, seconds)
 }
 
 fun String.Abbreviate(): String {

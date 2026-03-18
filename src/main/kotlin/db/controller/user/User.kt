@@ -34,4 +34,13 @@ object User {
             )
         }
     }
+
+    fun Connection.deleteImages(imageId: String) {
+        run(
+            """
+                DELETE FROM images WHERE id = ?
+            """.trimIndent(),
+            imageId
+        )
+    }
 }

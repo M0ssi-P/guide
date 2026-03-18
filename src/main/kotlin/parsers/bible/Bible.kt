@@ -6,6 +6,7 @@ import ParagraphList
 import client
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 import parsers.BibleParser
 import parsers.bible.models.*
@@ -117,16 +118,16 @@ class Bible: BibleParser() {
             error("Chapter not found")
         }
 
-        val key = getKey()
+        val url = "$hostUrl/bible/${version.id}/$book.$chapter.${version.abbreviation}"
+        val rec = client.get(url, header).textLarge
 
-        if(key.isNullOrEmpty()) {
-            error("Error retrieving the chapter! Please check your connection and try again")
-        }
+        val doc = Jsoup.parse(rec)
+        val jsonString = doc.select("#__NEXT_DATA__").first()?.data() ?: "{}"
 
-        val url = "$hostUrl/_next/data/$key/en/audio-bible/${version.id}/${book.uppercase()}.$chapter.${version.localAbbreviation}.json?versionId=${version.id}&usfm=${book.uppercase()}.$chapter.${version.localAbbreviation}"
-        val res = client.get(url, header).parsed<PageProps>()
+        val jsonConfig = Json { ignoreUnknownKeys = true }
+        val res = jsonConfig.decodeFromString<Props>(jsonString)
 
-        val audioInfo = res.pageProps.chapterInfo.chapterAudio?.map {
+        val audioInfo = res.Props.pageProps.chapterInfo.chapterAudio?.map {
             ChapterAud(
                 id = it.id,
                 title = it.title,
@@ -141,7 +142,7 @@ class Bible: BibleParser() {
             )
         }
 
-        val body = Jsoup.parse(res.pageProps.chapterInfo.content.trim())
+        val body = Jsoup.parse(res.Props.pageProps.chapterInfo.content.trim())
         val element = body.select("div.version > div.book > div.chapter");
 
         element.select("> div").forEach { el ->
@@ -791,21 +792,21 @@ class Bible: BibleParser() {
         TODO("Not yet implemented")
     }
 
-    private suspend fun getKey(): String? {
-        val html = client.get("https://www.bible.com/bible/111/GEN.INTRO1.NIV").text
-
-        val scriptRegex =
-            """<script id="__NEXT_DATA__" type="application/json">(.*?)</script>"""
-                .toRegex(RegexOption.DOT_MATCHES_ALL)
-
-        val match = scriptRegex.find(html)
-        val json = match?.groupValues?.get(1) ?: return null
-
-        val buildIdRegex = """"buildId":"(.*?)"""".toRegex()
-        val key = buildIdRegex.find(json)?.groupValues?.get(1)
-
-        return key
-    }
+//    private suspend fun getKey(): String? {
+//        val html = client.get("https://www.bible.com/bible/111/GEN.INTRO1.NIV").text
+//
+//        val scriptRegex =
+//            """<script id="__NEXT_DATA__" type="application/json">(.*?)</script>"""
+//                .toRegex(RegexOption.DOT_MATCHES_ALL)
+//
+//        val match = scriptRegex.find(html)
+//        val json = match?.groupValues?.get(1) ?: return null
+//
+//        val buildIdRegex = """"buildId":"(.*?)"""".toRegex()
+//        val key = buildIdRegex.find(json)?.groupValues?.get(1)
+//
+//        return key
+//    }
 }
 
 @Serializable
@@ -829,6 +830,11 @@ data class QueryLanguage(
 }
 
 @Serializable
+data class Props(
+    @SerialName("props") val Props: PageProps
+)
+
+@Serializable
 data class PageProps(
     @SerialName("pageProps") val pageProps: Response
 ) {
@@ -849,10 +855,10 @@ data class PageProps(
 
     @Serializable
     data class PaginationResponse(
-        val canonical: Boolean?,
+        val canonical: Boolean? = false,
         val usfm: List<String>,
         val human: String,
-        val toc: Boolean?,
+        val toc: Boolean? = false,
         @SerialName("version_id") val versionId: Int
     )
 

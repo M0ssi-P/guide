@@ -1,5 +1,6 @@
 package db
 
+import androidx.compose.runtime.mutableStateOf
 import backblazeb2.BackBlazeB2
 import backblazeb2.File
 import backblazeb2.actions.B2Credentials
@@ -60,9 +61,12 @@ class ConfigViewModel: ViewModel() {
             saveData("ui_settings", data = this)
         }
     )
+    var wasPlayerOn = mutableStateOf(false)
     private val _shouldHide = MutableStateFlow(
         loadData<Boolean>("should_hide") ?: true
     )
+    private val _localFullscreen = MutableStateFlow(false)
+    val localFullscreen = _localFullscreen.asStateFlow()
     private val _installationStatus = MutableStateFlow<String>("Initializing...")
     private val _installationStatusHeader = MutableStateFlow<String>("Initializing...")
     private val _stage = MutableStateFlow(0)
@@ -110,6 +114,10 @@ class ConfigViewModel: ViewModel() {
             val getLanguageData = db.getAllLanguages()
             _languageData.value = UiState.Success(getLanguageData.filter { it.tag == "en" || it.tag == "sw" })
         }
+    }
+
+    fun toggleLocalFullscreen() {
+        _localFullscreen.value = !_localFullscreen.value
     }
 
     @OptIn(ExperimentalPathApi::class)

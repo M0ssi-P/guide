@@ -51,7 +51,7 @@ fun DecoratedWindowScope.titleBarView(height: Dp, state: MutableState<Boolean>, 
 
     TitleBar(
         Modifier
-            .newFullscreenControls()
+            .newFullscreenControls(true)
             .height(height)
             .drawWithContent {
                 drawContent()

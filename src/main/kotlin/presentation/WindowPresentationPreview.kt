@@ -190,7 +190,7 @@ fun WindowPresentationPreview(key: Int? = null) {
                     if (currentPost != null) {
                         val file = remember(currentPost.location) { File(currentPost.location) }
 
-                        AsyncImageFromFile(file)
+                        AsyncImageFromFile(file, false)
                     }
                 }
                 else -> {}

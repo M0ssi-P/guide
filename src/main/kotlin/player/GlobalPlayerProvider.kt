@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.mossip.auraplayer.engine.AuraPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import mvvm.ViewModel
@@ -47,6 +48,8 @@ class GlobalPlayerViewModel: ViewModel() {
 
     data class NowPlaying(
         val id: String,
+        val title: String,
+        val subtitle: String,
         val type: GlobalPlayerType,
         val isPlaying: Boolean,
         val currentPosition: Long,
@@ -58,39 +61,25 @@ val LocalPlayer = staticCompositionLocalOf<GlobalPlayerViewModel> {
     error("Player not found")
 }
 
-val LocalPlayerState = staticCompositionLocalOf<> {
+val LocalPlayerState = staticCompositionLocalOf<AuraPlayer> {
     error("Player not found")
 }
 
 @Composable
-fun GlobalPlayerProvider(content: @Composable () -> Unit) {
+fun GlobalPlayerProvider(player: AuraPlayer, content: @Composable () -> Unit) {
     val localPlayer = remember { GlobalPlayerViewModel() }
-    val playerState = rememberVideoPlayerState()
     val mediaUrl by localPlayer.url.collectAsState()
 
-//    LaunchedEffect(localPlayer.nowPlaying) {
-//        snapshotFlow { localPlayer.nowPlaying }
-//            .collect { now ->
-//                now.value?.url?.let { url ->
-//                    playerState.openUri("https:$url", initialPlayerState)
-//                }
-//            }
-//    }
-
     LaunchedEffect(mediaUrl) {
-        mediaUrl?.let { url ->
-            try {
-                playerState.openUri("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", initialPlayerState)
-                playerState.volume = 1F
-            } catch (e: Exception) {
-                println("Download failed: ${e.message}")
-            }
+        mediaUrl?.let {
+            player.loadFile(it)
+            player.setPause(true)
         }
     }
 
     CompositionLocalProvider(
         LocalPlayer provides localPlayer,
-        LocalPlayerState provides playerState,
+        LocalPlayerState provides player,
     ) {
         content()
     }

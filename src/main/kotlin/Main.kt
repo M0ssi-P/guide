@@ -5,14 +5,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import com.mossip.auraplayer.engine.AuraPlayer
+import components.FullscreenTitleBarView
 import components.layouts.Sidebar
 import components.titleBarView
 import db.ConfigViewModel
+import mvvm.ShareViewModels
 import navigation.LocalTabs
 import navigation.ModalListener
 import navigation.NavSystem
@@ -26,6 +35,7 @@ import org.jetbrains.jewel.window.DecoratedWindow
 import org.jetbrains.jewel.window.styling.TitleBarColors
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 import player.GlobalPlayerProvider
+import player.LocalPlayer
 import player.PlayerUI
 import presentation.PresentationHost
 import presentation.PresentationWindowHost
@@ -41,13 +51,16 @@ fun main() {
 
      application {
          val textStyle = JewelTheme.createDefaultTextStyle()
+         val engine = remember { AuraPlayer() }
          val windowState = rememberWindowState(size = DpSize(1390.dp, 865.dp))
-         val configViewModel = remember { ConfigViewModel() }
+         val configViewModel = ShareViewModels.globalViewModel
          val shouldHide = configViewModel.shouldHide.collectAsState()
          val shouldHideSidebar = remember { mutableStateOf(
              loadData<Boolean>("should_hide_sidebar") ?: false
          ) }
          val isHideSidebarHovered = remember { mutableStateOf(false) }
+         var wasPlayerOn by configViewModel.wasPlayerOn
+         val localFullscreen by configViewModel.localFullscreen.collectAsState()
 
          ThemeUI {
              val theme = LocalTheme.current
@@ -107,36 +120,108 @@ fun main() {
                  swingCompatMode = false
              ) {
                  PresentationHost {
-                     GlobalPlayerProvider {
-                         DecoratedWindow(
-                             onCloseRequest = { exitApplication() },
-                             state = windowState,
-                             title = "The Guide",
-                             icon = painterResource("icons/logo.png")
-                         ) {
-                             val awtColor = java.awt.Color(18, 18, 18)
+                     GlobalPlayerProvider(engine) {
+                         NavSystem {
+                             val navigator = LocalTabs.current
+                             val localPlayer = LocalPlayer.current
 
-                             window.background = awtColor
-                             window.rootPane.background = awtColor
-                             window.contentPane.background = awtColor
+                             if(!localFullscreen) {
+                                 DecoratedWindow(
+                                     onCloseRequest = {
+                                         engine.release()
+                                         exitApplication()
+                                     },
+                                     onPreviewKeyEvent = { keyEvent ->
+                                         if (keyEvent.key == Key.F11 && keyEvent.type == KeyEventType.KeyDown) {
+                                             if(localPlayer.isPlaying.value) {
+                                                 engine.setPause(true)
+                                                 wasPlayerOn = true
+                                             }
+                                             configViewModel.toggleLocalFullscreen()
+                                             true
+                                         } else false
+                                     },
+                                     visible = true,
+                                     state = windowState,
+                                     title = "The Guide",
+                                     icon = painterResource("icons/logo.png"),
+                                 ) {
+                                     val awtColor = java.awt.Color(18, 18, 18)
+                                     window.background = awtColor
+                                     window.rootPane.background = awtColor
+                                     window.contentPane.background = awtColor
 
-                             NavSystem {
-                                 val navigator = LocalTabs.current
+                                     LaunchedEffect(wasPlayerOn) {
+                                         if(wasPlayerOn) {
+                                             wasPlayerOn = false
+                                             engine.setPause(false)
+                                         }
+                                     }
 
-                                 ModalListener {
+                                     ModalListener {
+                                         Row(modifier = Modifier.fillMaxSize().background(theme.colors.surface)) {
+                                             if(!shouldHide.value && !shouldHideSidebar.value) {
+                                                 Sidebar(shouldHideSidebar, shouldHide.value, isHideSidebarHovered)
+                                             }
+                                             Column(modifier = Modifier.fillMaxSize()){
+                                                 titleBarView(if (shouldHide.value) 1.dp else 38.dp, shouldHideSidebar, onHovered = isHideSidebarHovered)
+                                                 Box(
+                                                     modifier = Modifier.fillMaxSize(),
+                                                     contentAlignment = Alignment.Center
+                                                 ) {
+                                                     if(shouldHide.value) DBConfig(configViewModel) else NavHost(navigator)
+                                                 }
+                                             }
+                                         }
+
+                                         if(shouldHideSidebar.value) {
+                                             Sidebar(shouldHideSidebar, shouldHide.value, isHideSidebarHovered)
+                                         }
+                                     }
+                                 }
+                             } else {
+                                 Window(
+                                     onCloseRequest = {
+                                         engine.release()
+                                         exitApplication()
+                                     },
+                                     onPreviewKeyEvent = { keyEvent ->
+                                         if (keyEvent.key == Key.F11 && keyEvent.type == KeyEventType.KeyDown) {
+                                             if(localPlayer.isPlaying.value) {
+                                                 engine.setPause(true)
+                                                 wasPlayerOn = true
+                                             }
+                                             configViewModel.toggleLocalFullscreen()
+                                             true
+                                         } else false
+                                     },
+                                     undecorated = true,
+                                     resizable = false,
+                                     state = rememberWindowState(
+                                         placement = WindowPlacement.Fullscreen,
+                                     ),
+                                     icon = painterResource("icons/logo.png")
+                                 ) {
+                                     LaunchedEffect(wasPlayerOn) {
+                                         if(wasPlayerOn) {
+                                             wasPlayerOn = false
+                                             engine.setPause(false)
+                                         }
+                                     }
+
                                      Row(modifier = Modifier.fillMaxSize().background(theme.colors.surface)) {
                                          if(!shouldHide.value && !shouldHideSidebar.value) {
                                              Sidebar(shouldHideSidebar, shouldHide.value, isHideSidebarHovered)
                                          }
                                          Column(modifier = Modifier.fillMaxSize()){
-                                             titleBarView(if (shouldHide.value) 1.dp else 38.dp, shouldHideSidebar, onHovered = isHideSidebarHovered)
+                                             FullscreenTitleBarView()
                                              Box(
                                                  modifier = Modifier.fillMaxSize(),
                                                  contentAlignment = Alignment.Center
                                              ) {
-                                                 if(shouldHide.value) DBConfig(configViewModel) else NavHost(navigator)
+                                                 NavHost(navigator)
                                                  Box(Modifier.align(Alignment.BottomStart)) {
-                                                     PlayerUI()
+                                                     PlayerUI(engine)
                                                  }
                                              }
                                          }
