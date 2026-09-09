@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS sermons (
                 title TEXT NOT NULL,
                 sort_date TEXT NOT NULL,
                 minutes INTEGER DEFAULT NUll,
+                has_subtitle BOOLEAN NOT NULL DEFAULT 0,
                 is_cab BOOLEAN NOT NULL DEFAULT 0,
                 total_sections INTEGER,
                 c INTEGER NOT NULL,
@@ -18,4 +19,4 @@ CREATE TABLE IF NOT EXISTS sermons (
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (language_id) REFERENCES tables(id) ON DELETE CASCADE
-            )
+)

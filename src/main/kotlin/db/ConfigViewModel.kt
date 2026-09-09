@@ -1,34 +1,21 @@
 package db
 
 import androidx.compose.runtime.mutableStateOf
-import backblazeb2.BackBlazeB2
-import backblazeb2.File
-import backblazeb2.actions.B2Credentials
+import rs.File
 import db.controller.songbooks.Books.importBook
 import db.controller.songbooks.Books.importLyrics
 import db.controller.songbooks.Books.importSong
 import db.controller.table.Languages.getAllLanguages
-import db.controller.table.Languages.getLanguageDbID
 import db.controller.table.Languages.importTables
-import db.controller.table.Sermons.RefillSermon
 import db.controller.table.importLanguageSuspand
-import db.controller.table.importLineSuspend
-import db.controller.table.importParagraphSuspend
-import db.controller.table.importSectionSuspend
-import db.controller.table.importSermonSuspend
 import extractZipToMemory
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.Json
 import loadData
 import models.IProviderStats
@@ -36,7 +23,9 @@ import models.ISongDetails
 import mvvm.ViewModel
 import parsers.bible.models.ILanguage
 import parsers.vgr.Table
-import parsers.vgr.models.Sermon
+import rs.Bucket
+import rs.RS
+import rs.RSResponse
 import saveData
 import tryWithSuspend
 import ui.UiState
@@ -46,7 +35,7 @@ import ui.config.startTableStatement
 import ui.settings.UserInterfaceSettings
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.zip.GZIPInputStream
 import java.util.zip.ZipInputStream
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -82,18 +71,12 @@ class ConfigViewModel: ViewModel() {
     val languageData: StateFlow<UiState<List<ILanguage>>> = _languageData.asStateFlow()
     val db get() = _db.value
     val table = Table();
-    lateinit var b2: BackBlazeB2;
+    lateinit var rs: RS;
 
     init {
         viewModelScope.launch {
-            b2 = BackBlazeB2(
-                B2Credentials(
-                    applicationKeyId = "00522d1ad344c240000000002",
-                    applicationKey = "K005792uG9GXuDBM25nRpYYXQb6/Qw8"
-                )
-            )
+            rs = RS()
 
-            b2.authorize()
             startTableStatement(db)
             createUpdatedAtTrigger(db)
             loadLanguagesAndSave()
@@ -103,6 +86,7 @@ class ConfigViewModel: ViewModel() {
     fun loadLanguagesAndSave() {
         viewModelScope.launch {
             _languageData.value = UiState.Loading
+            val remoteAvailableLanguages = rs.callApi("table/db/list/table").parsed<RSResponse>()
             if(db.checkIfEmpty("languages")) {
                 val languages = table.getAllLanguages()
 
@@ -112,7 +96,7 @@ class ConfigViewModel: ViewModel() {
             }
 
             val getLanguageData = db.getAllLanguages()
-            _languageData.value = UiState.Success(getLanguageData.filter { it.tag == "en" || it.tag == "sw" })
+            _languageData.value = UiState.Success(getLanguageData.filter { remoteAvailableLanguages.ids!!.contains(it.iso63903) })
         }
     }
 
@@ -136,71 +120,73 @@ class ConfigViewModel: ViewModel() {
             }
 
             tryWithSuspend {
-                _installationStatusHeader.value = "Installing The Table."
-                val language = table.getAllLanguages().find { it.iso63901 == uiSettings.value.contentLanguage } ?: return@tryWithSuspend
+                for (selectedLanguage in uiSettings.value.downloadedLanguages) {
+                    _installationStatusHeader.value = "Installing ${selectedLanguage.third.name} Inforbase."
+                    val language = table.getAllLanguages().find { it.iso63901 == selectedLanguage.third.iso63901 } ?: return@tryWithSuspend
 
-                val tempDir = Files.createTempDirectory("tables-")
-                val zipPath = tempDir.resolve("${uiSettings.value.contentLanguage}-table.zip")
+                    val tempDir = Files.createTempDirectory("tables-")
+                    val zipPath = tempDir.resolve("${selectedLanguage.third.iso63901}-table.db.gz")
 
-                val bucket = b2.bucket("the-guide")
-                val f = bucket.file("tables/${uiSettings.value.contentLanguage}-table.zip")
+                    val bucket = Bucket(rs)
+                    val f = bucket.file("table/db/download/table/${language.iso63903}")
 
-                downloadZipToTemp(f, zipPath)
+                    downloadZipToTemp(f, zipPath)
 
-                val extracted = extractDbAndJson(zipPath, tempDir)
+                    val extracted = extractDbAndJson(zipPath, tempDir)
 
-                val id = db.importTables(language)
+                    val id = db.importTables(language)
 
-                delay(100)
+                    delay(100)
 
-                mergeDb(extracted.dbPath, id)
+                    mergeDb(extracted.dbPath, id)
 
-                tempDir.deleteRecursively()
-
-                listOf<String>("only-believe.zip", "collection-de-cantiques.zip", "nyimbo-za-wokovu.zip", "nyimbo-za-mungu.zip").forEachIndexed { i, saveName ->
-                    val f = bucket.file("songbooks/$saveName")
-                    val stream = f.createReadStream(
-                        onProgress = { read, total ->
-                            val percent = ((read.toDouble() / total.toDouble()) * 100).roundToInt()
-                            _installationStatus.value = "Installation songBooks: [${i + 1}] : [4] Progress $percent% / 100%"
-                        }
-                    )
-
-                    val zipBytes = stream.readBytes()
-
-                    val extractedJsonFiles = extractZipToMemory(zipBytes)
-
-                    var id: String? = null;
-
-                    for ((name, content) in extractedJsonFiles) {
-                        if (name.startsWith("stat")) {
-                            val data = Json.decodeFromString<IProviderStats>(content)
-
-                            val isFound = db.checkIfOneExist(
-                                """
-                                 SELECT 1 FROM books WHERE save_name = ? LIMIT 1
-                                 """.trimIndent(),
-                                saveName.replace(".zip", "")
-                            )
-
-                            if(!isFound) {
-                                db.importBook(data) {
-                                    id = it
-                                }
-                            }
-                        } else {
-                            if(!id.isNullOrEmpty()) {
-                                val data = Json.decodeFromString<List<ISongDetails>>(content)
-
-                                data.forEach { song ->
-                                    db.importSong(song, id!!) { songId, lyrics ->
-                                        db.importLyrics(lyrics, songId)
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    tempDir.deleteRecursively()
                 }
+
+//                listOf<String>("only-believe.zip", "collection-de-cantiques.zip", "nyimbo-za-wokovu.zip", "nyimbo-za-mungu.zip").forEachIndexed { i, saveName ->
+//                    val f = bucket.file("songbooks/$saveName")
+//                    val stream = f.createReadStream(
+//                        onProgress = { read, total ->
+//                            val percent = ((read.toDouble() / total.toDouble()) * 100).roundToInt()
+//                            _installationStatus.value = "Installation songBooks: [${i + 1}] : [4] Progress $percent% / 100%"
+//                        }
+//                    )
+//
+//                    val zipBytes = stream.readBytes()
+//
+//                    val extractedJsonFiles = extractZipToMemory(zipBytes)
+//
+//                    var id: String? = null;
+//
+//                    for ((name, content) in extractedJsonFiles) {
+//                        if (name.startsWith("stat")) {
+//                            val data = Json.decodeFromString<IProviderStats>(content)
+//
+//                            val isFound = db.checkIfOneExist(
+//                                """
+//                                 SELECT 1 FROM books WHERE save_name = ? LIMIT 1
+//                                 """.trimIndent(),
+//                                saveName.replace(".zip", "")
+//                            )
+//
+//                            if(!isFound) {
+//                                db.importBook(data) {
+//                                    id = it
+//                                }
+//                            }
+//                        } else {
+//                            if(!id.isNullOrEmpty()) {
+//                                val data = Json.decodeFromString<List<ISongDetails>>(content)
+//
+//                                data.forEach { song ->
+//                                    db.importSong(song, id!!) { songId, lyrics ->
+//                                        db.importLyrics(lyrics, songId)
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
 
                 setShouldHide(false)
             }
@@ -229,6 +215,7 @@ class ConfigViewModel: ViewModel() {
                 sort_date,
                 minutes,
                 is_cab,
+                has_subtitle,
                 total_sections,
                 c,
                 i,
@@ -249,6 +236,7 @@ class ConfigViewModel: ViewModel() {
                 sort_date,
                 minutes,
                 is_cab,
+                has_subtitle,
                 total_sections,
                 c,
                 i,
@@ -292,7 +280,7 @@ class ConfigViewModel: ViewModel() {
         val jsonContents: Map<String, String>
     )
 
-    suspend fun downloadZipToTemp(
+    fun downloadZipToTemp(
         file: File,
         zipPath: Path
     ) {
@@ -312,29 +300,12 @@ class ConfigViewModel: ViewModel() {
         val jsonContents = mutableMapOf<String, String>()
         var dbPath: Path? = null
 
-        ZipInputStream(Files.newInputStream(zipPath)).use { zis ->
-            var entry = zis.nextEntry
-            while (entry != null) {
-                val outPath = tempDir.resolve(entry.name)
-
-                if (!entry.isDirectory) {
-                    if (entry.name.endsWith(".db")) {
-                        // Save db to temp
-                        Files.newOutputStream(outPath).use {
-                            zis.copyTo(it)
-                        }
-                        dbPath = outPath
-                    } else if (entry.name.endsWith(".json")) {
-                        // Read JSON directly into memory
-                        val content = zis.readBytes().decodeToString()
-                        jsonContents[entry.name] = content
-                    }
-                }
-
-                zis.closeEntry()
-                entry = zis.nextEntry
-            }
+        val outPath = tempDir.resolve(zipPath.fileName.toString().removeSuffix(".gz"))
+        Files.createDirectories(outPath.parent)
+        GZIPInputStream(Files.newInputStream(zipPath)).use { gzis ->
+            Files.newOutputStream(outPath).use { out -> gzis.copyTo(out) }
         }
+        dbPath = outPath
 
         return ExtractedData(
             dbPath = dbPath ?: error("No .db found in zip"),

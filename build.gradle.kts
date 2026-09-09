@@ -38,7 +38,7 @@ dependencies {
     implementation(libs.jsoup)
     implementation(libs.google.gson)
     implementation(libs.xerial.sqlite)
-    implementation("io.github.m0ssi-p:auraplayer-compose:0.1.4")
+    implementation("io.github.m0ssi-p:auraplayer-compose:0.1.8")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.0")
     implementation("org.commonmark:commonmark:0.21.0")
 

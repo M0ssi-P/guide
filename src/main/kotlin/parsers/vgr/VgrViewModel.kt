@@ -2,6 +2,7 @@ package parsers.vgr
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
+import db.controller.table.Languages.getCurrentTable
 import db.controller.table.Sermons.getThisDay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -31,9 +32,12 @@ class VgrViewModel: ViewModel() {
     val thisDay: StateFlow<UiState<List<Sermon>>> = _thisDay
     private val _activeDays = MutableStateFlow<UiState<List<Calendar.ActiveDay>>>(UiState.Loading)
     val activeDays: StateFlow<UiState<List<Calendar.ActiveDay>>> = _activeDays.asStateFlow()
-    val uiSettings = loadData<UserInterfaceSettings>("ui_settings") ?: UserInterfaceSettings().apply {
-        saveData("ui_settings", data = this)
-    }
+    private val _uiSettings = MutableStateFlow(
+        loadData<UserInterfaceSettings>("ui_settings") ?: UserInterfaceSettings().apply {
+            saveData("ui_settings", data = this)
+        }
+    )
+    val uiSettings: StateFlow<UserInterfaceSettings> get() = _uiSettings.asStateFlow()
     val db = DB.connection("main.db");
     val scrollState = ScrollState(0);
 
@@ -54,7 +58,8 @@ class VgrViewModel: ViewModel() {
             }
             val currentMonth = LocalDate.now().monthValue
             val code = "${String.format("%02d", currentMonth)}${String.format("%02d", ofDay!!.day)}"
-            val dayData = db.getThisDay(code)
+            val tbLang = db.getCurrentTable(uiSettings.value.currentTableLanguage)
+            val dayData = db.getThisDay(code, tbLang?.dbId!!)
             _uiState.value = UiState.Success(isStored as IQotd)
             _activeDays.value = UiState.Success(cal.activeDays)
             _thisDay.value = UiState.Success(dayData)
@@ -80,7 +85,8 @@ class VgrViewModel: ViewModel() {
                 _uiState.value = UiState.Success(result)
                 _activeDays.value = UiState.Success(cal.activeDays)
                 ShareViewModels.verseOfTheDay[day] = result
-                val dayData = db.getThisDay(code)
+                val tbLang = db.getCurrentTable(uiSettings.value.currentTableLanguage)
+                val dayData = db.getThisDay(code, tbLang?.dbId!!)
                 _thisDay.value = UiState.Success(dayData)
             } catch (e: Exception) {
                 _uiState.value = UiState.Error("Failed to load data")

@@ -125,103 +125,47 @@ fun main() {
                              val navigator = LocalTabs.current
                              val localPlayer = LocalPlayer.current
 
-                             if(!localFullscreen) {
-                                 DecoratedWindow(
-                                     onCloseRequest = {
-                                         engine.release()
-                                         exitApplication()
-                                     },
-                                     onPreviewKeyEvent = { keyEvent ->
-                                         if (keyEvent.key == Key.F11 && keyEvent.type == KeyEventType.KeyDown) {
-                                             if(localPlayer.isPlaying.value) {
-                                                 engine.setPause(true)
-                                                 wasPlayerOn = true
-                                             }
-                                             configViewModel.toggleLocalFullscreen()
-                                             true
-                                         } else false
-                                     },
-                                     visible = true,
-                                     state = windowState,
-                                     title = "The Guide",
-                                     icon = painterResource("icons/logo.png"),
-                                 ) {
-                                     val awtColor = java.awt.Color(18, 18, 18)
-                                     window.background = awtColor
-                                     window.rootPane.background = awtColor
-                                     window.contentPane.background = awtColor
+                             DecoratedWindow(
+                                 onCloseRequest = {
+                                     engine.release()
+                                     exitApplication()
+                                 },
+                                 onPreviewKeyEvent = { keyEvent ->
+                                     if (keyEvent.key == Key.F11 && keyEvent.type == KeyEventType.KeyDown) {
+                                         configViewModel.toggleLocalFullscreen()
+                                         true
+                                     } else false
+                                 },
+                                 visible = true,
+                                 state = windowState,
+                                 title = "The Guide",
+                                 icon = painterResource("icons/logo.png"),
+                             ) {
+                                 val awtColor = java.awt.Color(18, 18, 18)
+                                 window.background = awtColor
+                                 window.rootPane.background = awtColor
+                                 window.contentPane.background = awtColor
 
-                                     LaunchedEffect(wasPlayerOn) {
-                                         if(wasPlayerOn) {
-                                             wasPlayerOn = false
-                                             engine.setPause(false)
-                                         }
-                                     }
-
-                                     ModalListener {
-                                         Row(modifier = Modifier.fillMaxSize().background(theme.colors.surface)) {
-                                             if(!shouldHide.value && !shouldHideSidebar.value) {
-                                                 Sidebar(shouldHideSidebar, shouldHide.value, isHideSidebarHovered)
-                                             }
-                                             Column(modifier = Modifier.fillMaxSize()){
-                                                 titleBarView(if (shouldHide.value) 1.dp else 38.dp, shouldHideSidebar, onHovered = isHideSidebarHovered)
-                                                 Box(
-                                                     modifier = Modifier.fillMaxSize(),
-                                                     contentAlignment = Alignment.Center
-                                                 ) {
-                                                     if(shouldHide.value) DBConfig(configViewModel) else NavHost(navigator)
-                                                 }
-                                             }
-                                         }
-
-                                         if(shouldHideSidebar.value) {
-                                             Sidebar(shouldHideSidebar, shouldHide.value, isHideSidebarHovered)
-                                         }
-                                     }
-                                 }
-                             } else {
-                                 Window(
-                                     onCloseRequest = {
-                                         engine.release()
-                                         exitApplication()
-                                     },
-                                     onPreviewKeyEvent = { keyEvent ->
-                                         if (keyEvent.key == Key.F11 && keyEvent.type == KeyEventType.KeyDown) {
-                                             if(localPlayer.isPlaying.value) {
-                                                 engine.setPause(true)
-                                                 wasPlayerOn = true
-                                             }
-                                             configViewModel.toggleLocalFullscreen()
-                                             true
-                                         } else false
-                                     },
-                                     undecorated = true,
-                                     resizable = false,
-                                     state = rememberWindowState(
-                                         placement = WindowPlacement.Fullscreen,
-                                     ),
-                                     icon = painterResource("icons/logo.png")
-                                 ) {
-                                     LaunchedEffect(wasPlayerOn) {
-                                         if(wasPlayerOn) {
-                                             wasPlayerOn = false
-                                             engine.setPause(false)
-                                         }
-                                     }
-
+                                 ModalListener(window) {
                                      Row(modifier = Modifier.fillMaxSize().background(theme.colors.surface)) {
                                          if(!shouldHide.value && !shouldHideSidebar.value) {
                                              Sidebar(shouldHideSidebar, shouldHide.value, isHideSidebarHovered)
                                          }
                                          Column(modifier = Modifier.fillMaxSize()){
-                                             FullscreenTitleBarView()
+                                             if(localFullscreen) {
+                                                 FullscreenTitleBarView()
+                                             } else {
+                                                 titleBarView(if (shouldHide.value) 1.dp else 38.dp, shouldHideSidebar, onHovered = isHideSidebarHovered)
+                                             }
                                              Box(
                                                  modifier = Modifier.fillMaxSize(),
                                                  contentAlignment = Alignment.Center
                                              ) {
-                                                 NavHost(navigator)
-                                                 Box(Modifier.align(Alignment.BottomStart)) {
-                                                     PlayerUI(engine)
+                                                 if(shouldHide.value) DBConfig(configViewModel) else NavHost(navigator)
+                                                 if(localFullscreen) {
+                                                     Box(Modifier.align(Alignment.BottomStart)) {
+                                                         PlayerUI(engine)
+                                                     }
                                                  }
                                              }
                                          }
@@ -232,6 +176,62 @@ fun main() {
                                      }
                                  }
                              }
+
+//                             if(!localFullscreen) {
+//
+//                             } else {
+//                                 Window(
+//                                     onCloseRequest = {
+//                                         engine.release()
+//                                         exitApplication()
+//                                     },
+//                                     onPreviewKeyEvent = { keyEvent ->
+//                                         if (keyEvent.key == Key.F11 && keyEvent.type == KeyEventType.KeyDown) {
+//                                             if(localPlayer.isPlaying.value) {
+//                                                 engine.setPause(true)
+//                                                 wasPlayerOn = true
+//                                             }
+//                                             configViewModel.toggleLocalFullscreen()
+//                                             true
+//                                         } else false
+//                                     },
+//                                     undecorated = true,
+//                                     resizable = false,
+//                                     state = rememberWindowState(
+//                                         placement = WindowPlacement.Fullscreen,
+//                                     ),
+//                                     icon = painterResource("icons/logo.png")
+//                                 ) {
+//                                     LaunchedEffect(wasPlayerOn) {
+//                                         if(wasPlayerOn) {
+//                                             wasPlayerOn = false
+//                                             engine.setPause(false)
+//                                         }
+//                                     }
+//
+//                                     Row(modifier = Modifier.fillMaxSize().background(theme.colors.surface)) {
+//                                         if(!shouldHide.value && !shouldHideSidebar.value) {
+//                                             Sidebar(shouldHideSidebar, shouldHide.value, isHideSidebarHovered)
+//                                         }
+//                                         Column(modifier = Modifier.fillMaxSize()){
+//                                             FullscreenTitleBarView()
+//                                             Box(
+//                                                 modifier = Modifier.fillMaxSize(),
+//                                                 contentAlignment = Alignment.Center
+//                                             ) {
+//                                                 NavHost(navigator)
+//                                                 Box(Modifier.align(Alignment.BottomStart)) {
+//                                                     PlayerUI(engine)
+//                                                 }
+//                                             }
+//                                         }
+//                                     }
+//
+//                                     if(shouldHideSidebar.value) {
+//                                         Sidebar(shouldHideSidebar, shouldHide.value, isHideSidebarHovered)
+//                                     }
+//                                 }
+//                             }
                          }
 
                          PresentationWindowHost()

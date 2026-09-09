@@ -44,7 +44,8 @@ fun TooltipAnchor(
     }
 
     AnimatedTooltip(
-        visible = showTooltip,
+        visible = showTooltip.value,
+        onVisibleChange = { showTooltip.value = it },
         offset = anchorPosition + IntOffset(0, 32)
     ) {
         Text(

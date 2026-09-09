@@ -72,8 +72,7 @@ fun GlobalPlayerProvider(player: AuraPlayer, content: @Composable () -> Unit) {
 
     LaunchedEffect(mediaUrl) {
         mediaUrl?.let {
-            player.loadFile(it)
-            player.setPause(true)
+            player.loadWhenReady(it)
         }
     }
 

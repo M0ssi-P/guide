@@ -57,7 +57,6 @@ import ui.theme.LocalTheme
 @Composable
 fun VersionSelector(model: BibleViewModel) {
     val theme = LocalTheme.current
-    val interactionSource = remember { MutableInteractionSource() }
     var show by remember { mutableStateOf(false) }
 
     val rotation by animateFloatAsState(
@@ -94,32 +93,16 @@ fun VersionSelector(model: BibleViewModel) {
         },
         popup = { state ->
             LanguageVersionSelectorPopup(state, model)
-        }
+        },
+        animate = false
     ) {
-        Row(
-            modifier = Modifier
-                .widthIn(min = 150.dp)
-                .clip(shape = RoundedCornerShape(4.dp))
-                .background(theme.colors.popup)
-                .padding(horizontal = 11.dp, vertical = 8.dp)
-                .pointerHoverIcon(
-                    PointerIcon(
-                        Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-                    )
-                ),
-
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(model.currentVersion?.abbreviation ?: "Loading...", style = theme.typography.button, color = theme.colors.deeming)
-            Spacer(Modifier.width(12.dp))
-            Icon(
-                imageVector = arrowDown(theme.colors.deeming),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier.size(24.dp).rotate(rotation)
-            )
-        }
+        PickerPill(
+            model.currentVersion?.abbreviation ?: "Loading...",
+            open = show,
+            onClick = {
+                show = !show
+            }
+        )
     }
 }
 

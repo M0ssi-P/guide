@@ -189,8 +189,8 @@ fun VerseOfTheDay() {
                                     fillMaxSize = false
                                 ) {
                                     Text(
-                                        text = vgrVM.uiSettings.downloadedLanguages.find {
-                                            it.second == vgrVM.uiSettings.contentLanguage
+                                        text = vgrVM.uiSettings.value.downloadedLanguages.find {
+                                            it.second == vgrVM.uiSettings.value.contentLanguage
                                         }?.second?.uppercase() ?: "ENG", color = theme.colors.activeTab, style = theme.typography.subs
                                     )
                                 }

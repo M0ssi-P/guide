@@ -1,4 +1,4 @@
-package backblazeb2
+package rs
 
 data class BackblazeErrorResponse (
     val status: Int,

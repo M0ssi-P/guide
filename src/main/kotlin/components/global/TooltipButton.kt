@@ -85,7 +85,7 @@ fun TooltipIconButton(
         }
     ) {
         Button(contentColor = theme.colors.text,
-            modifier = Modifier.size(25.dp).clip(RoundedCornerShape(4.dp)).background(col.value)
+            modifier = Modifier.size(20.dp).clip(RoundedCornerShape(4.dp)).background(col.value)
                 .onHover {
                     if(it) {
                         col.value = theme.colors.menuHoverColor
@@ -108,7 +108,7 @@ fun TooltipIconButton(
                 imageVector = icon(theme.colors.text),
                 contentDescription = null,
                 tint = Color.Unspecified,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(15.dp)
             )
         }
     }

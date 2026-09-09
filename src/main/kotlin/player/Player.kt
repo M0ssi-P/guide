@@ -7,17 +7,13 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,22 +36,26 @@ import com.composables.pauseIcon
 import com.composables.play2Icon
 import com.composables.prevIcon
 import com.composables.soundIcon
-import com.mossi.auraplayer.ui.AuraPlayerSurface
+import com.mossi.auraplayer.ui.AuraAudioSurface
 import com.mossip.auraplayer.engine.AuraPlayer
 import com.mossip.auraplayer.engine.PlayerState
 import components.global.AsyncImageFromFile
 import components.global.Button
 import components.global.TooltipIconButton
 import formatTime
+import mvvm.ShareViewModels
+import navigation.LocalWindow
 import org.jetbrains.jewel.ui.component.Slider
 import org.jetbrains.jewel.ui.component.Text
 import ui.theme.LocalTheme
-import java.io.File
 
 @Composable
 fun PlayerUI(player: AuraPlayer) {
     val theme = LocalTheme.current
     val localPlayer = LocalPlayer.current
+    val window = LocalWindow.current
+    val configModel = ShareViewModels.globalViewModel
+    val localFullscreen = configModel.localFullscreen.collectAsState()
     val nowPlaying by localPlayer.nowPlaying.collectAsState()
     val playerState by player.playerState.collectAsState()
     val duration by player.duration.collectAsState()
@@ -206,13 +206,20 @@ fun PlayerUI(player: AuraPlayer) {
                 TooltipIconButton(
                     icon = ::maximize,
                     tooltip = "Fullscreen",
+                    onClick = {
+                        configModel.toggleLocalFullscreen()
+                        player.setBorderlessFullscreen(window.windowHandle, !localFullscreen.value)
+                    }
                 )
-                TooltipIconButton(
-                    icon = ::closeIcon,
-                    tooltip = "Close",
-                )
+                if (!localFullscreen.value) {
+                    TooltipIconButton(
+                        icon = ::closeIcon,
+                        tooltip = "Close",
+                    )
+                }
             }
         }
-        AuraPlayerSurface(player, false, modifier = Modifier.size(0.dp))
+
+        AuraAudioSurface(player = player, content = {})
     }
 }

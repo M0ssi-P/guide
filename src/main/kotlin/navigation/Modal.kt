@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.zIndex
 import ui.theme.LocalTheme
@@ -40,14 +41,19 @@ val LocalModal = staticCompositionLocalOf<modalData> {
     modalData()
 }
 
+val LocalWindow = staticCompositionLocalOf<ComposeWindow> {
+    error("No ComposeWindow provided")
+}
+
 @Composable
-fun ModalListener(content: @Composable () -> Unit) {
+fun ModalListener(window: ComposeWindow, content: @Composable () -> Unit) {
     val theme = LocalTheme.current
     val modal = remember { modalData() }
     val visible = modal.Composition.value != null
 
     CompositionLocalProvider(
-        LocalModal provides modal
+        LocalModal provides modal,
+        LocalWindow provides window,
     ) {
         Box(modifier = Modifier.fillMaxSize().background(theme.colors.background)) {
             content()

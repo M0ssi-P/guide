@@ -15,6 +15,7 @@ data class Sermon(
     val title: String,
     val sortDate: String,
     val minutes: Int? = null,
+    val hasSubtitle: Boolean? = null,
     val isCab: Boolean = false,
     val sections: List<Section>? = null,
     val totalSections: Int? = null,

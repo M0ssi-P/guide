@@ -1,4 +1,4 @@
-package backblazeb2
+package rs
 
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -9,31 +9,31 @@ import java.io.PipedInputStream
 import java.io.PipedOutputStream
 
 class File {
+    private var _prefix: String;
     private var _bucket: Bucket;
-    private var _fileName: String = "";
 
-    constructor(bucket: Bucket, fileData: String) {
-        this._bucket = bucket;
-        this._fileName = fileData;
+    constructor(bucket: Bucket, prefix: String) {
+        this._bucket = bucket
+        this._prefix = prefix
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    suspend fun createReadStream(onProgress: ((bytesRead: Long, totalBytes: Long) -> Unit)? = null): InputStream {
+    fun createReadStream(onProgress: ((bytesRead: Long, totalBytes: Long) -> Unit)? = null): InputStream {
         val pipeIn = PipedInputStream()
         val pipeOut = PipedOutputStream(pipeIn)
 
-        val fileName = _fileName
+        val prefix = _prefix
 
         when {
-            fileName.isNotEmpty() -> {
+            _prefix.isNotEmpty() -> {
                 GlobalScope.launch {
                     try {
-                        val bucketName = _bucket.getBucketName()
-                        val res = _bucket.b2.requestFromDownloadFileByName(bucketName, fileName)
+                        val res = _bucket.r2.requestFromDownloadDb(prefix)
                         val totalBytes = res.body.contentLength()
                         res.body.use { body ->
                             val inputStream = ProgressInputStream(body.byteStream(), totalBytes, onProgress)
                             inputStream.use { inputStream ->
+                                inputStream.copyTo(pipeOut)
                             }
                         }
                     } catch (e: Exception) {

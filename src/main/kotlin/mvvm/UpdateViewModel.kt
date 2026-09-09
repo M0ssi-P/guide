@@ -4,7 +4,7 @@ import APP_VERSION
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import backblazeb2.ProgressInputStream
+import rs.ProgressInputStream
 import client
 import isNewerVersion
 import kotlinx.coroutines.launch
@@ -15,7 +15,6 @@ import java.io.File
 import java.io.IOException
 import java.time.Duration
 import java.time.Instant
-import kotlin.math.min
 
 @Serializable
 data class GithubRelease(

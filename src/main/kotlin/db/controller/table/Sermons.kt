@@ -3,12 +3,12 @@ package db.controller.table
 import db.controller.table.Sermons.importLine
 import db.controller.table.Sermons.importParagraphs
 import db.controller.table.Sermons.importSections
-import db.controller.table.Sermons.importSermon
 import db.generateId
 import db.run
 import db.runAndReturn
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
+import parsers.bible.models.ILanguage
 import parsers.vgr.models.Line
 import parsers.vgr.models.Paragraph
 import parsers.vgr.models.Section
@@ -146,12 +146,15 @@ object Sermons {
         )
     }
 
-    fun Connection.getThisDay(dateCode: String): List<Sermon> {
+    fun Connection.getThisDay(dateCode: String, langID: String): List<Sermon> {
         val mmdd = dateCode.filter { it.isDigit() }.takeLast(4)
 
         return runAndReturn(
-            "SELECT * FROM sermons WHERE substr(date_code, length(date_code) - 3, 4) = ?",
-            mmdd
+            """
+                SELECT * FROM sermons WHERE substr(date_code, length(date_code) - 4, 4) = ? AND language_id = ?
+            """.trimIndent(),
+            mmdd,
+            langID
         ) { rs ->
             Sermon(
                 id = null,
@@ -165,6 +168,7 @@ object Sermons {
                 title = rs.getString("title"),
                 sortDate = rs.getString("sort_date"),
                 minutes = rs.getInt("minutes"),
+                hasSubtitle = rs.getBoolean("has_subtitle"),
                 isCab = rs.getBoolean("is_cab"),
                 totalSections = rs.getInt("total_sections"),
                 c = rs.getInt("c"),
@@ -173,39 +177,4 @@ object Sermons {
             )
         }
     }
-}
-
-suspend fun Connection.importSermonSuspend(
-    sermon: Sermon,
-    lang: String
-): String = suspendCancellableCoroutine { cont ->
-    importSermon(sermon, lang) { id ->
-        cont.resume(id) {}
-    }
-}
-
-suspend fun Connection.importSectionSuspend(
-    section: Section,
-    sermonId: String
-): String = suspendCancellableCoroutine { cont ->
-    importSections(section, sermonId) { id ->
-        cont.resume(id) {}
-    }
-}
-
-suspend fun Connection.importParagraphSuspend(
-    paragraph: Paragraph,
-    sectionId: String
-): String = suspendCancellableCoroutine { cont ->
-    importParagraphs(paragraph, sectionId) { id ->
-        cont.resume(id) {}
-    }
-}
-
-suspend fun Connection.importLineSuspend(
-    line: Line,
-    paragraphId: String
-): Unit = suspendCancellableCoroutine { cont ->
-    importLine(line, paragraphId)
-    cont.resume(Unit) {}
 }

@@ -73,11 +73,7 @@ import java.time.LocalDate
 fun BookChapterSelector(model: BibleViewModel) {
     val theme = LocalTheme.current
     val interactionSource = remember { MutableInteractionSource() }
-    var show by remember { mutableStateOf(false) }
-
-    val rotation by animateFloatAsState(
-        targetValue = if (show) 180f else 0f
-    )
+//    var show by remember { mutableStateOf(false) }
 
     PopoverAnchored(
         modifier = Modifier
@@ -102,43 +98,19 @@ fun BookChapterSelector(model: BibleViewModel) {
             .clip(RoundedCornerShape(6.dp))
             .background(
                 theme.colors.popup
-            )
-            .clickable(
-                interactionSource = interactionSource,
-                onClick = { },
             ),
         hoverEnabled = false,
-        onChange = {
-            show = it.value
-        },
         popup = { state ->
             BookChapterSelectorPopup(state, model)
-        }
-    ) {
-        Row(
-            modifier = Modifier
-                .widthIn(min = 150.dp)
-                .clip(shape = RoundedCornerShape(4.dp))
-                .background(theme.colors.popup)
-                .padding(horizontal = 11.dp, vertical = 8.dp)
-                .pointerHoverIcon(
-                    PointerIcon(
-                        Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-                    )
-                ),
-
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("${model.currentBook?.human ?: "Loading..."} ${model.currentChapter?.human ?: ""}", style = theme.typography.button, color = theme.colors.deeming)
-            Spacer(Modifier.width(12.dp))
-            Icon(
-                imageVector = arrowDown(theme.colors.deeming),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier.size(24.dp).rotate(rotation)
-            )
-        }
+        },
+        animate = false
+    ) { show ->
+        PickerPill(
+            "${model.currentBook?.human ?: "Loading..."} ${model.currentChapter?.human ?: ""}",
+            open = show,
+            onClick = {
+            }
+        )
     }
 }
 

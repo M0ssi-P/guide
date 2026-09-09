@@ -61,19 +61,32 @@ object Languages {
         return generatedId
     }
 
-    fun Connection.getLanguageDbID(languageCode: String): String? {
-        var id: String? = null;
+    fun Connection.getCurrentTable(languageCode: String): ILanguage? {
+        var lang: ILanguage? = null;
 
         runAndReturn(
             """
-                SELECT * FROM languages WHERE tag = ? LIMIT 1
+                SELECT * FROM tables WHERE tag = ? LIMIT 1
             """.trimIndent(),
             languageCode
         ) { rs ->
-            id = rs.getString("id")
+            lang = ILanguage(
+                id = null,
+                dbId = rs.getString("id"),
+                iso63901 = rs.getString("iso_63901"),
+                iso63903 = rs.getString("iso_63903"),
+                name = rs.getString("name"),
+                localName = rs.getString("local_name"),
+                tag = rs.getString("tag"),
+                hasAudio = rs.getBoolean("has_audio"),
+                hasText = rs.getBoolean("has_text"),
+                totalVersions = rs.getInt("total_versions"),
+                textDirection = rs.getString("text_direction"),
+                font = null
+            )
         }
 
-        return id
+        return lang
     }
 
     fun Connection.getAllLanguages(): List<ILanguage> {

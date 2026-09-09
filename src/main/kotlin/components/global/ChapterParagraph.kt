@@ -15,6 +15,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -32,15 +34,32 @@ import parsers.bible.models.ChapterSection
 import parsers.bible.models.Paragraph
 import parsers.bible.models.VerseLineDisplay
 import parsers.bible.models.VerseLineEnum
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.text.TextLayoutResult
 import ui.theme.Inter
 import ui.theme.LocalTheme
+
+private enum class WordTiming { READ, CURRENT, UPCOMING }
 
 @Composable
 fun ChapterContent(
     sections: ChapterSection,
     highlightedVerse: Int? = null,
+    // Index (0-based) of the word currently being spoken inside
+    // `highlightedVerse` — feed this from currentWordIndex(...) /
+    // buildVerseWordTimings(...) against that verse's real timing data,
+    // the same helpers used for the other reading composable. -1 (default)
+    // means "no live word position" (paused / no timing available), and
+    // every verse renders exactly as it did before this change.
+    activeWordIndexInVerse: Int = -1,
     underlinedVerses: Set<Int> = emptySet(),
     selectedVerse: MutableState<MutableList<Int>>,
+    onActiveVersePositioned: (Rect) -> Unit = {},
     onVerseClick: (Int) -> Unit = {}
 ) {
     val theme = LocalTheme.current
@@ -57,6 +76,8 @@ fun ChapterContent(
         }
 
         sections.content?.forEachIndexed { paragraphIndex, paragraph ->
+            var activeVerseMidOffset: Int? = null
+
             val annotated = buildAnnotatedString {
                 paragraph.verses.forEach { verse ->
                     val start = length
@@ -72,28 +93,57 @@ fun ChapterContent(
                     pop()
                     append(" ")
 
+                    val isTimedVerse = highlightedVerse != null &&
+                            verse.number == highlightedVerse &&
+                            activeWordIndexInVerse >= 0
+                    var wordIndexInVerse = 0
+
                     verse.content.forEach { segment ->
                         if(segment.type == VerseLineEnum.Reference) return@forEach
 
                         val color = if(segment.isJesus) theme.colors.crimson else theme.colors.text
                         val isPartOf = selectedVerse.value.isNotEmpty() && verse.number in selectedVerse.value.first() .. selectedVerse.value.last()
+                        val decoration = if(isPartOf) TextDecoration.Underline else null
 
-                        val spanStyle = when(segment.display) {
-                            VerseLineDisplay.Normal -> SpanStyle(
-                                color = color,
-                                textDecoration = if(isPartOf) TextDecoration.Underline else null
-                            )
-                            VerseLineDisplay.Italic -> SpanStyle(color = color, fontStyle = FontStyle.Italic,
-                                textDecoration = if(isPartOf) TextDecoration.Underline else null)
-                            VerseLineDisplay.SmallCaps -> SpanStyle(color = color, fontFeatureSettings = "smcp",
-                                textDecoration = if(isPartOf) TextDecoration.Underline else null)
-                            VerseLineDisplay.BdSmallCaps -> SpanStyle(color = color, fontWeight = FontWeight.Bold, fontFeatureSettings = "smcp",
-                                textDecoration = if(isPartOf) TextDecoration.Underline else null)
+                        fun styleFor(base: Color): SpanStyle = when(segment.display) {
+                            VerseLineDisplay.Normal -> SpanStyle(color = base, textDecoration = decoration)
+                            VerseLineDisplay.Italic -> SpanStyle(color = base, fontStyle = FontStyle.Italic, textDecoration = decoration)
+                            VerseLineDisplay.SmallCaps -> SpanStyle(color = base, fontFeatureSettings = "smcp", textDecoration = decoration)
+                            VerseLineDisplay.BdSmallCaps -> SpanStyle(color = base, fontWeight = FontWeight.Bold, fontFeatureSettings = "smcp", textDecoration = decoration)
                         }
 
-                        pushStyle(spanStyle)
-                        append("${segment.content ?: ""} ")
-                        pop()
+                        if (!isTimedVerse) {
+                            pushStyle(styleFor(color))
+                            append("${segment.content ?: ""} ")
+                            pop()
+                            return@forEach
+                        }
+
+                        // Word-by-word only for the verse being read aloud right now.
+                        val words = (segment.content ?: "").split(" ").filter { it.isNotEmpty() }
+                        words.forEach { word ->
+                            val timing = when {
+                                wordIndexInVerse < activeWordIndexInVerse -> WordTiming.READ
+                                wordIndexInVerse == activeWordIndexInVerse -> WordTiming.CURRENT
+                                else -> WordTiming.UPCOMING
+                            }
+                            wordIndexInVerse++
+
+                            val wordStyle = when (timing) {
+                                WordTiming.READ -> styleFor(theme.colors.night)
+                                WordTiming.CURRENT -> styleFor(theme.colors.blue3).copy(
+                                    shadow = Shadow(
+                                        color = theme.colors.blue3.copy(alpha = 0.35f),
+                                        blurRadius = 18f
+                                    )
+                                )
+                                WordTiming.UPCOMING -> styleFor(color.copy(alpha = 0.4f))
+                            }
+
+                            pushStyle(wordStyle)
+                            append("$word ")
+                            pop()
+                        }
                     }
                     append(" ")
 
@@ -103,6 +153,31 @@ fun ChapterContent(
                         annotation = verse.number.toString(),
                         start = start,
                         end = end
+                    )
+
+                    if (highlightedVerse != null && verse.number == highlightedVerse) {
+                        activeVerseMidOffset = (start + end) / 2
+                    }
+                }
+            }
+
+            var textBoundsInWindow by remember { mutableStateOf<Rect?>(null) }
+            var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+            val midOffset = activeVerseMidOffset
+
+            LaunchedEffect(highlightedVerse) {
+                val layout = textLayoutResult
+                val bounds = textBoundsInWindow
+                if (midOffset != null && layout != null && bounds != null) {
+                    val safeOffset = midOffset.coerceIn(0, (layout.layoutInput.text.length - 1).coerceAtLeast(0))
+                    val localRect = layout.getBoundingBox(safeOffset)
+                    onActiveVersePositioned(
+                        Rect(
+                            left = bounds.left + localRect.left,
+                            top = bounds.top + localRect.top,
+                            right = bounds.left + localRect.right,
+                            bottom = bounds.top + localRect.bottom
+                        )
                     )
                 }
             }
@@ -130,7 +205,9 @@ fun ChapterContent(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 15.dp),
+                    .padding(vertical = 15.dp)
+                    .onGloballyPositioned { coordinates -> textBoundsInWindow = coordinates.boundsInWindow() },
+                onTextLayout = { layoutResult -> textLayoutResult = layoutResult },
                 onClick = { offset ->
                     val clickedVerse = annotated
                         .getStringAnnotations("VERSE", offset, offset)

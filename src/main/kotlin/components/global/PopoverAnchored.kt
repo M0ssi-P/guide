@@ -12,12 +12,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInParent
-import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.IntOffset
+import kotlinx.coroutines.delay
 import org.jetbrains.jewel.foundation.modifier.onHover
-import org.jetbrains.jewel.ui.component.Text
 
 @Composable
 fun PopoverAnchored(
@@ -25,14 +23,23 @@ fun PopoverAnchored(
     hoverEnabled: Boolean = false,
     onChange: ( e: MutableState<Boolean>) -> Unit = {},
     popup: @Composable ( e: MutableState<Boolean>) -> Unit,
+    animate: Boolean = true,
     content: @Composable (e: Boolean) -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val showTooltip = remember { mutableStateOf(false) }
+    val suppressNextClick = remember { mutableStateOf(false) }
     var anchorPosition by remember { mutableStateOf(IntOffset.Zero) }
 
     LaunchedEffect(showTooltip.value) {
         onChange(showTooltip)
+    }
+
+    LaunchedEffect(suppressNextClick.value) {
+        if (suppressNextClick.value) {
+            delay(300)
+            suppressNextClick.value = false
+        }
     }
 
     Box {
@@ -50,7 +57,11 @@ fun PopoverAnchored(
                     indication = null,
                     onClick = {
                         if(!hoverEnabled) {
-                            showTooltip.value = !showTooltip.value
+                            if (suppressNextClick.value) {
+                                suppressNextClick.value = false
+                            } else {
+                                showTooltip.value = !showTooltip.value
+                            }
                         }
                     }
                 )
@@ -64,10 +75,17 @@ fun PopoverAnchored(
         }
 
         AnimatedTooltip(
-            modifier,
-            visible = showTooltip,
+            visible = showTooltip.value,
+            onVisibleChange = { visible ->
+                if (!visible && showTooltip.value) {
+                    suppressNextClick.value = true
+                }
+                showTooltip.value = visible
+            },
+            modifier = modifier,
             hoverEnabled,
-            offset = anchorPosition + IntOffset(0, 10)
+            offset = anchorPosition + IntOffset(0, 10),
+            animate = animate,
         ) {
             popup(showTooltip)
         }
