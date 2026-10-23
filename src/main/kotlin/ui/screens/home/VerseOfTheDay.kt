@@ -133,15 +133,15 @@ fun VerseOfTheDay() {
                                     Button(
                                         modifier = Modifier.background(
                                             brush = Brush.verticalGradient(
-                                                colors = listOf(Color(0xFF109DF5), Color(0xFF1B55F7)) // example blue gradient fill
+                                                colors = listOf(theme.colors.primary, theme.colors.blue),
                                             ),
                                             shape = RoundedCornerShape(4.dp)
                                         ).border(
                                             width = 2.dp,
                                             brush = Brush.linearGradient(
                                                 colors = listOf(
-                                                    Color(0xFF109DF5),
-                                                    Color(0xFF1B55F7),
+                                                    theme.colors.blue,
+                                                    theme.colors.primary,
                                                 ),
                                                 start = Offset(0f, 0f),
                                                 end = Offset(400f, 400f)

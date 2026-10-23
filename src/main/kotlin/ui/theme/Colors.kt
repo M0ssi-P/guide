@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 
 data class Colors(
     val primary: Color,
+    val primaryBright: Color,
     val background: Color,
     val text: Color,
     val primaryText: Color,

@@ -10,7 +10,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import loadData
 import saveData
@@ -25,18 +24,30 @@ data class Theme(
 val LocalTheme = staticCompositionLocalOf<Theme> { error("no theme provided") }
 val LocalUi = staticCompositionLocalOf<MutableState<IntUiThemes>> { error("no theme provided") }
 
+val LocalAccentTheme = staticCompositionLocalOf<MutableState<String>> { error("no theme provided") }
+
 @Composable
 fun ThemeUI(
     content: @Composable () -> Unit
 ) {
-    val ui = remember { mutableStateOf(
-        loadData<UserInterfaceSettings>("ui_settings")?.darkMode ?: IntUiThemes.Dark.apply {
-            saveData("ui_settings", UserInterfaceSettings(darkMode = this))
-        }
-    ) }
+    val savedSettings = remember { loadData<UserInterfaceSettings>("ui_settings") }
+
+    val ui = remember {
+        mutableStateOf(
+            savedSettings?.darkMode ?: IntUiThemes.Dark.apply {
+                saveData("ui_settings", UserInterfaceSettings(darkMode = this))
+            }
+        )
+    }
+
+    val accentTheme = remember {
+        mutableStateOf(savedSettings?.accentThemeId ?: DefaultAccentThemeId)
+    }
 
     val colorPalette by derivedStateOf {
-        if (ui.value.isDark()) DarkColors else LightColors
+        val base = if (ui.value.isDark()) DarkColors else LightColors
+        val selected = AppThemes.firstOrNull { it.id == accentTheme.value } ?: AppThemes.first()
+        selected.colorsFor(base)
     }
 
     val theme = Theme(
@@ -48,9 +59,22 @@ fun ThemeUI(
     CompositionLocalProvider(
         LocalTheme provides theme,
         LocalUi provides ui,
+        LocalAccentTheme provides accentTheme,
         LocalTextStyle provides theme.typography.body,
         LocalContentColor provides theme.colors.text
     ) {
         content()
     }
+}
+
+
+fun updateUiSettings(
+    ui: MutableState<IntUiThemes>,
+    accentTheme: MutableState<String>,
+    darkMode: IntUiThemes = ui.value,
+    accentThemeId: String = accentTheme.value
+) {
+    ui.value = darkMode
+    accentTheme.value = accentThemeId
+    saveData("ui_settings", UserInterfaceSettings(darkMode = darkMode, accentThemeId = accentThemeId))
 }

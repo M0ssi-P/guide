@@ -1,6 +1,8 @@
 package navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -13,14 +15,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import ui.theme.LocalTheme
 
@@ -46,17 +51,25 @@ val LocalWindow = staticCompositionLocalOf<ComposeWindow> {
 }
 
 @Composable
-fun ModalListener(window: ComposeWindow, content: @Composable () -> Unit) {
+fun ModalListener(window: ComposeWindow, onDismiss: () -> Unit = {}, content: @Composable () -> Unit) {
     val theme = LocalTheme.current
     val modal = remember { modalData() }
+
     val visible = modal.Composition.value != null
+
+    val backdropBlur by animateDpAsState(
+        targetValue = if (visible) 18.dp else 0.dp,
+        animationSpec = spring(stiffness = 260f, dampingRatio = 0.9f)
+    )
 
     CompositionLocalProvider(
         LocalModal provides modal,
         LocalWindow provides window,
     ) {
         Box(modifier = Modifier.fillMaxSize().background(theme.colors.background)) {
-            content()
+            Box(Modifier.fillMaxSize().blur(backdropBlur)) {
+                content()
+            }
             AnimatedVisibility(
                 visible = visible,
                 enter = fadeIn(animationSpec = tween(150)) + scaleIn(
@@ -75,6 +88,7 @@ fun ModalListener(window: ComposeWindow, content: @Composable () -> Unit) {
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
                         ) {
+                            onDismiss()
                             modal.dismiss()
                         }
                         .zIndex(1f),

@@ -1,6 +1,7 @@
 package parsers.vgr.models
 
 import ui.toOrdinal
+import java.io.Serializable
 import java.time.Month
 
 data class Sermon(
@@ -23,7 +24,7 @@ data class Sermon(
     val i: Int,
     val ct: String,
     val updatedAt: Long? = null,
-)
+) : Serializable
 
 fun Sermon.getDdMmYy(): String {
     this.dateCode.split("-").let {

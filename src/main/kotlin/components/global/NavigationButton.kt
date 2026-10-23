@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -24,6 +25,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,18 +69,17 @@ fun NavigationButton(
     content: @Composable () -> Unit
 ){
     val theme = LocalTheme.current
-    val color = remember { mutableStateOf<Color>(backgroundColor ?: Color.Transparent) }
+    var isHovered by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
 
-    Button(fillMaxSize = max, secondModifier = secondModifier, modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(color.value).onHover { bool ->
+    val resolvedColor = when {
+        animateBg && isHovered && !disabled -> theme.colors.menuHoverColor
+        else -> backgroundColor ?: Color.Transparent
+    }
+
+    Button(fillMaxSize = max, secondModifier = secondModifier, modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(resolvedColor).onHover { bool ->
         if (disabled) return@onHover
-
-        if(animateBg && bool) {
-            color.value = theme.colors.menuHoverColor
-        } else {
-            color.value = backgroundColor ?: Color.Transparent
-        }
-
+        isHovered = bool
         onHover(bool)
     }.then(modifier)
         .pointerHoverIcon(
@@ -181,13 +182,10 @@ fun NavigationButtons(state: MutableState<Rect?>, stat: MutableState<Boolean>, s
 
         // Fixed home button
         main.tabs.forEachIndexed { index, navigator ->
-            val bg by remember(main.current.id, theme) {
-                derivedStateOf {
-                    if (main.current.id == navigator.id) theme.colors.surface else theme.colors.menu
-                }
-            }
-            
-            key(main.current) {
+            val bg = if (main.current.id == navigator.id) theme.colors.surface else theme.colors.menu
+
+
+            key(navigator.id) {
                 NavigationButton(max = false, modifier = Modifier
                     .newBorder(theme.colors.border, 1.dp, InsetX)
                     .fillMaxHeight()

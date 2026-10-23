@@ -2,12 +2,14 @@ package ui.settings
 
 import IntUiThemes
 import parsers.bible.models.ILanguage
+import ui.theme.DefaultAccentThemeId
 import java.io.Serializable
 
 data class UserInterfaceSettings(
     var mainLanguage: String = "en",
     var contentLanguage: String = "en",
     var darkMode: IntUiThemes = IntUiThemes.System,
+    val accentThemeId: String = DefaultAccentThemeId,
     var showYtButton: Boolean = true,
     var animeDefaultView: Int = 0,
     var mangaDefaultView: Int = 0,

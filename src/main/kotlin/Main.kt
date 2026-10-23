@@ -12,15 +12,12 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.mossip.auraplayer.engine.AuraPlayer
 import components.FullscreenTitleBarView
 import components.layouts.Sidebar
 import components.titleBarView
-import db.ConfigViewModel
 import mvvm.ShareViewModels
 import navigation.LocalTabs
 import navigation.ModalListener
@@ -59,7 +56,6 @@ fun main() {
              loadData<Boolean>("should_hide_sidebar") ?: false
          ) }
          val isHideSidebarHovered = remember { mutableStateOf(false) }
-         var wasPlayerOn by configViewModel.wasPlayerOn
          val localFullscreen by configViewModel.localFullscreen.collectAsState()
 
          ThemeUI {

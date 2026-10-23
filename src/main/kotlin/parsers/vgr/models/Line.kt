@@ -7,4 +7,4 @@ data class Line(
     val displayNumber: Boolean,
     val number: Int,
     val segments: MutableList<Segment>
-)
+): java.io.Serializable

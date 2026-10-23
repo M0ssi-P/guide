@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
@@ -12,6 +13,15 @@ import org.jetbrains.jewel.ui.component.Text
 
 val Arbutus = FontFamily(
     Font("fonts/Arbutus-Regular.ttf", FontWeight.Normal)
+)
+
+val Fraunces = FontFamily(
+    Font("fonts/Fraunces-SemiBoldItalic.ttf", FontWeight.SemiBold, FontStyle.Italic),
+    Font("fonts/Fraunces-Regular.ttf", FontWeight.Normal),
+    Font("fonts/Fraunces-Bold.ttf", FontWeight.Bold),
+    Font("fonts/Fraunces-Light.ttf", FontWeight.Light),
+    Font("fonts/Fraunces-Regular.ttf", FontWeight.Medium),
+    Font("fonts/Fraunces-SemiBold.ttf", FontWeight.SemiBold),
 )
 
 val Inter = FontFamily(
@@ -26,6 +36,7 @@ val Inter = FontFamily(
 
 val LightColors = Colors(
     primary = Color(0xFF006BFF),
+    primaryBright = Color(0xFF4D97FF),
     background = Color(0xFFFFFFFF),
     text = Color(0xFF8E8E93),
     primaryText = Color(0xFF071108),
@@ -55,6 +66,7 @@ val LightColors = Colors(
 
 val DarkColors = Colors(
     primary = Color(0xFF006BFF),
+    primaryBright = Color(0xFF4D97FF),
     background = Color(0xFFFFFFFF),
     text = Color(0xFF8E8E93),
     primaryText = Color(0xFFFFFFFF),

@@ -111,13 +111,13 @@ fun TopBar(
 }
 
 @Composable
-private fun TabPill(label: String, active: Boolean, onClick: () -> Unit) {
+fun TabPill(label: String, active: Boolean, onClick: () -> Unit) {
     val theme = LocalTheme.current
 
     Box(
         Modifier
             .clip(RoundedCornerShape(999.dp))
-            .background(if (active) theme.colors.blue3  else Color.Transparent)
+            .background(if (active) theme.colors.primary  else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 7.dp)
     ) {
