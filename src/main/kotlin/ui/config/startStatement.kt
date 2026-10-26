@@ -30,40 +30,33 @@ fun startTableStatement(conn: Connection) {
         stmt.execute("CREATE INDEX IF NOT EXISTS idx_lines_paragraph_id ON lines(paragraph_id)")
         stmt.execute("ANALYZE")
 
-        stmt.execute("DROP TABLE IF EXISTS lines_fts")
+        stmt.execute("DROP TRIGGER IF EXISTS paragraphs_ai")
+        stmt.execute("DROP TRIGGER IF EXISTS paragraphs_ad")
+        stmt.execute("DROP TRIGGER IF EXISTS paragraphs_au")
+        stmt.execute("DROP TABLE IF EXISTS paragraphs_fts")
 
         stmt.execute("""
             CREATE VIRTUAL TABLE IF NOT EXISTS paragraphs_fts USING fts5(
-                text,
-                content='paragraphs',
-                content_rowid='id'
+                text, content='paragraphs', content_rowid='rowid'
             )
         """.trimIndent())
 
-        val ftsIsEmpty = stmt.executeQuery("SELECT NOT EXISTS (SELECT 1 FROM paragraphs_fts LIMIT 1)")
-            .use { it.next(); it.getBoolean(1) }
-        val paragraphsHasData = conn.checkIfOneExist("SELECT 1 FROM paragraphs LIMIT 1")
-
-        if (ftsIsEmpty && paragraphsHasData) {
-            stmt.execute("INSERT INTO paragraphs_fts(paragraphs_fts) VALUES('rebuild')")
-        }
-
         stmt.execute("""
             CREATE TRIGGER IF NOT EXISTS paragraphs_ai AFTER INSERT ON paragraphs BEGIN
-                INSERT INTO paragraphs_fts(rowid, text) VALUES (new.id, new.text);
+                INSERT INTO paragraphs_fts(rowid, text) VALUES (new.rowid, new.text);
             END
         """.trimIndent())
 
         stmt.execute("""
             CREATE TRIGGER IF NOT EXISTS paragraphs_ad AFTER DELETE ON paragraphs BEGIN
-                INSERT INTO paragraphs_fts(paragraphs_fts, rowid, text) VALUES ('delete', old.id, old.text);
+                INSERT INTO paragraphs_fts(paragraphs_fts, rowid, text) VALUES ('delete', old.rowid, old.text);
             END
         """.trimIndent())
 
         stmt.execute("""
             CREATE TRIGGER IF NOT EXISTS paragraphs_au AFTER UPDATE ON paragraphs BEGIN
-                INSERT INTO paragraphs_fts(paragraphs_fts, rowid, text) VALUES ('delete', old.id, old.text);
-                INSERT INTO paragraphs_fts(rowid, text) VALUES (new.id, new.text);
+                INSERT INTO paragraphs_fts(paragraphs_fts, rowid, text) VALUES ('delete', old.rowid, old.text);
+                INSERT INTO paragraphs_fts(rowid, text) VALUES (new.rowid, new.text);
             END
         """.trimIndent())
     }

@@ -20,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,8 +37,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.locationIcon
 import com.composables.settingsIcon
+import com.mossip.auraplayer.engine.PlayerState
 import components.global.ReaderTab
 import components.global.TabPill
+import formatTime
 import icons.bookmarkIcon
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -71,8 +74,14 @@ fun TableDesktopScreen(modifier: Modifier = Modifier) {
     val engine = LocalPlayerState.current
     val nowPlaying by globalPlayer.nowPlaying.collectAsState()
 
+    val scope = rememberCoroutineScope()
+
     var sermonResults by remember { mutableStateOf<List<Sermon>>(emptyList()) }
     var contentResults by remember { mutableStateOf<List<ContentHit>>(emptyList()) }
+
+    val playerState by engine.playerState.collectAsState()
+    val duration by engine.duration.collectAsState()
+    val currentTime by engine.currentTime.collectAsState()
 
     LaunchedEffect(state.searchQuery, mode.value) {
         delay(180)
@@ -152,7 +161,7 @@ fun TableDesktopScreen(modifier: Modifier = Modifier) {
                     when (mode) {
                         TableMode.Listen -> ListenView(
                             info = state.info,
-                            playing = state.playing,
+                            playing = playerState == PlayerState.PLAYING,
                             modifier = Modifier.fillMaxSize()
                         )
                         TableMode.Read -> when(val data = currentSermon) {
@@ -197,14 +206,15 @@ fun TableDesktopScreen(modifier: Modifier = Modifier) {
                     is UiState.Success -> {
                         val sermon = data.data
                         FloatingPlayer(
+                            player = engine,
                             track = PlayerTrack(
                                 title = sermon.title,
                                 breadcrumb = "${sermon.dateCode} - ${sermon.location}",
                                 languageCode = "ENG",
-                                elapsedLabel = "English",
-                                remainingLabel = "dsdsd",
+                                elapsedLabel = formatTime(currentTime),
+                                remainingLabel = formatTime(duration),
                                 progressFraction = 0.5f,
-                                isPlaying = state.playing,
+                                isPlaying = playerState == PlayerState.PLAYING,
                                 readAlongOn = false
                             ),
                             onTogglePlay = {
@@ -214,27 +224,29 @@ fun TableDesktopScreen(modifier: Modifier = Modifier) {
                                         title = sermon.title,
                                         subtitle = "${sermon.dateCode} - ${sermon.location}",
                                         type = GlobalPlayerType.SERMON,
-                                        isPlaying = true,
+                                        isPlaying = playerState == PlayerState.PLAYING,
                                         currentPosition = 0L,
                                         url = url.trim(),
                                     ))
-                                    state.playing = true
                                     engine.setPause(false)
-                                    println("works")
+                                    state.playing = playerState == PlayerState.PLAYING
                                 }
-                                val file = SermonMedia.audioFile(sermon)
                                 when {
                                     nowPlaying?.id == sermon.stringId -> {
-                                        state.playing = !state.playing
                                         engine.setPause(!state.playing)
+                                        state.playing = playerState == PlayerState.PLAYING
                                     }
-                                    file.exists() -> playSermon(file.absolutePath)
-                                    else -> modal.show {
-                                        ListenModal(
-                                            sermon = sermon,
-                                            onPlay = { playSermon(it); modal.dismiss() },
-                                            onDismiss = { modal.dismiss() }
-                                        )
+                                    else -> scope.launch {
+                                        // Reuse a copy we or another app already saved before asking to download.
+                                        val local = SermonMedia.findLocal(sermon)
+                                        if (local != null) playSermon(local.absolutePath)
+                                        else modal.show {
+                                            ListenModal(
+                                                sermon = sermon,
+                                                onPlay = { playSermon(it); modal.dismiss() },
+                                                onDismiss = { modal.dismiss() }
+                                            )
+                                        }
                                     }
                                 }
                             },

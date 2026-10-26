@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,13 +33,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.arrow2left
 import com.composables.arrow2right
-import com.composables.arrowLeft
-import com.composables.arrowRight
 import com.composables.hamburger
 import com.composables.pauseIcon
 import com.composables.play
 import com.composables.plusIcon
+import com.mossi.auraplayer.ui.AuraAudioSurface
 import com.mossi.auraplayer.ui.logo.Fullscreen
+import com.mossip.auraplayer.engine.AuraPlayer
+import components.global.DefaultSeekBar
 import ui.theme.LocalTheme
 
 // TODO move into Theme.colors once you add an accent token (kept local so this file drops in standalone)
@@ -58,6 +60,7 @@ data class PlayerTrack(
 
 @Composable
 fun FloatingPlayer(
+    player: AuraPlayer,
     track: PlayerTrack,
     modifier: Modifier = Modifier,
     onTogglePlay: () -> Unit = {},
@@ -110,7 +113,7 @@ fun FloatingPlayer(
         ) {
             AlbumMark(size = 36.dp)
 
-            IconButton14(icon = ::arrowLeft, contentDescription = "Back 15 seconds", onClick = onSkipBack)
+            IconButton14(icon = ::arrow2left, contentDescription = "Back 15 seconds", onClick = onSkipBack)
 
             Box(
                 modifier = Modifier
@@ -128,7 +131,7 @@ fun FloatingPlayer(
                 )
             }
 
-            IconButton14(icon = ::arrowRight, contentDescription = "Forward 15 seconds", onClick = onSkipForward, mirrored = true)
+            IconButton14(icon = ::arrow2right, contentDescription = "Forward 15 seconds", onClick = onSkipForward, mirrored = true)
 
             Row(
                 modifier = Modifier.weight(1f),
@@ -136,7 +139,7 @@ fun FloatingPlayer(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(track.elapsedLabel, color = theme.colors.text.copy(alpha = 0.55f), fontSize = 10.5.sp)
-                ProgressTrack(track.progressFraction, modifier = Modifier.weight(1f), trackHeight = 3.dp, showKnob = false)
+                DefaultSeekBar(player, modifier = Modifier.weight(1f), accent = theme.colors.primary)
                 Text(track.remainingLabel, color = theme.colors.text.copy(alpha = 0.55f), fontSize = 10.5.sp)
             }
 
@@ -151,6 +154,8 @@ fun FloatingPlayer(
                 Icon(Fullscreen(theme.colors.text.copy(alpha = 0.8f)), contentDescription = "Expand player", tint = Color.Unspecified, modifier = Modifier.size(15.dp))
             }
         }
+
+        AuraAudioSurface(player = player, content = {})
 
         // expanded card
         Column(
@@ -195,7 +200,7 @@ fun FloatingPlayer(
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text(track.elapsedLabel, color = theme.colors.text.copy(alpha = 0.55f), fontSize = 12.sp)
-                ProgressTrack(track.progressFraction, modifier = Modifier.weight(1f), trackHeight = 5.dp, showKnob = true)
+                DefaultSeekBar(player = player, modifier = Modifier.weight(1f), accent = theme.colors.primary)
                 Text(track.remainingLabel, color = theme.colors.text.copy(alpha = 0.55f), fontSize = 12.sp)
             }
 
@@ -280,46 +285,6 @@ private fun AlbumMark(size: Dp, iconSize: Dp = size * 0.42f) {
             tint = Color.Unspecified,
             modifier = Modifier.size(iconSize)
         )
-    }
-}
-
-@Composable
-private fun ProgressTrack(fraction: Float, modifier: Modifier = Modifier, trackHeight: Dp, showKnob: Boolean) {
-    val theme = LocalTheme.current
-
-    Box(
-        modifier = modifier
-            .height(if (showKnob) 13.dp else trackHeight)
-            .fillMaxWidth(),
-        contentAlignment = Alignment.CenterStart
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(trackHeight)
-                .clip(RoundedCornerShape(trackHeight))
-                .background(Color.White.copy(alpha = 0.1f))
-        )
-        Box(
-            Modifier
-                .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                .height(trackHeight)
-                .clip(RoundedCornerShape(trackHeight))
-                .background(theme.colors.primary)
-        )
-        if (showKnob) {
-            Box(
-                Modifier
-                    .fillMaxWidth(fraction.coerceIn(0f, 1f))
-            ) {
-                Box(
-                    Modifier
-                        .size(13.dp)
-                        .clip(CircleShape)
-                        .background(theme.colors.primary)
-                )
-            }
-        }
     }
 }
 
