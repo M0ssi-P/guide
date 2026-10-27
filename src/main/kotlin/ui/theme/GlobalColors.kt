@@ -15,6 +15,14 @@ val Arbutus = FontFamily(
     Font("fonts/Arbutus-Regular.ttf", FontWeight.Normal)
 )
 
+val ZillaSlab = FontFamily(
+    Font("fonts/ZillaSlab-Regular.ttf", FontWeight.Normal),
+    Font("fonts/ZillaSlab-Bold.ttf", FontWeight.Bold),
+    Font("fonts/ZillaSlab-Light.ttf", FontWeight.Light),
+    Font("fonts/ZillaSlab-Medium.ttf", FontWeight.Medium),
+    Font("fonts/ZillaSlab-SemiBold.ttf", FontWeight.SemiBold),
+)
+
 val Fraunces = FontFamily(
     Font("fonts/Fraunces-SemiBoldItalic.ttf", FontWeight.SemiBold, FontStyle.Italic),
     Font("fonts/Fraunces-Regular.ttf", FontWeight.Normal),

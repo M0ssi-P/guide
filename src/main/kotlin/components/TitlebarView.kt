@@ -93,7 +93,11 @@ fun DecoratedWindowScope.titleBarView(height: Dp, state: MutableState<Boolean>, 
             }
         }
 
-        Row(Modifier.align(Alignment.End).padding(end = 10.dp)) {
+        Row(Modifier.align(Alignment.End).padding(end = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
+            PopoverAnchored(
+                modifier = Modifier.dropShadow(shape = RoundedCornerShape(16.dp), block = { color = Color.Black.copy(alpha = 0.35f); spread = -6f; radius = 40f; offset = Offset(0f, 18f) }),
+                popup = { InboxPopup(it) }
+            ) { open -> InboxButton(open) }
             PopoverAnchored(
                 modifier = Modifier
                     .dropShadow(

@@ -36,6 +36,8 @@ fun Titlebar(
     onSearchClick: () -> Unit,
     onBrowseClick: () -> Unit,
     onMenuClick: () -> Unit,
+    languageCode: String,
+    onLanguageClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val theme = LocalTheme.current
@@ -67,7 +69,8 @@ fun Titlebar(
             onModeChange = { state.mode = it },
             modifier = Modifier.padding(top = 6.dp)
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            components.global.LanguageChip(languageCode, "Table language: $languageCode", Modifier.padding(end = 4.dp), height = 30.dp, onClick = onLanguageClick)
             TitlebarIcon(::searchIcon, "Search", onSearchClick)
             TitlebarIcon(::book, "Browse", onBrowseClick)
             TitlebarIcon(::hamburger, "Menu", onMenuClick)

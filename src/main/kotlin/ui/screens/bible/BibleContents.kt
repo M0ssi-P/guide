@@ -1,5 +1,9 @@
 package ui.screens.bible
 
+import components.global.crossfadeOn
+import presentation.sentences
+import activity.SavedSource
+import activity.SavedStore
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Ease
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -100,6 +104,9 @@ import player.loadChapters
 import ui.theme.Inter
 import ui.theme.LocalTheme
 import kotlin.collections.forEachIndexed
+import androidx.compose.runtime.CompositionLocalProvider
+import components.global.LocalBibleStyle
+import ui.screens.reading.ReadStyle
 
 private val FONT_SIZES = listOf(26, 30, 34, 40, 46)
 
@@ -125,6 +132,9 @@ fun BibleContents(
     val coroutineScope = rememberCoroutineScope()
     val scrollbarInteractionSource = remember { MutableInteractionSource() }
     val lazyColumnBoundsInWindow = remember { mutableStateOf<Rect?>(null) }
+    val readPrefs by ui.screens.reading.ReadingStores.bible.prefs
+    var parallel by remember { mutableStateOf(false) }
+    val navTab = navigation.LocalTabs.current.current
 
     Column(
         modifier = modifier.fillMaxSize().background(theme.colors.surface).layeredRadialBackground(),
@@ -146,21 +156,33 @@ fun BibleContents(
                     onToggleFullscreen = {  },
                     visible = true,
                 )
+                if (tab == ReaderTab.READING) BibleReaderToolbar(
+                    model, parallel, onParallel = { parallel = !parallel },
+                    onProject = { projectChapter(model, selectedVerse.value) { navTab.navigate(navigation.Screen.Projection) } }
+                )
             }
         }
+        // after a translation switch, fade in once the new chapter has arrived
+        var shownVersion by remember { mutableStateOf(model.currentVersion?.id) }
+        LaunchedEffect(model.chapterContent) { shownVersion = model.currentVersion?.id }
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .weight(1f)
+                .crossfadeOn(shownVersion)
+                .then(if (!localFullscreen.value) Modifier.background(readPrefs.theme.bgC) else Modifier),
             contentAlignment = Alignment.Center
         ) {
             when(tab) {
-                ReaderTab.READING -> {
+                ReaderTab.READING -> if (!localFullscreen.value && (parallel || readPrefs.style != ReadStyle.SCROLL)) {
+                    BibleAltView(model, parallel, selectedVerse)
+                    BibleSelectionBar(model, selectedVerse, onCompare = { parallel = true }, Modifier.align(Alignment.BottomCenter).padding(bottom = 96.dp))
+                } else CompositionLocalProvider(LocalBibleStyle provides bibleStyle(readPrefs)) {
                     BoxWithConstraints(
                         modifier = Modifier
                             .then(
                                 if (!localFullscreen.value) {
-                                    Modifier.widthIn(min = 200.dp, max = 1200.dp)
+                                    Modifier.widthIn(min = 200.dp, max = (readPrefs.width.dp + 60).dp)
                                         .padding(horizontal = 30.dp)
                                 } else Modifier
                                     .padding(horizontal = 165.dp)
@@ -188,6 +210,14 @@ fun BibleContents(
                             currentWordIndex(wordTimings, currentTime.toFloat())
                         else -1
 
+                        val savedHighlights by SavedStore.highlights
+                        val verseTones = remember(savedHighlights, model.currentVersion?.id, model.currentChapter?.usfm) {
+                            savedHighlights.filter {
+                                it.target.source == SavedSource.BIBLE && it.target.bibleVersionId == model.currentVersion?.id &&
+                                    it.target.chapterUsfm == model.currentChapter?.usfm
+                            }.associate { it.target.number!! to it.tone.color }
+                        }
+
                         LazyColumn(
                             state = model.contentScrollState,
                             contentPadding = PaddingValues(bottom = 100.dp, top = 64.dp),
@@ -207,6 +237,7 @@ fun BibleContents(
                                     itemsIndexed(model.chapterContent?.chapter!!) { index, chapter ->
                                         ChapterContent(
                                             chapter,
+                                            verseTones = verseTones,
                                             highlightedVerse = highlightedVerseNumber,
                                             activeWordIndexInVerse = activeWordIdx,
                                             selectedVerse = selectedVerse,
@@ -326,6 +357,8 @@ fun BibleContents(
                             .fillMaxHeight(),
                         interactionSource = scrollbarInteractionSource,
                     )
+
+                    BibleSelectionBar(model, selectedVerse, onCompare = { parallel = true }, Modifier.align(Alignment.BottomCenter).padding(bottom = 96.dp))
                 }
                 ReaderTab.PLAYER -> PlayerView(
                     elapsedSeconds = currentTime.toFloat(),

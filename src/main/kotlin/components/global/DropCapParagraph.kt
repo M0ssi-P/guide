@@ -101,7 +101,8 @@ fun NumberedParagraph(
     numColor: Color = Color(0xFFF0E4C8),
     bodyFontSize: TextUnit = 19.sp,
     bodyLineHeight: TextUnit = 34.sp,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fontFamily: FontFamily? = null,
 ) {
     if (text.isEmpty()) return
     val density = LocalDensity.current
@@ -122,7 +123,7 @@ fun NumberedParagraph(
         val narrowLayout = remember(text, narrowWidthPx) {
             measurer.measure(
                 text,
-                TextStyle(fontSize = bodyFontSize, lineHeight = bodyLineHeight),
+                TextStyle(fontSize = bodyFontSize, lineHeight = bodyLineHeight, fontFamily = fontFamily),
                 constraints = Constraints(maxWidth = narrowWidthPx)
             )
         }
@@ -135,11 +136,11 @@ fun NumberedParagraph(
             Row(verticalAlignment = Alignment.Top) {
                 Text("$number", color = numColor, fontWeight = FontWeight.Bold, fontSize = 12.sp,
                     modifier = Modifier.padding(end = 6.dp, top = 3.dp))
-                Text(firstLine, color = bodyColor, fontSize = bodyFontSize, lineHeight = bodyLineHeight,
+                Text(firstLine, color = bodyColor, fontSize = bodyFontSize, lineHeight = bodyLineHeight, fontFamily = fontFamily,
                     modifier = Modifier.width(with(density) { narrowWidthPx.toDp() }))
             }
             if (remainder.isNotEmpty()) {
-                Text(remainder, color = bodyColor, fontSize = bodyFontSize, lineHeight = bodyLineHeight,
+                Text(remainder, color = bodyColor, fontSize = bodyFontSize, lineHeight = bodyLineHeight, fontFamily = fontFamily,
                     modifier = Modifier.fillMaxWidth())
             }
         }

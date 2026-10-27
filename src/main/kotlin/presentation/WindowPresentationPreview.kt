@@ -185,6 +185,8 @@ fun WindowPresentationPreview(key: Int? = null) {
                         }
                     }
                 }
+                is ProjectionDeck -> DeckSlide(theme.colors.primary, theme.colors.primaryBright, Modifier.fillMaxSize())
+                is DisplayFeed -> DisplayView(vm, theme.colors.primary, theme.colors.primaryBright, Modifier.fillMaxSize())
                 is PostsViewModal -> {
                     val currentPost = vm.currentPost
                     if (currentPost != null) {

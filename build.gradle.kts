@@ -11,6 +11,18 @@ plugins {
 group = "com.game"
 version = "1.0-SNAPSHOT"
 
+// The one app version: the installers, APP_VERSION in the app (generated below) and the GitHub release tag "v$appVersion".
+// Raise it for every release; MSI upgrades need it to go up.
+val appVersion = "1.0.1"
+
+val generateAppVersion by tasks.registering {
+    val out = layout.buildDirectory.dir("generated/appVersion")
+    inputs.property("appVersion", appVersion)
+    outputs.dir(out)
+    doLast { out.get().file("AppVersion.kt").asFile.apply { parentFile.mkdirs() }.writeText("const val APP_VERSION = \"v$appVersion\"\n") }
+}
+kotlin.sourceSets["main"].kotlin.srcDir(generateAppVersion)
+
 repositories {
     mavenCentral()
     maven("https://jitpack.io")
@@ -28,6 +40,7 @@ dependencies {
         exclude(group = compose.material)
     }
     implementation(libs.kotlinx.serilization)
+    implementation("org.apache.pdfbox:pdfbox:3.0.3")
     implementation(libs.okhttp3)
     implementation(libs.nicehttp)
     implementation(libs.net.jna)
@@ -59,7 +72,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "game"
-            packageVersion = "1.0.1"
+            packageVersion = appVersion
             includeAllModules = true
             val os = org.gradle.internal.os.OperatingSystem.current()
             javaHome = when {
@@ -70,6 +83,8 @@ compose.desktop {
             }
 
             windows {
+                // Never change this: Windows uses it to recognise newer MSIs of The Guide as upgrades of the same app.
+                upgradeUuid = "60391b7f-76ce-46af-a103-5198370d3c10"
                 iconFile.set(
                     project.file("src/main/resources/src/logo.ico")
                 )

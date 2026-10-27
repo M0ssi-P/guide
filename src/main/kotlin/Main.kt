@@ -1,3 +1,4 @@
+import activity.ActivityTracker
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -43,8 +44,11 @@ import ui.theme.LocalUi
 import ui.theme.ThemeUI
 
 @OptIn(ExperimentalFoundationApi::class)
-fun main() {
+fun main(args: Array<String>) {
+     // started from the backup copy to install an update: only the updater window
+     if (args.firstOrNull() == "--updater") { update.runUpdater(args.getOrNull(1)); return }
      initialiseNetwork()
+     update.Updates.onStartup()
 
      application {
          val textStyle = JewelTheme.createDefaultTextStyle()
@@ -120,9 +124,11 @@ fun main() {
                          NavSystem {
                              val navigator = LocalTabs.current
                              val localPlayer = LocalPlayer.current
+                             ActivityTracker()
 
                              DecoratedWindow(
                                  onCloseRequest = {
+                                     update.Updates.installOnQuitIfAsked()
                                      engine.release()
                                      exitApplication()
                                  },
@@ -142,6 +148,7 @@ fun main() {
                                  window.rootPane.background = awtColor
                                  window.contentPane.background = awtColor
 
+                                 update.Updates.quitApp = { engine.release(); exitApplication() }
                                  ModalListener(window) {
                                      Row(modifier = Modifier.fillMaxSize().background(theme.colors.surface)) {
                                          if(!shouldHide.value && !shouldHideSidebar.value) {
@@ -170,6 +177,7 @@ fun main() {
                                      if(shouldHideSidebar.value) {
                                          Sidebar(shouldHideSidebar, shouldHide.value, isHideSidebarHovered)
                                      }
+                                     components.global.UpdateOverlay()
                                  }
                              }
 

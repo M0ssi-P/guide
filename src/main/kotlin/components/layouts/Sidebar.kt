@@ -40,6 +40,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.composables.calendarIcon
+import com.composables.liveSignalIcon
 import com.composables.safeHome
 import com.composables.savedIcon
 import com.composables.searchIcon
@@ -79,6 +81,11 @@ val menuBarItems = mutableListOf<MenuItem>(
         imageVector = ::safeHome
     ),
     MenuItem(
+        name = "This Week",
+        matchPath = Screen.ThisWeek,
+        imageVector = ::calendarIcon
+    ),
+    MenuItem(
         name = "Saved",
         matchPath = Screen.Saved,
         imageVector = ::savedIcon
@@ -87,6 +94,11 @@ val menuBarItems = mutableListOf<MenuItem>(
         name = "My Activity",
         matchPath = Screen.MyActivity,
         imageVector = ::statsIcon
+    ),
+    MenuItem(
+        name = "Join live",
+        matchPath = Screen.Listener,
+        imageVector = ::liveSignalIcon
     ),
 )
 

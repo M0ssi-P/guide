@@ -42,7 +42,7 @@ data class PaginatedPage(val blocks: List<ContentBlock>)
  * ITALIC, UNDERLINE, STRIKETHROUGH, SUPERSCRIPT). Anything unmatched is a no-op, so worst case
  * an unrecognized style is silently dropped rather than crashing.
  */
-private fun styleToSpanStyle(style: Style): SpanStyle = when (style.toString().uppercase()) {
+internal fun styleToSpanStyle(style: Style): SpanStyle = when (style.toString().uppercase()) {
     "BOLD" -> SpanStyle(fontWeight = FontWeight.Bold)
     "ITALIC" -> SpanStyle(fontStyle = FontStyle.Italic)
     "UNDERLINE" -> SpanStyle(textDecoration = TextDecoration.Underline)

@@ -84,82 +84,22 @@ fun BibleHome() {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        Row(modifier = Modifier.weight(1f)) {
-            Row(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-            ) {
-                val lyrics = sub?.find { it.default }?.lyrics
-                val lyric = getCurrentVerseSafe(currentTime, lyrics)
+        val lyrics = sub?.find { it.default }?.lyrics
+        val lyric = getCurrentVerseSafe(currentTime, lyrics)
 
-                val flatVerses = remember(model.chapterContent) {
-                    model.chapterContent?.chapter?.let { perVerseMode(it) } ?: emptyList()
-                }
-                val highlightedVerseNumber = lyric?.verse?.toIntOrNull()
-                val activeVerse = remember(flatVerses, highlightedVerseNumber) {
-                    highlightedVerseNumber?.let { num -> flatVerses.find { it.number == num } }
-                }
-
-                RailView(
-                    verseCount = verseCount,
-                    activeVerseIndex = if(activeVerse != null) activeVerse.number - 1 else -1,
-                    onSeekVerse = { },
-                    visible = chromeVisible,
-                )
-                BibleContents(
-                    model, Modifier.weight(1f).fillMaxHeight(),
-                    fontStep,
-                    sub,
-                    selectedVerse,
-                    verseCount
-                )
-//                Box(Modifier.align(Alignment.BottomCenter)) {
-//                    PlayerUI(engine)
-//                }
-            }
+        val flatVerses = remember(model.chapterContent) {
+            model.chapterContent?.chapter?.let { perVerseMode(it) } ?: emptyList()
         }
-        PlayerBar(
-            playing = PlayerState.PLAYING == playerState,
-            onPlayPause = {
-                val isPlaying = playerState == PlayerState.PLAYING
-                engine.setPause(isPlaying)
-            },
-            onRewind10 = {
-//                elapsed = (elapsed - 10f).coerceAtLeast(0f)
-            },
-            onForward10 = {
-//                elapsed = (elapsed + 10f).coerceAtMost(totalDuration)
-            },
-            onPrevChapter = {
-//                if (currentChapter > 1) selectBookChapter(currentBook, currentChapter - 1)
-            },
-            onNextChapter = {
-//                if (currentChapter < bookInfo.chapters) selectBookChapter(currentBook, currentChapter + 1)
-            },
-            elapsedSeconds = currentTime.toFloat(),
-            totalDurationSeconds = duration.toFloat(),
-            onSeekFraction = {
-//                seekToFraction(it)
-            },
-            speed = speed.toFloat(),
-            onCycleSpeed = {
-//                val speeds = 1
-//                speed = speeds[(speeds.indexOf(speed) + 1) % speeds.size]
-            },
-            muted = false,
-            onToggleMuted = {
-//                muted = !muted
-            },
-            autoAdvance = true,
-            onAutoAdvanceChange = {
-//                autoAdvance = it
-            },
-            voice = "voice",
-            onVoiceChange = {
-//                voice = it
-            },
-            visible = chromeVisible,
-            translation = "NKJV",
-            onTranslationChange = { },
+        val highlightedVerseNumber = lyric?.verse?.toIntOrNull()
+        val activeVerse = remember(flatVerses, highlightedVerseNumber) {
+            highlightedVerseNumber?.let { num -> flatVerses.find { it.number == num } }
+        }
+        BibleContents(
+            model, Modifier.weight(1f).fillMaxHeight(),
+            fontStep,
+            sub,
+            selectedVerse,
+            verseCount
         )
     }
 }

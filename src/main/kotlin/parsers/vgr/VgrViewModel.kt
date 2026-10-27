@@ -1,5 +1,7 @@
 package parsers.vgr
 
+import activity.ActivityKind
+import activity.ActivityLog
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import db.controller.table.Languages.getCurrentTable
@@ -94,9 +96,25 @@ class VgrViewModel: ViewModel() {
         }
     }
 
+    /** Switches The Table to another installed language, staying on the same sermon when that language has it. */
+    fun setTableLanguage(tag: String) {
+        if (tag == _uiSettings.value.currentTableLanguage) return
+        val dateCode = (_currentSermon.value as? UiState.Success)?.data?.dateCode
+        viewModelScope.launch {
+            val target = withContext(Dispatchers.IO) {
+                val tb = db.getCurrentTable(tag)?.dbId ?: return@withContext null
+                val list = db.getSermonsList(tb)
+                (list.firstOrNull { it.dateCode == dateCode } ?: list.firstOrNull())?.let { it to db.getFullSermon(it) }
+            }
+            target?.let { (s, full) -> saveData("current_sermon", s); _currentSermon.value = UiState.Success(full) }
+            _uiSettings.value = _uiSettings.value.copy(currentTableLanguage = tag).also { saveData("ui_settings", it) }
+        }
+    }
+
     fun setCurrentSermon(sermon: Sermon) {
         viewModelScope.launch {
             saveData("current_sermon", sermon)
+            ActivityLog.record(ActivityKind.TABLE, "Opened ${sermon.title}", "${sermon.dateCode} · ${sermon.location}", "sermon:${sermon.stringId}", "Open")
             val fullSermon = withContext(Dispatchers.IO) { db.getFullSermon(sermon) }
             _currentSermon.value = UiState.Success(fullSermon)
         }

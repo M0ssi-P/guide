@@ -1,5 +1,10 @@
 package ui.screens.table
 
+import com.composables.projectorIcon
+import presentation.DeckSource
+import presentation.ProjectionDeck
+import ui.screens.projection.deckItems
+import navigation.Screen
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -57,6 +62,7 @@ import parsers.vgr.SermonMedia
 import parsers.vgr.VgrViewModel
 import parsers.vgr.models.Sermon
 import ui.UiState
+import components.global.crossfadeOn
 import ui.theme.LocalTheme
 
 @Composable
@@ -70,6 +76,9 @@ fun TableDesktopScreen(modifier: Modifier = Modifier) {
         VgrViewModel()
     })
     val currentSermon by vgrVM.currentSermon.collectAsState()
+    val tableSettings by vgrVM.uiSettings.collectAsState()
+    val langCode = remember(tableSettings.currentTableLanguage) { tableLanguageCode(tableSettings.currentTableLanguage) }
+    val openLanguages = { modal.show { TableLanguageModal(vgrVM) { modal.dismiss() } } }
     val globalPlayer = LocalPlayer.current
     val engine = LocalPlayerState.current
     val nowPlaying by globalPlayer.nowPlaying.collectAsState()
@@ -153,11 +162,13 @@ fun TableDesktopScreen(modifier: Modifier = Modifier) {
                     }
                 },
                 onBrowseClick = { state.overlay = TableOverlay.Browse },
-                onMenuClick = { state.overlay = TableOverlay.Menu }
+                onMenuClick = { state.overlay = TableOverlay.Menu },
+                languageCode = langCode,
+                onLanguageClick = openLanguages
             )
 
             Box(Modifier.weight(1f).fillMaxWidth()) {
-                Crossfade(targetState = state.mode, animationSpec = tween(400), modifier = Modifier.fillMaxSize()) { mode ->
+                Crossfade(targetState = state.mode, animationSpec = tween(400), modifier = Modifier.fillMaxSize().crossfadeOn(tableSettings.currentTableLanguage)) { mode ->
                     when (mode) {
                         TableMode.Listen -> ListenView(
                             info = state.info,
@@ -165,9 +176,11 @@ fun TableDesktopScreen(modifier: Modifier = Modifier) {
                             modifier = Modifier.fillMaxSize()
                         )
                         TableMode.Read -> when(val data = currentSermon) {
-                            is UiState.Success -> {
+                            is UiState.Success -> Box(Modifier.fillMaxSize()) {
                                 val sermon = data.data
-                                StudyReadView(
+                                val tablePrefs by ui.screens.reading.ReadingStores.table.prefs
+                                if (tablePrefs.style == ui.screens.reading.ReadStyle.SCROLL) TableScrollView(sermon, tablePrefs)
+                                else Box(Modifier.fillMaxSize()) { StudyReadView(
                                     document = StudyDocument(
                                         title = sermon.title,
                                         sessionLabel = "${sermon.dateCode} - ${sermon.location}",
@@ -181,7 +194,10 @@ fun TableDesktopScreen(modifier: Modifier = Modifier) {
                                         ),
                                     ),
                                     modifier = Modifier.fillMaxSize(),
-                                )
+                                    sermon = sermon,
+                                    prefs = tablePrefs,
+                                ) }
+                                TableSettingsButton(Modifier.align(Alignment.TopEnd).padding(16.dp))
                             }
                             else -> StudyReadView(
                                 document = StudyDocument(
@@ -210,13 +226,14 @@ fun TableDesktopScreen(modifier: Modifier = Modifier) {
                             track = PlayerTrack(
                                 title = sermon.title,
                                 breadcrumb = "${sermon.dateCode} - ${sermon.location}",
-                                languageCode = "ENG",
+                                languageCode = langCode,
                                 elapsedLabel = formatTime(currentTime),
                                 remainingLabel = formatTime(duration),
                                 progressFraction = 0.5f,
                                 isPlaying = playerState == PlayerState.PLAYING,
                                 readAlongOn = false
                             ),
+                            onLanguageClick = openLanguages,
                             onTogglePlay = {
                                 val playSermon = { url: String ->
                                     globalPlayer.loadNowPlaying(GlobalPlayerViewModel.NowPlaying(
@@ -273,7 +290,16 @@ fun TableDesktopScreen(modifier: Modifier = Modifier) {
             TableOverlay.Menu -> MenuDrawer(
                 items = state.menuItems,
                 onClose = { state.overlay = TableOverlay.None },
-                onItemClick = { state.overlay = TableOverlay.None },
+                onItemClick = { item ->
+                    state.overlay = TableOverlay.None
+                    // the multi-purpose projection opens on the sermon being read; Bible and Songs are a tab away there
+                    if (item.label == "Project") {
+                        (currentSermon as? UiState.Success)?.data?.let { s ->
+                            ProjectionDeck.load(DeckSource.TABLE, s.title, "${s.dateCode} · ${s.location}", s.deckItems(), 0, s.copy(sections = null))
+                        }
+                        currentTab.navigate(Screen.Projection)
+                    }
+                },
                 modifier = Modifier.align(Alignment.CenterEnd)
             )
             TableOverlay.None -> Unit
@@ -339,6 +365,7 @@ class TableState(
     )
 
     val menuItems = listOf(
+        MenuItem("Project", ::projectorIcon),
         MenuItem("Bookmarks", ::bookmarkIcon),
         MenuItem("Language", ::locationIcon),
         MenuItem("Settings", ::settingsIcon),

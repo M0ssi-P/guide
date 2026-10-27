@@ -46,6 +46,23 @@ import ui.theme.LocalTheme
 
 private enum class WordTiming { READ, CURRENT, UPCOMING }
 
+/** Reading-settings look for [ChapterContent]; null keeps its original look (fullscreen, other callers). */
+data class BibleTextStyle(
+    val family: androidx.compose.ui.text.font.FontFamily,
+    val weight: FontWeight,
+    val size: Float,
+    val lineHeight: Float,
+    val fg: Color,
+    val number: Color,
+    val jesus: Color,
+    val head: Color,
+    val numbers: Boolean,
+    val headings: Boolean,
+    val perLine: Boolean,
+)
+
+val LocalBibleStyle = androidx.compose.runtime.compositionLocalOf<BibleTextStyle?> { null }
+
 @Composable
 fun ChapterContent(
     sections: ChapterSection,
@@ -58,6 +75,7 @@ fun ChapterContent(
     // every verse renders exactly as it did before this change.
     activeWordIndexInVerse: Int = -1,
     underlinedVerses: Set<Int> = emptySet(),
+    verseTones: Map<Int, Color> = emptyMap(),
     selectedVerse: MutableState<MutableList<Int>>,
     onActiveVersePositioned: (Rect) -> Unit = {},
     onVerseClick: (Int) -> Unit = {}
@@ -65,13 +83,14 @@ fun ChapterContent(
     val theme = LocalTheme.current
     val globalModel = ShareViewModels.globalViewModel
     val localFullscreen = globalModel.localFullscreen.collectAsState()
+    val look = LocalBibleStyle.current.takeIf { !localFullscreen.value }
 
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {
-        if (sections.hasHeading && sections.heading != null && !localFullscreen.value) {
+        if (sections.hasHeading && sections.heading != null && !localFullscreen.value && (look?.headings ?: true)) {
             Row(modifier = Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 12.dp)) {
-                Text("${sections.heading.heading}", style = theme.typography.h2, color = theme.colors.night, fontSize = 28.sp)
+                Text("${sections.heading.heading}", style = theme.typography.h2, color = look?.head ?: theme.colors.night, fontSize = 28.sp)
             }
         }
 
@@ -86,10 +105,10 @@ fun ChapterContent(
                         SpanStyle(
                             fontSize = 12.sp,
                             baselineShift = BaselineShift.Superscript,
-                            color = theme.colors.blue3
+                            color = look?.number ?: theme.colors.blue3
                         )
                     )
-                    append(if(verse.displayNumber) verse.number.toString() else "")
+                    append(if(verse.displayNumber && (look?.numbers ?: true)) verse.number.toString() else "")
                     pop()
                     append(" ")
 
@@ -101,7 +120,7 @@ fun ChapterContent(
                     verse.content.forEach { segment ->
                         if(segment.type == VerseLineEnum.Reference) return@forEach
 
-                        val color = if(segment.isJesus) theme.colors.crimson else theme.colors.text
+                        val color = if(segment.isJesus) (look?.jesus ?: theme.colors.crimson) else (look?.fg ?: theme.colors.text)
                         val isPartOf = selectedVerse.value.isNotEmpty() && verse.number in selectedVerse.value.first() .. selectedVerse.value.last()
                         val decoration = if(isPartOf) TextDecoration.Underline else null
 
@@ -145,9 +164,10 @@ fun ChapterContent(
                             pop()
                         }
                     }
-                    append(" ")
+                    append(if (look?.perLine == true) "\n" else " ")
 
                     val end = length
+                    verseTones[verse.number]?.let { addStyle(SpanStyle(background = it.copy(alpha = 0.32f)), start, end) }
                     addStringAnnotation(
                         tag = "VERSE",
                         annotation = verse.number.toString(),
@@ -189,10 +209,11 @@ fun ChapterContent(
             ClickableText(
                 text = annotated,
                 style = TextStyle(
-                    fontFamily = Inter,
+                    fontFamily = look?.family ?: Inter,
+                    fontWeight = look?.weight,
                     textDecoration = decoration,
-                    fontSize = if(localFullscreen.value) 53.sp else 26.sp,
-                    lineHeight = (if (localFullscreen.value) 53.sp else 26.sp) * 2,
+                    fontSize = look?.size?.sp ?: if(localFullscreen.value) 53.sp else 26.sp,
+                    lineHeight = look?.let { (it.size * it.lineHeight).sp } ?: ((if (localFullscreen.value) 53.sp else 26.sp) * 2),
                     textIndent = when(paragraph.type) {
                         Paragraph.Normal -> TextIndent(firstLine = 20.sp)
                         Paragraph.Q2 -> TextIndent(firstLine = 16.sp)

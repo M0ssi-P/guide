@@ -66,7 +66,8 @@ fun FloatingPlayer(
     onTogglePlay: () -> Unit = {},
     onSkipBack: () -> Unit = {},
     onSkipForward: () -> Unit = {},
-    onToggleReadAlong: () -> Unit = {}
+    onToggleReadAlong: () -> Unit = {},
+    onLanguageClick: () -> Unit = {}
 ) {
     val theme = LocalTheme.current
     var expanded by remember { mutableStateOf(false) }
@@ -186,14 +187,7 @@ fun FloatingPlayer(
                     Text(track.title, color = theme.colors.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                     Text(track.breadcrumb, color = theme.colors.text.copy(alpha = 0.55f), fontSize = 12.sp)
                 }
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(Color.Transparent)
-                        .padding(horizontal = 13.dp, vertical = 6.dp)
-                ) {
-                    Text(track.languageCode, color = theme.colors.text.copy(alpha = 0.6f), fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
-                }
+                components.global.LanguageChip(track.languageCode, "Audio and text language: ${track.languageCode}", height = 32.dp, onClick = onLanguageClick)
             }
 
             Spacer(Modifier.height(16.dp))

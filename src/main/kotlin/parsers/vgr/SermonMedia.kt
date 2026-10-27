@@ -4,6 +4,7 @@ import client
 import db.controller.table.Languages.getCurrentTable
 import defaultHeaders
 import loadData
+import saveData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -27,6 +28,13 @@ object SermonMedia {
     /** The sermon's 2-letter table language, falling back to the language picked in settings. */
     private fun languageTag(sermon: Sermon): String =
         sermon.language.ifEmpty { loadData<UserInterfaceSettings>("ui_settings")?.currentTableLanguage ?: "en" }
+
+    /** Every folder sermon audio is kept in: The Table's per-language folders and ~/TheGuide. */
+    fun mediaRoots(): List<File> {
+        val base = File(System.getProperty("user.home"), if (os.contains("win")) "Music/MessageAudio" else "Music/org.branham.thetable.macos")
+        return (base.listFiles()?.map { File(it, "Sermons") }?.filter { it.isDirectory } ?: emptyList()) +
+            listOf(File(System.getProperty("user.home"), "TheGuide")).filter { it.isDirectory }
+    }
 
     private fun mediaDir(lang: String): File {
         val dr = if(os.contains("win")) "Music/MessageAudio/${lang}/Sermons" else "Music/org.branham.thetable.macos/${lang}/Sermons"
@@ -115,6 +123,8 @@ object SermonMedia {
                 }
             }
             if (!part.renameTo(target)) throw IOException("Couldn't save ${target.name}")
+            // remembered so Saved › Downloads can tell our files from other apps' copies in the same folder
+            saveData("guide_downloads", HashSet(loadData<HashSet<String>>("guide_downloads") ?: hashSetOf()).apply { add(target.absolutePath) })
         } finally {
             part.delete()
         }

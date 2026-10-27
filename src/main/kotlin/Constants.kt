@@ -4,4 +4,4 @@ object dbNames {
     const val REPO: String = "guide"
 }
 
-const val APP_VERSION = "v1.0.0"
+// APP_VERSION is generated from appVersion in build.gradle.kts

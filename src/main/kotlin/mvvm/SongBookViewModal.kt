@@ -41,9 +41,21 @@ class SongBookViewModal: ViewModel(), ProjectionViewModel {
         if (hasInitialised) return;
         hasInitialised = true
         _songBooks.value = loadBooks()
-        _currentBook.value = _songBooks.value.first()
-        _songs.value = loadSongsFrom(_songBooks.value.first())
-        _currentSong.value = _songs.value.first()
+        // no song books installed yet: Songs shows its empty screen instead of crashing
+        _currentBook.value = _songBooks.value.firstOrNull()
+        _songs.value = _currentBook.value?.let { loadSongsFrom(it) } ?: emptyList()
+        _currentSong.value = _songs.value.firstOrNull()
+    }
+
+    /** Re-reads the books after the Workshop adds, imports or deletes one; keeps the current book and song when they still exist. */
+    fun refreshBooks(selectId: String? = null) {
+        hasInitialised = true
+        _songBooks.value = loadBooks()
+        val book = _songBooks.value.firstOrNull { it.id == selectId }
+            ?: _songBooks.value.firstOrNull { it.id == _currentBook.value?.id } ?: _songBooks.value.firstOrNull()
+        _currentBook.value = book
+        _songs.value = book?.let { loadSongsFrom(it) } ?: emptyList()
+        _currentSong.value = _songs.value.firstOrNull { it.id == _currentSong.value?.id } ?: _songs.value.firstOrNull()
     }
 
     fun loadBooks(): List<IProviderStats> {

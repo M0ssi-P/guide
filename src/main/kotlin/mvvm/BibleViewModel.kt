@@ -1,5 +1,7 @@
 package mvvm
 
+import activity.ActivityKind
+import activity.ActivityLog
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.getValue
@@ -116,6 +118,13 @@ class BibleViewModel : ViewModel(), ProjectionViewModel {
         ShareViewModels.currentChapter = chapter
         saveData("current-bible-chapter", chapter)
         loadContent(currentVersion, chapter)
+        if (chapter != null) {
+            val book = currentBook?.human ?: chapter.usfm.substringBefore(".")
+            ActivityLog.record(
+                ActivityKind.BIBLE, "Read $book ${chapter.human}", currentVersion?.localAbbreviation ?: "Bible",
+                "bible:${chapter.usfm}", "Continue"
+            )
+        }
     }
 
     fun loadBook() {
@@ -132,6 +141,20 @@ class BibleViewModel : ViewModel(), ProjectionViewModel {
         }
 
         putCurrentBook(currentVersion?.books?.find { it.usfm == "GEN" })
+    }
+
+    /** Reads the same book and chapter in [version], which may be in another language. */
+    fun switchVersion(version: IBibleVersion) {
+        val usfm = currentChapter?.usfm
+        val otherLanguage = version.language.tag != currentLanguage?.tag
+        putCurrentVersion(version)
+        if (otherLanguage) putCurrentLanguage(version.language)
+        val book = version.books?.find { it.usfm == usfm?.substringBefore(".") } ?: version.books?.firstOrNull()
+        putCurrentBook(book)
+        viewModelScope.launch {
+            if (otherLanguage) loadVersions(version.language.tag)
+            putCurrentChapter(book?.chapters?.find { it.usfm == usfm } ?: book?.chapters?.firstOrNull { it.human == "1" })
+        }
     }
 
     fun onChapterClicked(chapter: IBibleVersion.Chapter?) {

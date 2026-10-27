@@ -24,7 +24,7 @@ import java.io.File
 import javax.imageio.ImageIO
 
 @Composable
-fun AsyncImageFromFile(file: File, isThumbnail: Boolean = true) {
+fun AsyncImageFromFile(file: File, isThumbnail: Boolean = true, contentScale: ContentScale = ContentScale.Crop) {
     val bitmapState = remember(file.path) { mutableStateOf<ImageBitmap?>(null) }
 
     LaunchedEffect(file.path) {
@@ -68,7 +68,7 @@ fun AsyncImageFromFile(file: File, isThumbnail: Boolean = true) {
             bitmap = bmp,
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = contentScale
         )
     }
 }

@@ -5,6 +5,12 @@ sealed class Screen(route: String) {
     object Saved: Screen("/saved")
     object MyActivity: Screen("/activity")
     object Setting: Screen("/setting")
+    object ThisWeek: Screen("/thisweek")
+    object LetterArchive: Screen("/letters")
+    object Projection: Screen("/projection")
+    object Listener: Screen("/listener")
+    object SongWorkshop: Screen("/workshop")
+    data class Letter(val id: String): Screen("/letter/$id")
     data class Library(
         val page: LibraryScreen
     ): Screen("/library")
@@ -30,6 +36,12 @@ fun Screen.fullRoute(): String = when (this) {
     Screen.Saved -> "/saved"
     Screen.MyActivity -> "/activity"
     Screen.Setting -> "/setting"
+    Screen.ThisWeek -> "/thisweek"
+    Screen.LetterArchive -> "/letters"
+    Screen.Projection -> "/projection"
+    Screen.Listener -> "/listener"
+    Screen.SongWorkshop -> "/workshop"
+    is Screen.Letter -> "/letter/${id}"
     is Screen.Library -> "/library/${page}"
 }
 

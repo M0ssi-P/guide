@@ -1,5 +1,14 @@
 package ui.screens.table
 
+import ui.screens.reading.ReadingPrefs
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.round
+import androidx.compose.ui.window.Popup
+import components.global.rise
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,7 +34,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import activity.ActivityLog
+import activity.SavedSource
+import activity.SavedStore
+import activity.SavedTarget
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.composables.play
+import kotlinx.coroutines.delay
+import navigation.LocalTabs
+import navigation.Screen
+import org.jetbrains.jewel.foundation.modifier.onHover
+import parsers.vgr.models.Sermon
+import presentation.DeckItem
+import presentation.DeckSource
+import presentation.ProjectionDeck
+import ui.screens.projection.deckItems
+import ui.screens.saved.SaveToolbar
 import components.global.DropCapParagraph
 import components.global.NumberedParagraph
 import ui.theme.LocalTheme
@@ -56,14 +87,22 @@ enum class SectionState { DONE, CURRENT, UPCOMING }
 fun StudyReadView(
     document: StudyDocument,
     modifier: Modifier = Modifier,
-    initialPage: Int = 0
+    initialPage: Int = 0,
+    sermon: Sermon? = null,
+    prefs: ReadingPrefs? = null
 ) {
     val theme = LocalTheme.current
     val scope = rememberCoroutineScope()
     val blocks = remember(document.sections) { sectionsToBlocks(document.sections) }
+    val numbered = remember(blocks) { blocks.filterIsInstance<ContentBlock.ParagraphBlock>().filter { it.number != null && !it.isQuestion } }
+    // pages already counted towards "paragraphs read" for this sermon, so turning back doesn't count twice
+    val counted = remember(sermon?.stringId) { mutableSetOf<Int>() }
 
-    val bodyStyle = TextStyle(fontSize = 19.sp, lineHeight = 34.sp)
-    val headingStyle = TextStyle(fontSize = 19.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+    // the reading settings change size, spacing and typeface; pages are re-measured with them
+    val bodySize = prefs?.size?.toFloat() ?: 19f
+    val bodyLh = prefs?.let { it.size * it.spacing.lh } ?: 34f
+    val bodyStyle = TextStyle(fontSize = bodySize.sp, lineHeight = bodyLh.sp, fontFamily = prefs?.family)
+    val headingStyle = TextStyle(fontSize = bodySize.sp, lineHeight = bodyLh.sp, fontWeight = FontWeight.Bold, fontFamily = prefs?.family)
 
     Box(
         modifier = modifier
@@ -93,6 +132,10 @@ fun StudyReadView(
                     isFirstPage = index == 0,
                     pageNumber = index + 1,
                     pageCount = pages.size,
+                    sermon = sermon,
+                    numbered = numbered,
+                    counted = counted,
+                    prefs = prefs,
                     onPrevPage = { pager.previous(scope) },
                     onNextPage = { pager.next(scope) }
                 )
@@ -108,11 +151,23 @@ private fun StudyPageContent(
     isFirstPage: Boolean,
     pageNumber: Int,
     pageCount: Int,
+    sermon: Sermon?,
+    numbered: List<ContentBlock.ParagraphBlock>,
+    counted: MutableSet<Int>,
+    prefs: ReadingPrefs?,
     onPrevPage: () -> Unit,
     onNextPage: () -> Unit
 ) {
     val theme = LocalTheme.current
     val scrollState = remember(pageNumber) { ScrollState(0) }
+
+    // a page left open for a few seconds counts as read; the last page finishes the sermon
+    LaunchedEffect(pageNumber, sermon?.stringId) {
+        if (sermon == null) return@LaunchedEffect
+        delay(5000)
+        if (counted.add(pageNumber)) ActivityLog.paragraphsRead(page.blocks.count { it is ContentBlock.ParagraphBlock })
+        if (pageNumber == pageCount) ActivityLog.finishedSermon(sermon.stringId, sermon.title, sermon.dateCode)
+    }
 
     Row(
         modifier = Modifier
@@ -130,7 +185,7 @@ private fun StudyPageContent(
                 MetaRow(document.title, document.sessionLabel)
                 PullQuote(document.pullQuote)
             }
-            VerseBody(page.blocks, isFirstPage = isFirstPage)
+            VerseBody(page.blocks, isFirstPage = isFirstPage, sermon = sermon, numbered = numbered, prefs = prefs)
             Spacer(Modifier.weight(1f))
             PageFooter(
                 pageNumber = pageNumber,
@@ -213,7 +268,7 @@ private fun PullQuote(quote: String) {
 }
 
 @Composable
-private fun VerseBody(blocks: List<ContentBlock>, isFirstPage: Boolean) {
+private fun VerseBody(blocks: List<ContentBlock>, isFirstPage: Boolean, sermon: Sermon?, numbered: List<ContentBlock.ParagraphBlock>, prefs: ReadingPrefs?) {
     val theme = LocalTheme.current
     val dropCapIndex = if (isFirstPage) {
         blocks.indexOfFirst { it is ContentBlock.ParagraphBlock && it.isFirst }
@@ -232,26 +287,34 @@ private fun VerseBody(blocks: List<ContentBlock>, isFirstPage: Boolean) {
 //                    )
                 }
                 is ContentBlock.ParagraphBlock -> {
-                    val bodyColor = if (block.isQuestion) {
-                        theme.colors.text.copy(alpha = 0.72f)
-                    } else {
-                        theme.colors.text.copy(alpha = 0.86f)
-                    }
+                    val base = prefs?.theme?.fgC ?: theme.colors.text
+                    val bodyColor = if (block.isQuestion) base.copy(alpha = 0.72f) else base.copy(alpha = 0.86f)
+                    val size = prefs?.size?.sp ?: 19.sp
+                    val lh = prefs?.let { (it.size * it.spacing.lh).sp } ?: 34.sp
 
                     if (i == dropCapIndex && block.text.isNotEmpty()) {
                         DropCapParagraph(
                             block.text,
                             bodyColor = bodyColor,
+                            bodyFontSize = size,
+                            bodyLineHeight = lh,
+                            fontFamily = prefs?.family ?: ui.theme.Fraunces,
                         )
                     } else {
                         if (block.number != null && !block.isQuestion) {
-                            NumberedParagraph(
-                                number = block.number,
-                                text = block.text,
-                                numColor = theme.colors.primary.copy(alpha = 0.7f),
-                                bodyColor = bodyColor,
-                                modifier = Modifier.widthIn(max = 640.dp)
-                            )
+                            SavableParagraph(block, sermon, numbered) {
+                                if (prefs?.numbers == false) Text(block.text, color = bodyColor, fontSize = size, lineHeight = lh, fontFamily = prefs.family, modifier = Modifier.widthIn(max = 640.dp))
+                                else NumberedParagraph(
+                                    number = block.number,
+                                    text = block.text,
+                                    numColor = prefs?.theme?.accentC ?: theme.colors.primary.copy(alpha = 0.7f),
+                                    bodyColor = bodyColor,
+                                    bodyFontSize = size,
+                                    bodyLineHeight = lh,
+                                    modifier = Modifier.widthIn(max = 640.dp),
+                                    fontFamily = prefs?.family
+                                )
+                            }
                         } else {
                             Text(
                                 block.text,
@@ -381,5 +444,61 @@ private fun ReadAlongWaveform() {
             fontSize = 11.sp,
             modifier = Modifier.padding(top = 12.dp)
         )
+    }
+}
+/** A numbered paragraph that shows its highlight and, at the pointer, the highlight / bookmark / note / project tools. */
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+internal fun SavableParagraph(
+    block: ContentBlock.ParagraphBlock,
+    sermon: Sermon?,
+    numbered: List<ContentBlock.ParagraphBlock>,
+    content: @Composable () -> Unit
+) {
+    if (sermon == null || block.number == null) return content()
+    val nav = LocalTabs.current.current
+    val highlights by SavedStore.highlights
+    // the picker opens where the pointer first rests and stays put, so it can be reached;
+    // it closes 250ms after the pointer has left both the paragraph and the picker
+    var anchor by remember { mutableStateOf<IntOffset?>(null) }
+    var overParagraph by remember { mutableStateOf(false) }
+    var overPicker by remember { mutableStateOf(false) }
+    LaunchedEffect(overParagraph, overPicker) { if (!overParagraph && !overPicker) { delay(250); anchor = null } }
+    val density = LocalDensity.current
+    val lift = with(density) { 48.dp.roundToPx() }
+    val target = remember(sermon.stringId, block.number) { SavedTarget(SavedSource.TABLE, sermon = sermon.copy(sections = null), number = block.number) }
+    val tone = highlights.firstOrNull { it.target.key == target.key }?.tone
+    val tint by animateColorAsState(tone?.color?.copy(alpha = 0.16f) ?: Color.Transparent, tween(250))
+    val ref = "${sermon.title} · ${sermon.dateCode} · ¶ ${block.number}"
+    Box(
+        Modifier.widthIn(max = 680.dp)
+            .onPointerEvent(PointerEventType.Enter) { overParagraph = true }
+            .onPointerEvent(PointerEventType.Exit) { overParagraph = false }
+            .onPointerEvent(PointerEventType.Move) { e -> if (anchor == null) anchor = e.changes.first().position.round() }
+            .onPointerEvent(PointerEventType.Press) { e -> anchor = e.changes.first().position.round() }
+    ) {
+        Box(Modifier.clip(RoundedCornerShape(10.dp)).background(tint).padding(horizontal = 6.dp, vertical = 2.dp)) { content() }
+        anchor?.let { at ->
+            Popup(offset = IntOffset((at.x - lift * 2).coerceAtLeast(0), at.y - lift), onDismissRequest = { anchor = null }) {
+                Box(Modifier.rise(distance = 6.dp).onPointerEvent(PointerEventType.Enter) { overPicker = true }.onPointerEvent(PointerEventType.Exit) { overPicker = false }) {
+                    SaveToolbar(
+                        target = target,
+                        text = block.text.text,
+                        ref = ref,
+                        title = sermon.title,
+                        meta = "The Table · ${sermon.dateCode} · \u00B6 ${block.number} of ${numbered.size}",
+                        progress = (numbered.indexOf(block) + 1f) / numbered.size.coerceAtLeast(1),
+                        onProject = {
+                            val deck = sermon.deckItems()
+                            ProjectionDeck.load(
+                                DeckSource.TABLE, sermon.title, "${sermon.dateCode} · ${sermon.location}",
+                                deck, deck.indexOfFirst { it.number == block.number }.coerceAtLeast(0), sermon.copy(sections = null)
+                            )
+                            nav.navigate(Screen.Projection)
+                        }
+                    )
+                }
+            }
+        }
     }
 }
