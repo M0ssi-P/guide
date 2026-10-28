@@ -23,14 +23,16 @@ class GlobalPlayerViewModel: ViewModel() {
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying
 
-    private val _url = MutableStateFlow<String?>(null)
-    val url: StateFlow<String?> = _url
+    // the counter makes choosing the same file again (e.g. after it ended) still load it
+    private val _url = MutableStateFlow<Pair<String, Int>?>(null)
+    val url: StateFlow<Pair<String, Int>?> = _url
+    private var loads = 0
 
     private val _nowPlaying = MutableStateFlow<NowPlaying?>(null)
     val nowPlaying: StateFlow<NowPlaying?> = _nowPlaying
 
     private fun load(url: String) {
-        _url.value = url
+        _url.value = url to ++loads
     }
 
     fun loadNowPlaying(nowPlaying: NowPlaying) {
@@ -71,9 +73,9 @@ fun GlobalPlayerProvider(player: AuraPlayer, content: @Composable () -> Unit) {
     val mediaUrl by localPlayer.url.collectAsState()
 
     LaunchedEffect(mediaUrl) {
-        mediaUrl?.let {
-            println("MediaUrl: $mediaUrl")
-            player.loadWhenReady(it)
+        mediaUrl?.let { (url, _) ->
+            println("MediaUrl: $url")
+            player.loadWhenReady(url)
         }
     }
 

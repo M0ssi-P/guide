@@ -181,12 +181,12 @@ private fun ListenerPage() {
                     ) {
                         Box(Modifier.size(7.dp).clip(CircleShape).background(lc))
                         Text(
-                            if (drop) "Holding position" else if (src == null) "Following the text" else if (lag < 1) "In sync · %.1fs behind".format(lag) else "%.1fs behind host".format(lag),
+                            if (drop) "Holding position" else if (!ListenSession.following) "Not following · press Resync" else if (src == null) "Following the text" else if (lag < 1) "In sync · %.1fs behind".format(lag) else "%.1fs behind host".format(lag),
                             color = lc, fontSize = 12.sp, fontWeight = FontWeight.SemiBold
                         )
                     }
                     if (ListenSession.debug) Text(ListenSession.debugLine, color = StageMuted, fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
-                    StageGhost("Resync") { ListenSession.reconnect() }
+                    StageGhost("Resync") { ListenSession.resync() }
                     Box {
                         StageGhost("${ListenSession.lang?.name ?: "Language"} ▾") { langMenu = !langMenu }
                         DropdownMenu(langMenu, { langMenu = false }, Modifier.width(280.dp).background(StagePanel).heightIn(max = 420.dp)) {

@@ -250,7 +250,7 @@ fun TableDesktopScreen(modifier: Modifier = Modifier) {
                                 }
                                 when {
                                     nowPlaying?.id == sermon.stringId -> {
-                                        engine.setPause(!state.playing)
+                                        engine.setPause(engine.playerState.value == PlayerState.PLAYING)
                                         state.playing = playerState == PlayerState.PLAYING
                                     }
                                     else -> scope.launch {

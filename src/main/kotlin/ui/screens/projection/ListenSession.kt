@@ -94,6 +94,8 @@ object ListenSession {
     fun connect(h: LiveHostInfo) {
         if (connection?.host?.address == h.address && connected) return
         connection?.close()
+        // another host: nothing of the last session carries over, and the language step runs for its sermon
+        if (host?.address != h.address) clearSession()
         host = h
         connection = LiveConnection(h, onState = { state = it; receivedAt = System.currentTimeMillis(); connected = true }, onPong = { rtt = it }, onClosed = { connected = false }).also { it.connect() }
     }
@@ -105,10 +107,30 @@ object ListenSession {
         connection?.close()
         connection = null
         connected = false
-        listening = false
-        state = null
+        clearSession()
         host = null
     }
+
+    private fun clearSession() {
+        listening = false
+        state = null
+        prepared = null
+        english = null
+        useEnglishAudio = false
+        lastResync = -1
+        lastHostAt = 0
+        lastLoadedId = null
+        following = true
+        audioLoaded()
+    }
+
+    /** The audio id last loaded for this session; a different one means the session, sermon or language changed. */
+    internal var lastLoadedId: String? = null
+    /** False once the listener plays something else; Resync turns following back on. */
+    var following by mutableStateOf(true)
+
+    /** The Resync button: reconnect and take the live audio back. */
+    fun resync() { lastLoadedId = null; following = true; reconnect() }
 
     /** The audio the listener hears and the timed sentences that belong to it. */
     fun audioSource(): Prepared? = when {
@@ -230,9 +252,13 @@ object ListenSession {
     /** A 150ms fade out, the jump, and a fade back in, so a jump at a boundary doesn't click. */
     private suspend fun fadeSeek(engine: AuraPlayer, to: Double) {
         val v = engine.volume.value
-        for (k in 4 downTo 0) { engine.setVolume(v * k / 5); delay(30) }
-        engine.seek(to)
-        for (k in 1..5) { delay(30); engine.setVolume(v * k / 5) }
+        try {
+            for (k in 4 downTo 0) { engine.setVolume(v * k / 5); delay(30) }
+            engine.seek(to)
+            for (k in 1..4) { delay(30); engine.setVolume(v * k / 5) }
+        } finally {
+            engine.setVolume(v) // also when the page closes mid-fade
+        }
     }
 
     /** A new audio was loaded: re-apply the host's play state and let the first sync seek straight away. */
@@ -263,10 +289,22 @@ fun ListenSync() {
             val s = ListenSession.state
             if (src != null && s != null) {
                 val audioId = "live:${s.code}:${src.audio}"
-                if (globalPlayer.nowPlaying.value?.id != audioId) {
-                    globalPlayer.loadNowPlaying(GlobalPlayerViewModel.NowPlaying(audioId, s.title, "Live · ${s.code}", GlobalPlayerType.LIVE, true, 0L, src.audio!!))
-                    ListenSession.audioLoaded()
-                } else ListenSession.syncStep(engine, prefs.value.offsetMs)
+                when {
+                    // the host moved to another sermon: get this language's text and audio for it
+                    src.sermon != null && !src.sermon.dateCode.equals(s.code, true) && s.code.isNotBlank() -> ListenSession.lang?.let { l ->
+                        ListenSession.prepared = prepareLanguage(l, s.code)
+                        ListenSession.english = null
+                    }
+                    !ListenSession.following -> {}
+                    globalPlayer.nowPlaying.value?.id == audioId -> ListenSession.syncStep(engine, prefs.value.offsetMs)
+                    // something else is playing that we didn't load for this session: the listener chose it
+                    audioId == ListenSession.lastLoadedId -> ListenSession.following = false
+                    else -> {
+                        globalPlayer.loadNowPlaying(GlobalPlayerViewModel.NowPlaying(audioId, s.title, "Live · ${s.code}", GlobalPlayerType.LIVE, true, 0L, src.audio!!))
+                        ListenSession.lastLoadedId = audioId
+                        ListenSession.audioLoaded()
+                    }
+                }
             } else if (ListenSession.textOnly && engine.playerState.value == PlayerState.PLAYING && globalPlayer.nowPlaying.value?.id?.startsWith("live:") == true) {
                 engine.setPause(true)
             }
