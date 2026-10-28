@@ -42,6 +42,8 @@ data class LiveState(
     /** The live Table sentence as its segment index [section, block, sentence], and how much of it is spoken. */
     val sentence: List<Int>? = null,
     val progress: Float = 0f,
+    /** Seconds the host's recording takes for [sentence], so a listener can say it in the same time. 0 = unknown. */
+    val span: Double = 0.0,
     /** Seconds into the host's own recording; only meaningful to someone playing the same file. */
     val position: Double = 0.0,
     val playing: Boolean = false,
@@ -77,6 +79,9 @@ object LiveHost {
     private var server: WsServer? = null
     private var startedAt = 0L
 
+    /** Set by the Projection screen: builds the current state on demand, every push. */
+    @Volatile var source: (() -> LiveState)? = null
+
     fun update(next: LiveState) { state = next.copy(resync = state.resync, hostName = state.hostName) }
     fun resyncEveryone() { state = state.copy(resync = state.resync + 1) }
 
@@ -104,6 +109,7 @@ object LiveHost {
         // push the position five times a second
         thread(isDaemon = true, name = "live-push") {
             while (running.value) {
+                source?.let { f -> runCatching { update(f()) } }
                 server?.broadcast(gson.toJsonTree(state).asJsonObject.apply { addProperty("t", "state") }.toString())
                 Thread.sleep(200)
             }

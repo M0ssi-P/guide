@@ -32,6 +32,7 @@ repositories {
 }
 
 dependencies {
+    testImplementation(kotlin("test"))
     // Note, if you develop a library, you should use compose.desktop.common.
     // compose.desktop.currentOs should be used in launcher-sourceSet
     // (in a separate module for demo project and in testMain).
@@ -94,6 +95,8 @@ compose.desktop {
 }
 
 tasks {
+    test { useJUnitPlatform() }
+
     withType<JavaExec> {
         afterEvaluate {
             javaLauncher = project.javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(jdkLevel) }

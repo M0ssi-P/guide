@@ -48,6 +48,18 @@ fun DeckItem.sentences(): List<DeckItem> {
     }.ifEmpty { listOf(this) }
 }
 
+/** True when the sentences carry recording timings (a few untimed ones are fine). */
+fun isTimed(items: List<DeckItem>) = items.isNotEmpty() && items.count { it.start != null } >= items.size * 0.9
+
+/** The sentence whose start has passed at [time] seconds, and how far into it by its own start/end. */
+fun locateTime(items: List<DeckItem>, time: Double, duration: Double): Pair<Int, Float> {
+    val i = items.indexOfLast { it.start != null && it.start <= time }.coerceAtLeast(0)
+    val it = items.getOrNull(i) ?: return 0 to 0f
+    val start = it.start ?: time
+    val end = it.end ?: items.drop(i + 1).firstNotNullOfOrNull { n -> n.start } ?: duration
+    return i to ((time - start) / (end - start).coerceAtLeast(0.001)).toFloat().coerceIn(0f, 1f)
+}
+
 /** Where in paragraph [number] the reader is, 0..1 by characters, given the live sentence and how far into it. */
 fun paragraphFraction(items: List<DeckItem>, index: Int, progress: Float): Float {
     val cur = items.getOrNull(index) ?: return 0f
@@ -107,6 +119,8 @@ fun FocusReader(
     glow: Boolean = true,
     rest: Color = Color(0xFFFFF6E2),
     under: ((Int) -> String?)? = null,
+    /** Projector: the live line is bigger. Listener: one size for all, only colour changes, so lines never resize. */
+    grow: Boolean = true,
 ) {
     val list = rememberLazyListState()
     // audio updates arrive a few times a second; glide between them so the glow moves by character
@@ -128,7 +142,7 @@ fun FocusReader(
         ) {
             itemsIndexed(items) { i, item ->
                 val d = abs(i - index)
-                val size by animateFloatAsState(if (d == 0) sizes.first else if (d == 1) sizes.second else sizes.third, tween(500))
+                val size by animateFloatAsState(if (!grow || d == 0) sizes.first else if (d == 1) sizes.second else sizes.third, tween(500))
                 androidx.compose.foundation.layout.Column(Modifier.fillMaxWidth(), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
                     Text(
                         when {
@@ -142,8 +156,8 @@ fun FocusReader(
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    if (i == index) under?.invoke(i)?.let {
-                        Text(it, color = Color(0xFF8A93A6), fontSize = 15.sp, lineHeight = 22.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
+                    under?.invoke(i)?.let {
+                        Text(it, color = Color(0xFF8A93A6).copy(alpha = if (i == index) 1f else 0.45f), fontSize = 15.sp, lineHeight = 22.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
                     }
                 }
             }

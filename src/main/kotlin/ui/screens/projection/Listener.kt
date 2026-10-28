@@ -129,14 +129,7 @@ private fun ListenerPage() {
     // the sentence on screen: from the audio being heard when it is this text's own recording, else from the host
     val ownAudio = src != null && src === prepared && nowPlaying?.id?.startsWith("live:") == true && playerState == PlayerState.PLAYING
     val (idx, prog) = when {
-        ownAudio && items.any { it.start != null } -> {
-            val now = currentTime - p.offsetMs / 1000.0
-            val i = items.indexOfLast { it.start != null && it.start <= now }.coerceAtLeast(0)
-            val it = items[i]
-            val start = it.start ?: now
-            val end = it.end ?: items.drop(i + 1).firstNotNullOfOrNull { n -> n.start } ?: (now + 1)
-            i to ((now - start) / (end - start).coerceAtLeast(0.001)).toFloat().coerceIn(0f, 1f)
-        }
+        ownAudio && presentation.isTimed(items) -> presentation.locateTime(items, currentTime - p.offsetMs / 1000.0, duration)
         s != null -> ListenSession.locateIn(items, s)
         else -> 0 to 0f
     }
@@ -192,6 +185,7 @@ private fun ListenerPage() {
                             color = lc, fontSize = 12.sp, fontWeight = FontWeight.SemiBold
                         )
                     }
+                    if (ListenSession.debug) Text(ListenSession.debugLine, color = StageMuted, fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
                     StageGhost("Resync") { ListenSession.reconnect() }
                     Box {
                         StageGhost("${ListenSession.lang?.name ?: "Language"} ▾") { langMenu = !langMenu }
@@ -251,7 +245,7 @@ private fun ListenerPage() {
                         ListenSession.mode == "Center" -> {
                             FocusReader(
                                 items, idx, prog, p.lit(), Modifier.fillMaxSize().padding(vertical = 30.dp),
-                                family = p.family, sizes = Triple(p.size * 1.7f, p.size * 0.9f, p.size * 0.72f), fg = t.fgC, glow = p.glow, rest = p.lit(),
+                                family = p.family, sizes = Triple(p.size * 1.3f, p.size * 1.3f, p.size * 1.3f), fg = t.fgC, glow = p.glow, rest = p.lit(), grow = false,
                                 under = { englishFor(items.getOrNull(it)) }
                             )
                             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to t.bgC, 0.25f to Color.Transparent, 0.75f to Color.Transparent, 1f to t.bgC)))

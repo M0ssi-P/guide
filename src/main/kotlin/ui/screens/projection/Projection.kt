@@ -244,19 +244,16 @@ fun Projection() {
     val playing = isThis && playerState == PlayerState.PLAYING
     val shares = remember(deck.items) { cumulativeShares(deck.items) }
     // Table segments carry start/end seconds; a few untimed sentences shouldn't throw the whole deck back to the estimate
-    val timed = remember(deck.items) { deck.items.isNotEmpty() && deck.items.count { it.start != null } >= deck.items.size * 0.9 }
+    val timed = remember(deck.items) { presentation.isTimed(deck.items) }
 
     // the recording moves the slides while it plays
     LaunchedEffect(currentTime, playing, deck.followAudio) {
         if (!playing || !deck.followAudio || duration <= 0) return@LaunchedEffect
         if (timed) {
             // segment timings from the data: the sentence whose start has passed
-            val i = deck.items.indexOfLast { it.start != null && it.start <= currentTime }.coerceAtLeast(0)
-            val it = deck.items[i]
-            val start = it.start ?: currentTime
-            val end = it.end ?: deck.items.drop(i + 1).firstNotNullOfOrNull { n -> n.start } ?: duration
+            val (i, p) = presentation.locateTime(deck.items, currentTime, duration)
             deck.index = i
-            deck.progress = ((currentTime - start) / (end - start).coerceAtLeast(0.001)).toFloat().coerceIn(0f, 1f)
+            deck.progress = p
             return@LaunchedEffect
         }
         val f = (currentTime / duration).toFloat()
@@ -267,21 +264,26 @@ fun Projection() {
         deck.progress = ((f - start) / (shares[i] - start).coerceAtLeast(1e-6f)).coerceIn(0f, 1f)
     }
 
-    // live listeners read this
-    LaunchedEffect(live) {
-        while (live) {
-            LiveHost.update(
-                LiveState(
-                    title = deck.title, code = deck.sermon?.dateCode ?: "", location = deck.sermon?.location ?: "",
-                    paragraph = if (deck.source == DeckSource.TABLE) deck.current?.number else null,
-                    fraction = presentation.paragraphFraction(deck.items, deck.index, deck.progress),
-                    sentence = deck.current?.key,
-                    progress = deck.progress,
-                    position = engine.currentTime.value,
-                    playing = deck.sermon != null && nowPlaying?.id == deck.sermon?.stringId && engine.playerState.value == PlayerState.PLAYING,
-                )
+    // live listeners read this. It keeps working after leaving this screen, and while the sermon plays the place comes
+    // from the host's own audio clock, so moving the slides by hand doesn't drag listeners along.
+    LaunchedEffect(Unit) {
+        LiveHost.source = {
+            val audio = deck.sermon != null && globalPlayer.nowPlaying.value?.id == deck.sermon?.stringId
+            val t = engine.currentTime.value
+            val items = deck.items
+            val (i, p) = if (audio && presentation.isTimed(items)) presentation.locateTime(items, t, engine.duration.value) else deck.index to deck.progress
+            val cur = items.getOrNull(i)
+            LiveState(
+                title = deck.title, code = deck.sermon?.dateCode ?: "", location = deck.sermon?.location ?: "",
+                paragraph = if (deck.source == DeckSource.TABLE) cur?.number else null,
+                fraction = presentation.paragraphFraction(items, i, p),
+                sentence = cur?.key,
+                progress = p,
+                span = if (audio) cur?.let { c -> val st = c.start ?: return@let null; (c.end ?: items.getOrNull(i + 1)?.start)?.minus(st) } ?: 0.0 else 0.0,
+                position = t,
+                playing = audio && engine.playerState.value == PlayerState.PLAYING,
+                language = deck.sermon?.language ?: "",
             )
-            delay(300)
         }
     }
 
