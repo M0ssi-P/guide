@@ -129,7 +129,11 @@ private fun ListenerPage() {
     // the sentence on screen: from the audio being heard when it is this text's own recording, else from the host
     val ownAudio = src != null && src === prepared && nowPlaying?.id?.startsWith("live:") == true && playerState == PlayerState.PLAYING
     val (idx, prog) = when {
-        ownAudio && presentation.isTimed(items) -> presentation.locateTime(items, currentTime - p.offsetMs / 1000.0, duration)
+        ownAudio && presentation.isTimed(items) -> {
+            // the words follow this listener's own audio, through timings stretched to its recording if needed
+            val k = live.timeScale(items.mapNotNull { it.end }.maxOrNull(), duration)
+            presentation.locateTime(items, (currentTime - p.offsetMs / 1000.0) / k, duration / k)
+        }
         s != null -> ListenSession.locateIn(items, s)
         else -> 0 to 0f
     }
@@ -181,7 +185,7 @@ private fun ListenerPage() {
                     ) {
                         Box(Modifier.size(7.dp).clip(CircleShape).background(lc))
                         Text(
-                            if (drop) "Holding position" else if (!ListenSession.following) "Not following · press Resync" else if (src == null) "Following the text" else if (lag < 1) "In sync · %.1fs behind".format(lag) else "%.1fs behind host".format(lag),
+                            if (drop) "Holding position" else if (!ListenSession.following) "Not following · press Resync" else if (src == null) "Following the text" else if (lag < 1) "In sync · %.1fs behind".format(lag) else if (lag > 20) "%d min behind the host".format(((lag + 30) / 60).toInt().coerceAtLeast(1)) else "%.1fs behind host".format(lag),
                             color = lc, fontSize = 12.sp, fontWeight = FontWeight.SemiBold
                         )
                     }

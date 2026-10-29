@@ -38,7 +38,7 @@ class LiveSyncTest {
     @Test fun slightlyBehindSpeedsUpButStaysInRange() {
         val a = at(0.5, ourTime = 3.6)
         assertIs<SyncAction.Play>(a)
-        assertEquals(MAX_RATE, a.rate, 1e-9)
+        assertEquals(MAX_RATE, a.rate, 1e-9) // needs 1.6×, capped at 1.5
     }
 
     @Test fun aheadHoldsOnlyAtASentenceBoundary() {
@@ -49,9 +49,13 @@ class LiveSyncTest {
     }
 
     @Test fun farBehindNeverSkipsItJustPlaysFaster() {
-        // listener 5s back in an earlier sentence, at a boundary or not: no jump, top speed until caught up
-        assertEquals(SyncAction.Play(MAX_RATE), at(0.5, ourTime = -0.9, currentStart = -1.0))
-        assertEquals(SyncAction.Play(MAX_RATE), at(0.5, ourTime = 0.0, currentStart = -1.0))
+        assertEquals(SyncAction.Play(MAX_RATE), at(0.5, ourTime = -1.0))
+        assertEquals(SyncAction.Play(MAX_RATE), at(0.5, ourTime = 2.0))
+    }
+
+    @Test fun inStepUsesTheRatioWithinTheNewCap() {
+        // the Swahili sentence takes 4/3 of the English one; 1.33× is inside 0.8–1.5
+        assertEquals(SyncAction.Play(4.0 / 3), at(0.5, ourTime = 4.0))
     }
 
     @Test fun ratesAlwaysInRange() {
@@ -69,4 +73,11 @@ class SameRecordingTest {
     @Test fun otherSermonMatchesBySentence() = assertEquals(false, sameRecording("en", "62-1014M", "en", "62-1014E"))
     // older hosts don't send their Table language
     @Test fun olderHostNeverUsesTheShortcut() = assertEquals(false, sameRecording("", "62-1014M", "en", "62-1014M"))
+}
+
+class TimeScaleTest {
+    // the real data: Swahili Table timings end at 97.1 min (English), the Swahili recording runs 127.3 min
+    @Test fun swahiliTimingsAreStretchedToTheSwahiliRecording() = assertEquals(7636.75 / 5825.36, timeScale(5825.36, 7636.75), 1e-9)
+    @Test fun timingsThatFitAreLeftAlone() = assertEquals(1.0, timeScale(5825.36, 5823.88))
+    @Test fun noTimingsNoScale() = assertEquals(1.0, timeScale(null, 7636.75))
 }

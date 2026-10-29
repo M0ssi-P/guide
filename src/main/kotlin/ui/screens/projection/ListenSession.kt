@@ -21,6 +21,7 @@ import live.LiveState
 import live.SyncAction
 import live.decideSync
 import live.sameRecording
+import live.timeScale
 import live.TableLang
 import loadData
 import parsers.vgr.SermonMedia
@@ -223,14 +224,16 @@ object ListenSession {
             lag = abs(e)
             if (jumpNext || resync || hostJumped || abs(e) > 2.0) SyncAction.Seek(target, fade = !jumpNext) else SyncAction.Play(1.0 + (e * 0.1).coerceIn(-0.05, 0.05))
         } else {
-            val place = placeIn(src, s, duration) ?: return
+            // stretch timings made for another recording (e.g. English timings in the Swahili Table) onto ours
+            val k = timeScale(src.items.mapNotNull { it.end }.maxOrNull(), duration)
+            val place = placeIn(src, s, duration / k)?.let { Place(it.target * k, it.start * k, it.end * k) } ?: return
             val ourLen = place.end - place.start
             val ratio = if (s.span > 0.05 && ourLen > 0.05) ourLen / s.span else 1.0
             val target = place.target + inFlight * ratio + offset
             lag = abs(target - ourTime)
             decideSync(
                 ourTime, target, place.end + offset, hostLeft = (1 - s.progress) * s.span,
-                baseRatio = ratio, currentStart = currentStart(src, ourTime - offset, duration) + offset, jumpNow = jumpNext || resync || hostJumped,
+                baseRatio = ratio, currentStart = currentStart(src, (ourTime - offset) / k, duration / k) * k + offset, jumpNow = jumpNext || resync || hostJumped,
             )
         }
         jumpNext = false

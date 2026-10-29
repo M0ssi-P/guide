@@ -9,9 +9,9 @@ sealed class SyncAction {
 }
 
 // mpv keeps the pitch when the speed changes (audio-pitch-correction), so this range still sounds natural.
-// 1.35 rather than 1.25 so a recording a third longer (Swahili 2h against English 1h30) can keep up without jumping.
+// Up to 1.5× so a recording much longer than the host's (Swahili against English) stays close.
 const val MIN_RATE = 0.80
-const val MAX_RATE = 1.35
+const val MAX_RATE = 1.5
 
 /**
  * Sentence-by-sentence alignment. All times are in the listener's own recording, except [hostLeft].
@@ -35,7 +35,7 @@ fun decideSync(
     return when {
         // ahead: we've finished the host's sentence (or more); wait at the boundary we just crossed, never mid-sentence
         ourTime >= sentenceEnd - 0.05 && error < -0.05 -> if (atBoundary) SyncAction.Hold else SyncAction.Play(MIN_RATE)
-        // behind: never skip words, just play faster until caught up
+        // behind: never skip words, play faster until caught up
         error > 1.5 -> SyncAction.Play(MAX_RATE)
         else -> SyncAction.Play(needed.coerceIn(MIN_RATE, MAX_RATE))
     }
@@ -48,3 +48,15 @@ fun decideSync(
 fun sameRecording(hostTableLanguage: String, hostCode: String, ourTableLanguage: String?, ourCode: String?): Boolean =
     hostTableLanguage.isNotBlank() && hostTableLanguage.equals(ourTableLanguage, true) &&
         hostCode.isNotBlank() && hostCode.equals(ourCode, true)
+
+/**
+ * Some languages' Table data carries the timings of the English recording (Swahili does: its sentences end at 97 min
+ * for "A Guide" while the Swahili recording runs 127 min). When the timings don't fit the recording being played,
+ * stretch them to it: returns recording length ÷ last timed end, or 1 when they already fit (within 3%).
+ * shortcut: a straight stretch, not true Swahili timings; replace once the data has real per-language timings.
+ */
+fun timeScale(lastTimedEnd: Double?, duration: Double): Double {
+    if (lastTimedEnd == null || lastTimedEnd <= 0 || duration <= 0) return 1.0
+    val k = duration / lastTimedEnd
+    return if (kotlin.math.abs(k - 1) > 0.03) k else 1.0
+}
