@@ -8,6 +8,7 @@ import saveData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import okHttpClient
 import okhttp3.Request
 import parsers.vgr.models.Sermon
@@ -101,6 +102,43 @@ object SermonMedia {
             ?.let { return@withContext it }
         val id = mediaFileId(sermon) ?: return@withContext null
         urlFor(id, 9, OmegaCatalog.M4A)
+    }
+
+    /** A VGR language id as a name for labels: the installed Table language's own name (e.g. "Kiswahili"). */
+    suspend fun languageName(languageId: Int): String? {
+        val iso = OmegaCatalog.get()?.languages?.entries?.firstOrNull { it.value == languageId }?.key ?: return null
+        return live.TableInstaller.installed().firstOrNull { it.iso3.equals(iso, true) }?.let { it.localName.ifBlank { it.name } }
+    }
+
+    /** The English recording of VGR sermon [sermonId] (catalog opus first): a file on this computer, else its stream link. */
+    suspend fun englishCompanion(sermonId: Int): String? = withContext(Dispatchers.IO) {
+        val cat = OmegaCatalog.get() ?: return@withContext null
+        val f = cat.find(sermonId, "eng", OmegaCatalog.OPUS) ?: cat.find(sermonId, "eng", OmegaCatalog.M4A) ?: return@withContext null
+        englishLocal(cat, f)?.absolutePath ?: runCatching { urlFor(f.fileId, f.mediaTypeId, f.fileTypeId) }.getOrNull()
+    }
+
+    private fun englishLocal(cat: OmegaCatalog.Parsed, f: OmegaFile): File? {
+        val dir = mediaDir("ENG")
+        val named = cat.englishName(f.sermonId, if (f.fileTypeId == OmegaCatalog.OPUS) "opus" else "m4a")?.let { File(dir, it) }
+        return named?.takeIf { it.isFile } ?: dir.listFiles { x -> x.isFile && x.length() == f.size }?.firstOrNull()
+    }
+
+    /**
+     * Downloads the English recording next to a translated one, so its singing and shouting (quiet in other languages)
+     * can be mixed in. Nothing for English sermons, or when it's already on this computer.
+     */
+    fun downloadEnglishCompanionLater(sermon: Sermon) {
+        kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch { downloadEnglishCompanion(sermon) }
+    }
+
+    suspend fun downloadEnglishCompanion(sermon: Sermon) = withContext(Dispatchers.IO) {
+        if (languageTag(sermon) == "en") return@withContext
+        val cat = OmegaCatalog.get() ?: return@withContext
+        val f = cat.find(sermon.i, "eng", OmegaCatalog.OPUS) ?: return@withContext
+        if (englishLocal(cat, f) != null) return@withContext
+        val url = urlFor(f.fileId, f.mediaTypeId, f.fileTypeId) ?: return@withContext
+        val name = cat.englishName(f.sermonId, "opus") ?: "${sermon.dateCode} VGR.opus"
+        runCatching { download(url, File(mediaDir("ENG"), name)) {} }.onFailure { it.printStackTrace() }
     }
 
     private val audioExtensions = setOf("opus", "m4a", "mp3", "ogg", "aac", "wav")

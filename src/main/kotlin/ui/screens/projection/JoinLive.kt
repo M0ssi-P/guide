@@ -337,6 +337,7 @@ private fun LangStep(onNext: () -> Unit) {
                                             val target = SermonMedia.audioFile(sermon, p.audio)
                                             val ok2 = runCatching { SermonMedia.download(p.audio, target) { audioProgress[l.tag] = it.coerceAtLeast(0.01f) } }.isSuccess
                                             audioProgress.remove(l.tag)
+                                            if (ok2) player.EnglishBed.afterDownload(sermon)
                                             if (ok2) status[l.tag] = LangStatus.Ready(p.copy(audio = target.absolutePath, local = true)).also { if (ListenSession.lang?.tag == l.tag) ListenSession.prepared = it.prepared }
                                         }
                                     }

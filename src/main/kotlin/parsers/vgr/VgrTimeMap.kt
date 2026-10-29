@@ -51,6 +51,20 @@ class VgrTimeMap(private val timeline: LongArray, private val recording: LongArr
     /** This recording's time to the Table timeline, in seconds. */
     fun toTimeline(seconds: Double): Double = convert(seconds * 1000, recording, timeline) / 1000
 
+    /** The last anchor point on the timeline at or before [seconds]. */
+    fun previousTimelinePoint(seconds: Double): Double? {
+        val ms = (seconds * 1000).toLong()
+        val i = timeline.binarySearch(ms).let { if (it >= 0) it else -it - 2 }
+        return timeline.getOrNull(i)?.div(1000.0)
+    }
+
+    /** The next anchor point on the timeline after [seconds] (a pair's start or end), where English can wait. */
+    fun nextTimelinePoint(seconds: Double): Double? {
+        val ms = (seconds * 1000).toLong()
+        val i = timeline.binarySearch(ms).let { if (it >= 0) it + 1 else -it - 1 }
+        return timeline.getOrNull(i)?.div(1000.0)
+    }
+
     private fun convert(ms: Double, from: LongArray, to: LongArray): Double {
         val i = from.binarySearch(ms.toLong()).let { if (it >= 0) it else -it - 2 }
         // before the first anchor: from 0 up to it proportionally
@@ -99,15 +113,28 @@ class VgrTimeMap(private val timeline: LongArray, private val recording: LongArr
 /** Time maps per audio source (file path or URL), read once in the background. Null until read, or when there is none. */
 object TimeMaps {
     private const val HEAD = 2_000_000
-    private val maps = ConcurrentHashMap<String, Result<VgrTimeMap?>>()
+    private val headers = ConcurrentHashMap<String, Result<AudioHeader?>>()
+    private val synopsisRegex = Regex(""""sermonId"\s*:\s*(\d+).*?"languageId"\s*:\s*(\d+)""")
 
-    fun get(source: String?): VgrTimeMap? {
+    /** What VGR wrote into a recording's header: its time map, and which sermon and language it is (from `synopsis`). */
+    class AudioHeader(val map: VgrTimeMap?, val sermonId: Int?, val languageId: Int?)
+
+    /** The header of [source] (path or URL), read once in the background; null until read. */
+    fun header(source: String?): AudioHeader? {
         source ?: return null
-        maps[source]?.let { return it.getOrNull() }
-        maps[source] = Result.success(null) // reading; also stops repeat requests
-        thread(isDaemon = true, name = "vgr-time-map") { maps[source] = runCatching { VgrTimeMap.fromHeader(head(source)) } }
+        headers[source]?.let { return it.getOrNull() }
+        headers[source] = Result.success(null) // reading; also stops repeat requests
+        thread(isDaemon = true, name = "vgr-time-map") {
+            headers[source] = runCatching {
+                val head = head(source)
+                val syn = synopsisRegex.find(String(head, Charsets.ISO_8859_1))
+                AudioHeader(VgrTimeMap.fromHeader(head), syn?.groupValues?.get(1)?.toInt(), syn?.groupValues?.get(2)?.toInt())
+            }
+        }
         return null
     }
+
+    fun get(source: String?): VgrTimeMap? = header(source)?.map
 
     private fun head(source: String): ByteArray {
         val f = File(source)

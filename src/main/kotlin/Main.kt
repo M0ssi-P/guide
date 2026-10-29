@@ -129,6 +129,7 @@ fun main(args: Array<String>) {
                              DecoratedWindow(
                                  onCloseRequest = {
                                      update.Updates.installOnQuitIfAsked()
+                                     player.EnglishBed.release()
                                      engine.release()
                                      exitApplication()
                                  },
@@ -178,6 +179,7 @@ fun main(args: Array<String>) {
                                          Sidebar(shouldHideSidebar, shouldHide.value, isHideSidebarHovered)
                                      }
                                      components.global.UpdateOverlay()
+                                     components.global.EnglishAskOverlay()
                                  }
                              }
 

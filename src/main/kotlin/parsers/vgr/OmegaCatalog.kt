@@ -25,7 +25,9 @@ object OmegaCatalog {
     private val lock = Mutex()
     @Volatile private var loaded: Parsed? = null
 
-    class Parsed(val languages: Map<String, Int>, val files: Map<Triple<Int, Int, Int>, OmegaFile>) {
+    class Parsed(val languages: Map<String, Int>, val files: Map<Triple<Int, Int, Int>, OmegaFile>, val sermons: Map<Int, Pair<String, String>> = emptyMap()) {
+        /** VGR's English file name for a sermon, e.g. "62-1014E A Guide VGR.opus". */
+        fun englishName(sermonId: Int, ext: String) = sermons[sermonId]?.let { (code, title) -> "$code $title VGR.$ext" }
         /** [iso3] like "swa"; [fileTypeId] 6 = opus, 2 = m4a. */
         fun find(sermonId: Int, iso3: String, fileTypeId: Int): OmegaFile? =
             languages[iso3.lowercase()]?.let { files[Triple(sermonId, it, fileTypeId)] }
@@ -53,13 +55,23 @@ object OmegaCatalog {
     }
 
     /**
-     * Layout: a length-prefixed header (field 7 = language {1: id, 2: iso3}), then length-prefixed entries
+     * Layout: a length-prefixed header (field 7 = language {1: id, 2: iso3}; field 8 = sermon {1: id, 3: date code,
+     * 4: English title}), then length-prefixed entries
      * {1: media type, 2: file type, 3: sermon id, 4: language id, 6: size, 7: 64-byte file id}.
      */
     fun parse(b: ByteArray): Parsed {
         val (hLen, hAt) = Proto.varint(b, 0)
         val languages = HashMap<String, Int>()
+        val sermons = HashMap<Int, Pair<String, String>>()
         for ((f, t, v) in Proto.fields(b, hAt, hAt + hLen.toInt())) {
+            if (f == 8 && t == 2) {
+                val m = Proto.fields(v as ByteArray)
+                val id = m.firstOrNull { it.first == 1 }?.third as? Long
+                val code = (m.firstOrNull { it.first == 3 }?.third as? ByteArray)?.let { String(it) }
+                val title = (m.firstOrNull { it.first == 4 }?.third as? ByteArray)?.let { String(it) }
+                if (id != null && code != null && title != null) sermons[id.toInt()] = code to title
+                continue
+            }
             if (f != 7 || t != 2) continue
             val l = Proto.fields(v as ByteArray)
             val id = l.firstOrNull { it.first == 1 }?.third as? Long ?: continue
@@ -83,6 +95,6 @@ object OmegaCatalog {
             id?.let { bytes -> files.putIfAbsent(Triple(sermon, lang, ft), OmegaFile(mt, ft, sermon, lang, size, bytes.joinToString("") { "%02x".format(it) })) }
             i = end
         }
-        return Parsed(languages, files)
+        return Parsed(languages, files, sermons)
     }
 }

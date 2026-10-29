@@ -187,6 +187,7 @@ fun FloatingPlayer(
                     Text(track.title, color = theme.colors.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                     Text(track.breadcrumb, color = theme.colors.text.copy(alpha = 0.55f), fontSize = 12.sp)
                 }
+                components.global.VoicesChip()
                 components.global.LanguageChip(track.languageCode, "Audio and text language: ${track.languageCode}", height = 32.dp, onClick = onLanguageClick)
             }
 

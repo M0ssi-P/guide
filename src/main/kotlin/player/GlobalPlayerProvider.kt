@@ -79,6 +79,14 @@ fun GlobalPlayerProvider(player: AuraPlayer, content: @Composable () -> Unit) {
         }
     }
 
+    // the English original under a translated recording (singing and shouting), when the recording has VGR's map
+    LaunchedEffect(Unit) {
+        while (true) {
+            runCatching { EnglishBed.tick(player, localPlayer.nowPlaying.value?.url) }.onFailure { it.printStackTrace() }
+            kotlinx.coroutines.delay(200)
+        }
+    }
+
     CompositionLocalProvider(
         LocalPlayer provides localPlayer,
         LocalPlayerState provides player,

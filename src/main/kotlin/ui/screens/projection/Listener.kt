@@ -279,6 +279,7 @@ private fun ListenerPage() {
                         color = StageMuted, fontSize = 11.5.sp
                     )
                 }
+                components.global.VoicesChip()
                 Box(Modifier.weight(1f).height(5.dp).clip(RoundedCornerShape(3.dp)).background(Color(0xFF1A202A))) {
                     Box(
                         Modifier.fillMaxWidth(if (duration > 0 && audioOn) (currentTime / duration).toFloat().coerceIn(0f, 1f) else 0f).fillMaxHeight()

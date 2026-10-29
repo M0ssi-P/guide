@@ -260,6 +260,11 @@ fun ReadingSettingsModal(store: ReadingPrefsStore, options: SettingsOptions, onD
                 }
             }
 
+            if (options.audioDelay) Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.fillMaxWidth().height(1.dp).background(theme.colors.border))
+                components.global.VoicesSettings()
+            }
+
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Reset to default", color = theme.colors.text, fontSize = 13.sp, modifier = Modifier.clickable { store.set(store.default) }.hand().padding(vertical = 10.dp))
                 Box(
