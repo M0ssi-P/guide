@@ -13,7 +13,7 @@ version = "1.0-SNAPSHOT"
 
 // The one app version: the installers, APP_VERSION in the app (generated below) and the GitHub release tag "v$appVersion".
 // Raise it for every release; MSI upgrades need it to go up.
-val appVersion = "1.0.1"
+val appVersion = "1.0.3"
 
 val generateAppVersion by tasks.registering {
     val out = layout.buildDirectory.dir("generated/appVersion")
