@@ -335,7 +335,7 @@ private fun SermonPlayer(letter: Letter, sermon: Sermon?) {
     val isThis = sermon != null && nowPlaying?.id == sermon.stringId
     val playing = isThis && playerState == PlayerState.PLAYING
     val progress = if (isThis && duration > 0) (position / duration).toFloat() else 0f
-    val onDevice = remember(sermon) { sermon?.let { SermonMedia.audioFile(it).exists() } ?: false }
+    val onDevice = remember(sermon) { sermon?.let { SermonMedia.ownCopy(it) != null } ?: false }
 
     fun start(s: Sermon, url: String) {
         globalPlayer.loadNowPlaying(

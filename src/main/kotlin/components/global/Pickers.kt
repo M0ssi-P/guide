@@ -18,7 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.arrowDown
+import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.ui.component.Icon
+import ui.screens.thisweek.hand
 import ui.theme.Inter
 import ui.theme.LocalTheme
 
@@ -29,6 +31,8 @@ fun PickerPill(label: String, open: Boolean, onClick: () -> Unit) {
     val borderColor = if (open) theme.colors.primary else theme.colors.border
     val textColor = if (open) theme.colors.primary else theme.colors.text
 
+    var hovered by remember { mutableStateOf(false) }
+
     val rotation by animateFloatAsState(
         targetValue = if (open) 180f else 0f
     )
@@ -36,9 +40,11 @@ fun PickerPill(label: String, open: Boolean, onClick: () -> Unit) {
     Box(
         Modifier
             .clip(RoundedCornerShape(9.dp))
-            .background(theme.colors.popup)
+            .background(if (hovered) theme.colors.menuHoverColor else theme.colors.menu)
             .border(1.dp, borderColor, RoundedCornerShape(9.dp))
             .padding(horizontal = 12.dp, vertical = 8.dp)
+            .onHover { hovered = it }
+            .hand()
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(label, fontFamily = Inter, fontWeight = FontWeight.SemiBold, fontSize = 14.5.sp, color = textColor)

@@ -283,6 +283,8 @@ fun Projection() {
                 position = t,
                 playing = audio && engine.playerState.value == PlayerState.PLAYING,
                 language = deck.sermon?.language ?: "",
+                // the sermon's own label can be the language it was preached in, so listeners compare this instead
+                tableLanguage = vgr.uiSettings.value.currentTableLanguage,
             )
         }
     }

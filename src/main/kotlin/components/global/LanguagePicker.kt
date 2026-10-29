@@ -141,7 +141,7 @@ fun PickerModal(
         top()
         var focused by remember { mutableStateOf(false) }
         Row(
-            Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(4.dp)).background(theme.colors.background)
+            Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(4.dp)).background(theme.colors.surface.copy(alpha = 0.6f))
                 .border(1.dp, if (focused) theme.colors.primary else theme.colors.border, RoundedCornerShape(4.dp)).padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {

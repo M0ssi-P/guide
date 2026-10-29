@@ -161,7 +161,12 @@ fun TableDesktopScreen(modifier: Modifier = Modifier) {
                         )
                     }
                 },
-                onBrowseClick = { state.overlay = TableOverlay.Browse },
+                onProjectionClick = {
+                    (currentSermon as? UiState.Success)?.data?.let { s ->
+                        ProjectionDeck.load(DeckSource.TABLE, s.title, "${s.dateCode} · ${s.location}", s.deckItems(), 0, s.copy(sections = null))
+                    }
+                    currentTab.navigate(Screen.Projection)
+                },
                 onMenuClick = { state.overlay = TableOverlay.Menu },
                 languageCode = langCode,
                 onLanguageClick = openLanguages

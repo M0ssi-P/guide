@@ -21,12 +21,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.book
 import com.composables.hamburger
+import com.composables.projectorIcon
 import com.composables.searchIcon
+import ui.screens.table.TableColors.Ink
+import ui.screens.thisweek.hand
 import ui.theme.Inter
 import ui.theme.LocalTheme
 
@@ -34,7 +38,7 @@ import ui.theme.LocalTheme
 fun Titlebar(
     state: TableState,
     onSearchClick: () -> Unit,
-    onBrowseClick: () -> Unit,
+    onProjectionClick: () -> Unit,
     onMenuClick: () -> Unit,
     languageCode: String,
     onLanguageClick: () -> Unit,
@@ -72,8 +76,13 @@ fun Titlebar(
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
             components.global.LanguageChip(languageCode, "Table language: $languageCode", Modifier.padding(end = 4.dp), height = 30.dp, onClick = onLanguageClick)
             TitlebarIcon(::searchIcon, "Search", onSearchClick)
-            TitlebarIcon(::book, "Browse", onBrowseClick)
-            TitlebarIcon(::hamburger, "Menu", onMenuClick)
+            Row(
+                Modifier.height(30.dp).clip(RoundedCornerShape(4.dp)).background(theme.colors.primary).clickable(role = Role.Button, onClick = onProjectionClick).hand().padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(projectorIcon(Ink), null, tint = Color.Unspecified, modifier = Modifier.size(15.dp))
+                Text("Project", color = Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -87,7 +96,7 @@ private fun TitlebarIcon(icon: (c: Color) -> ImageVector, label: String, onClick
             .size(32.dp)
             .clip(RoundedCornerShape(9.dp))
             .clickable { onClick() }
-            .background(Color.Transparent),
+            .background(Color.Transparent).hand(),
         contentAlignment = Alignment.Center
     ) {
         Icon(icon(theme.colors.text), contentDescription = label, tint = Color.Unspecified, modifier = Modifier.size(16.dp))

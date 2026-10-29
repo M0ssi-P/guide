@@ -40,3 +40,11 @@ fun decideSync(
         else -> SyncAction.Play(needed.coerceIn(MIN_RATE, MAX_RATE))
     }
 }
+
+/**
+ * True only when host and listener play the very same file: the same Table language they each chose, and the same
+ * sermon (date code). Then the host's audio time is used directly; otherwise sentences are matched.
+ */
+fun sameRecording(hostTableLanguage: String, hostCode: String, ourTableLanguage: String?, ourCode: String?): Boolean =
+    hostTableLanguage.isNotBlank() && hostTableLanguage.equals(ourTableLanguage, true) &&
+        hostCode.isNotBlank() && hostCode.equals(ourCode, true)

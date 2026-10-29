@@ -103,7 +103,7 @@ fun ListenModal(sermon: Sermon, onPlay: (String) -> Unit, onDismiss: () -> Unit)
                     ListenChoice.DOWNLOAD -> {
                         progress = 0f
                         step = ListenStep.Downloading
-                        val file = SermonMedia.audioFile(sermon)
+                        val file = SermonMedia.audioFile(sermon, url)
                         SermonMedia.download(url, file) { progress = it }
                         onPlay(file.absolutePath)
                     }

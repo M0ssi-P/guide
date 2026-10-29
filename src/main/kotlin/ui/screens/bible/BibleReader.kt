@@ -87,6 +87,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.projectorIcon
 import components.global.BibleTextStyle
+import components.global.BookChapterSelector
 import components.global.SoftEase
 import components.global.popIn
 import components.global.rise
@@ -162,15 +163,12 @@ internal fun BibleReaderToolbar(model: BibleViewModel, parallel: Boolean, onPara
     val modal = LocalModal.current
     val p by ReadingStores.bible.prefs
     Row(
-        Modifier.fillMaxWidth().background(theme.colors.surface).padding(horizontal = 20.dp, vertical = 10.dp),
+        Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             ToolButton("‹", "Previous chapter") { model.stepChapter(-1) }
-            Text(
-                "${model.bookName()} ${model.currentChapter?.human ?: ""}", color = theme.colors.primaryText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.height(36.dp).clip(RoundedCornerShape(10.dp)).border(1.dp, theme.colors.border, RoundedCornerShape(10.dp)).padding(horizontal = 14.dp, vertical = 9.dp)
-            )
+            BookChapterSelector(model)
             ToolButton("›", "Next chapter") { model.stepChapter(1) }
             val code = model.currentVersion?.localAbbreviation ?: ""
             components.global.LanguageChip(code, "Translation: ${model.currentVersion?.localTitle ?: code}") {

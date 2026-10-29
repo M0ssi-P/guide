@@ -51,6 +51,8 @@ data class LiveState(
     val resync: Int = 0,
     val hostName: String = "",
     val language: String = "",
+    /** The Table language the host reads from (e.g. "en"). Empty from older hosts, which then never use the same-recording shortcut. */
+    val tableLanguage: String = "",
 )
 
 data class ListenerReport(

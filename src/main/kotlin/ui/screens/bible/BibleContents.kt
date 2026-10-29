@@ -139,28 +139,11 @@ fun BibleContents(
     Column(
         modifier = modifier.fillMaxSize().background(theme.colors.surface).layeredRadialBackground(),
     ) {
-        if(!localFullscreen.value) {
-            Column {
-                TopBar(
-                    model,
-                    tab,
-                    onTabChange = { tab = it },
-                    fontStep = fontStep.value,
-                    onFontStepChange = { fontStep.value = it.coerceIn(0, FONT_SIZES.lastIndex) },
-                    projectionOn = false,
-                    onToggleProjection = {
-//                            projection = !projection
-//                            showChrome = true
-//                            if (projection) resetAutoHide() else hideJob?.cancel()
-                    },
-                    onToggleFullscreen = {  },
-                    visible = true,
-                )
-                if (tab == ReaderTab.READING) BibleReaderToolbar(
-                    model, parallel, onParallel = { parallel = !parallel },
-                    onProject = { projectChapter(model, selectedVerse.value) { navTab.navigate(navigation.Screen.Projection) } }
-                )
-            }
+        if(!localFullscreen.value && tab == ReaderTab.READING) {
+            BibleReaderToolbar(
+                model, parallel, onParallel = { parallel = !parallel },
+                onProject = { projectChapter(model, selectedVerse.value) { navTab.navigate(navigation.Screen.Projection) } }
+            )
         }
         // after a translation switch, fade in once the new chapter has arrived
         var shownVersion by remember { mutableStateOf(model.currentVersion?.id) }

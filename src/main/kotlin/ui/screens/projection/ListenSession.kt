@@ -20,6 +20,7 @@ import live.LiveHostInfo
 import live.LiveState
 import live.SyncAction
 import live.decideSync
+import live.sameRecording
 import live.TableLang
 import loadData
 import parsers.vgr.SermonMedia
@@ -213,7 +214,9 @@ object ListenSession {
         val offset = offsetMs / 1000.0
         val inFlight = ((now - receivedAt) / 1000.0).coerceIn(0.0, 1.0)
 
-        val same = s.language.isNotBlank() && s.language == src.sermon?.language && src.sermon?.dateCode.equals(s.code, true)
+        // the very same recording only when both chose the same Table language (English audio counts as "en")
+        val ourLanguage = if (src === english) "en" else lang?.tag
+        val same = sameRecording(s.tableLanguage, s.code, ourLanguage, src.sermon?.dateCode)
         val action = if (same) {
             val target = s.position + inFlight + offset
             val e = target - ourTime

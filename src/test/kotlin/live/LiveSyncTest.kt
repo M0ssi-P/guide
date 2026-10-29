@@ -61,3 +61,12 @@ class LiveSyncTest {
         }
     }
 }
+
+class SameRecordingTest {
+    @Test fun sameTableLanguageAndSermonUsesTheHostTime() = assertTrue(sameRecording("en", "62-1014M", "en", "62-1014m"))
+    // A Guide (English host) and Kiongozi (Swahili listener) share the date code but not the recording
+    @Test fun otherLanguageMatchesBySentence() = assertEquals(false, sameRecording("en", "62-1014M", "sw", "62-1014M"))
+    @Test fun otherSermonMatchesBySentence() = assertEquals(false, sameRecording("en", "62-1014M", "en", "62-1014E"))
+    // older hosts don't send their Table language
+    @Test fun olderHostNeverUsesTheShortcut() = assertEquals(false, sameRecording("", "62-1014M", "en", "62-1014M"))
+}
