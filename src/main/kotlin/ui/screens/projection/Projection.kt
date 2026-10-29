@@ -109,6 +109,8 @@ import presentation.ProjectionEntry
 import presentation.rememberScreens
 import presentation.sentences
 import ui.UiState
+import parsers.vgr.toRecording
+import parsers.vgr.toTimeline
 import ui.screens.table.ContentBlock
 import ui.screens.table.sectionsToBlocks
 import ui.screens.thisweek.hand
@@ -250,8 +252,9 @@ fun Projection() {
     LaunchedEffect(currentTime, playing, deck.followAudio) {
         if (!playing || !deck.followAudio || duration <= 0) return@LaunchedEffect
         if (timed) {
-            // segment timings from the data: the sentence whose start has passed
-            val (i, p) = presentation.locateTime(deck.items, currentTime, duration)
+            // segment timings are on the Table timeline; this recording's map (if any) converts its time onto it
+            val map = parsers.vgr.TimeMaps.get(globalPlayer.nowPlaying.value?.url)
+            val (i, p) = presentation.locateTime(deck.items, map.toTimeline(currentTime), map.toTimeline(duration))
             deck.index = i
             deck.progress = p
             return@LaunchedEffect
@@ -271,7 +274,9 @@ fun Projection() {
             val audio = deck.sermon != null && globalPlayer.nowPlaying.value?.id == deck.sermon?.stringId
             val t = engine.currentTime.value
             val items = deck.items
-            val (i, p) = if (audio && presentation.isTimed(items)) presentation.locateTime(items, t, engine.duration.value) else deck.index to deck.progress
+            val map = if (audio) parsers.vgr.TimeMaps.get(globalPlayer.nowPlaying.value?.url) else null
+            val tl = map.toTimeline(t)
+            val (i, p) = if (audio && presentation.isTimed(items)) presentation.locateTime(items, tl, map.toTimeline(engine.duration.value)) else deck.index to deck.progress
             val cur = items.getOrNull(i)
             LiveState(
                 title = deck.title, code = deck.sermon?.dateCode ?: "", location = deck.sermon?.location ?: "",
@@ -279,8 +284,10 @@ fun Projection() {
                 fraction = presentation.paragraphFraction(items, i, p),
                 sentence = cur?.key,
                 progress = p,
-                span = if (audio) cur?.let { c -> val st = c.start ?: return@let null; (c.end ?: items.getOrNull(i + 1)?.start)?.minus(st) } ?: 0.0 else 0.0,
+                // seconds this sentence takes in the host's own recording
+                span = if (audio) cur?.let { c -> val st = c.start ?: return@let null; (c.end ?: items.getOrNull(i + 1)?.start)?.let { e -> map.toRecording(e) - map.toRecording(st) } } ?: 0.0 else 0.0,
                 position = t,
+                timeline = if (audio && presentation.isTimed(items)) tl else 0.0,
                 playing = audio && engine.playerState.value == PlayerState.PLAYING,
                 language = deck.sermon?.language ?: "",
                 // the sermon's own label can be the language it was preached in, so listeners compare this instead
@@ -300,7 +307,7 @@ fun Projection() {
         if (isThis) {
             if (playing) engine.setPause(true)
             else {
-                if (deck.followAudio && duration > 0) engine.seek(deck.current?.start?.takeIf { timed } ?: ((shares.getOrNull(deck.index - 1) ?: 0f) * duration))
+                if (deck.followAudio && duration > 0) engine.seek(deck.current?.start?.takeIf { timed }?.let { parsers.vgr.TimeMaps.get(globalPlayer.nowPlaying.value?.url).toRecording(it) } ?: ((shares.getOrNull(deck.index - 1) ?: 0f) * duration))
                 engine.setPause(false)
             }
             return

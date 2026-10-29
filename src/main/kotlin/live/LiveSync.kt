@@ -48,15 +48,3 @@ fun decideSync(
 fun sameRecording(hostTableLanguage: String, hostCode: String, ourTableLanguage: String?, ourCode: String?): Boolean =
     hostTableLanguage.isNotBlank() && hostTableLanguage.equals(ourTableLanguage, true) &&
         hostCode.isNotBlank() && hostCode.equals(ourCode, true)
-
-/**
- * Some languages' Table data carries the timings of the English recording (Swahili does: its sentences end at 97 min
- * for "A Guide" while the Swahili recording runs 127 min). When the timings don't fit the recording being played,
- * stretch them to it: returns recording length ÷ last timed end, or 1 when they already fit (within 3%).
- * shortcut: a straight stretch, not true Swahili timings; replace once the data has real per-language timings.
- */
-fun timeScale(lastTimedEnd: Double?, duration: Double): Double {
-    if (lastTimedEnd == null || lastTimedEnd <= 0 || duration <= 0) return 1.0
-    val k = duration / lastTimedEnd
-    return if (kotlin.math.abs(k - 1) > 0.03) k else 1.0
-}

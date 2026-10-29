@@ -21,7 +21,9 @@ import live.LiveState
 import live.SyncAction
 import live.decideSync
 import live.sameRecording
-import live.timeScale
+import parsers.vgr.TimeMaps
+import parsers.vgr.toRecording
+import parsers.vgr.toTimeline
 import live.TableLang
 import loadData
 import parsers.vgr.SermonMedia
@@ -141,9 +143,13 @@ object ListenSession {
         else -> prepared
     }?.takeIf { it.audio != null }
 
-    /** Where the host is, mapped into [items]: by the segment index first, else by place in the paragraph. */
+    /**
+     * Where the host is, mapped into [items]: by its Table-timeline place (the same in every language, unlike sentence
+     * numbers), else by the segment index, else by place in the paragraph.
+     */
     fun locateIn(items: List<DeckItem>, s: LiveState): Pair<Int, Float> =
-        items.indexOfFirst { it.key != null && it.key == s.sentence }.takeIf { it >= 0 }?.let { it to s.progress }
+        (if (s.timeline > 0 && presentation.isTimed(items)) presentation.locateTime(items, s.timeline, Double.MAX_VALUE) else null)
+            ?: items.indexOfFirst { it.key != null && it.key == s.sentence }.takeIf { it >= 0 }?.let { it to s.progress }
             ?: locate(items, s.paragraph, s.fraction)
 
     /**
@@ -224,16 +230,21 @@ object ListenSession {
             lag = abs(e)
             if (jumpNext || resync || hostJumped || abs(e) > 2.0) SyncAction.Seek(target, fade = !jumpNext) else SyncAction.Play(1.0 + (e * 0.1).coerceIn(-0.05, 0.05))
         } else {
-            // stretch timings made for another recording (e.g. English timings in the Swahili Table) onto ours
-            val k = timeScale(src.items.mapNotNull { it.end }.maxOrNull(), duration)
-            val place = placeIn(src, s, duration / k)?.let { Place(it.target * k, it.start * k, it.end * k) } ?: return
+            // Table times are on the timeline; our recording's map (VGR's, read from the audio file) turns them into ours
+            val map = TimeMaps.get(src.audio)
+            val tlDuration = map.toTimeline(duration)
+            val place = placeIn(src, s, tlDuration)?.let { pl ->
+                // a host that sends its timeline place is followed exactly by it, not by our sentence's share
+                val tlTarget = if (s.timeline > 0 && presentation.isTimed(src.items)) s.timeline else pl.target
+                Place(map.toRecording(tlTarget), map.toRecording(pl.start), map.toRecording(pl.end))
+            } ?: return
             val ourLen = place.end - place.start
             val ratio = if (s.span > 0.05 && ourLen > 0.05) ourLen / s.span else 1.0
             val target = place.target + inFlight * ratio + offset
             lag = abs(target - ourTime)
             decideSync(
                 ourTime, target, place.end + offset, hostLeft = (1 - s.progress) * s.span,
-                baseRatio = ratio, currentStart = currentStart(src, (ourTime - offset) / k, duration / k) * k + offset, jumpNow = jumpNext || resync || hostJumped,
+                baseRatio = ratio, currentStart = map.toRecording(currentStart(src, map.toTimeline(ourTime - offset), tlDuration)) + offset, jumpNow = jumpNext || resync || hostJumped,
             )
         }
         jumpNext = false

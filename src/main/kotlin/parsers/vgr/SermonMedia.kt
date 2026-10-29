@@ -42,20 +42,42 @@ object SermonMedia {
     }
 
     /**
-     * Where we save this sermon's audio: .m4a on every system, or .opus when [url] is the opus fallback.
-     * (Windows used to save .opus; those files are still found by [ownCopy].)
+     * Where we save this sermon's audio, with the extension of [url] (.opus from the catalog, .m4a otherwise).
      */
     fun audioFile(sermon: Sermon, url: String? = null): File {
         val title = if(os.contains("win")) sermon.title else sermon.title.replace(Regex("[^\\w\\s]"), "")
         val iso3 = DB.connection("main.db").getCurrentTable(languageTag(sermon))?.iso63903?.uppercase() ?: "ENG"
-        val ext = if (url?.substringBefore('?')?.endsWith(".opus", true) == true) "opus" else "m4a"
+        val ext = if (url == null || url.substringBefore('?').endsWith(".opus", true)) "opus" else "m4a"
         return File(mediaDir(iso3), "${sermon.dateCode} $title VGR.$ext")
     }
 
-    /** Our own saved copy in either format, .m4a first, so an old .opus download is reused instead of fetched again. */
-    fun ownCopy(sermon: Sermon): File? {
-        val m4a = audioFile(sermon)
-        return m4a.takeIf { it.isFile } ?: File(m4a.parentFile, m4a.nameWithoutExtension + ".opus").takeIf { it.isFile }
+    /**
+     * Our own saved copy or VGR's (The Table names its downloads "SWA62-1014E A Guide VGR.opus") in the language's folder.
+     * The opus comes first because it carries VGR's time map; [sizes] (from the media catalog) pick the right file when
+     * several share the date code.
+     */
+    fun ownCopy(sermon: Sermon, sizes: Set<Long> = emptySet()): File? {
+        val base = audioFile(sermon)
+        val iso3 = base.parentFile.parentFile.name
+        val candidates = listOf(File(base.parentFile, base.nameWithoutExtension + ".opus"), base) +
+            (base.parentFile.listFiles { f ->
+                f.isFile && f.extension.lowercase() in audioExtensions &&
+                    (f.name.startsWith("${sermon.dateCode} ") || f.name.startsWith("$iso3${sermon.dateCode} "))
+            }?.sortedBy { if (it.extension.equals("opus", true)) 0 else 1 } ?: emptyList())
+        val present = candidates.filter { it.isFile }.distinct()
+        return present.firstOrNull { it.length() in sizes } ?: present.firstOrNull()
+    }
+
+    private suspend fun catalogFiles(sermon: Sermon): List<OmegaFile> {
+        val iso3 = DB.connection("main.db").getCurrentTable(languageTag(sermon))?.iso63903 ?: return emptyList()
+        val cat = OmegaCatalog.get() ?: return emptyList()
+        return listOfNotNull(cat.find(sermon.i, iso3, OmegaCatalog.OPUS), cat.find(sermon.i, iso3, OmegaCatalog.M4A))
+    }
+
+    private suspend fun urlFor(fileId: String, mediaTypeId: Int, fileTypeId: Int): String? {
+        val res = client.get("$updaterUrl/api/table/omega-media-catalog/media-files/$fileId/url?mediaTypeId=$mediaTypeId&fileTypeId=$fileTypeId&bulkDownload=False")
+        // works whether the body is the bare link, a JSON string, or a JSON object holding it
+        return if (res.isSuccessful) urlRegex.find(res.text)?.value?.replace("\\/", "/") else null
     }
 
     /**
@@ -70,16 +92,15 @@ object SermonMedia {
     }
 
     /**
-     * Resolves the stream link: m4a (fileTypeId 2) on every system, opus (6) only when a language has no m4a.
-     * Null means the sermon has no audio in this language (no media id on the page, a 404, or no url in the response).
+     * Resolves the stream link. From VGR's media catalog: the opus first (it carries the time map that lines the
+     * Table's sentences up with this recording), then the m4a. Without a catalog entry, the m4a the web page links to.
+     * Null means the sermon has no audio in this language.
      */
     suspend fun audioUrl(sermon: Sermon): String? = withContext(Dispatchers.IO) {
+        catalogFiles(sermon).firstNotNullOfOrNull { f -> runCatching { urlFor(f.fileId, f.mediaTypeId, f.fileTypeId) }.getOrNull() }
+            ?.let { return@withContext it }
         val id = mediaFileId(sermon) ?: return@withContext null
-        listOf("2", "6").firstNotNullOfOrNull { type ->
-            val res = client.get("$updaterUrl/api/table/omega-media-catalog/media-files/$id/url?mediaTypeId=9&fileTypeId=$type&bulkDownload=False")
-            // works whether the body is the bare link, a JSON string, or a JSON object holding it
-            if (res.isSuccessful) urlRegex.find(res.text)?.value?.replace("\\/", "/") else null
-        }
+        urlFor(id, 9, OmegaCatalog.M4A)
     }
 
     private val audioExtensions = setOf("opus", "m4a", "mp3", "ogg", "aac", "wav")
@@ -89,7 +110,8 @@ object SermonMedia {
      * matched by file name containing the media id (needs network to resolve) or the date code.
      */
     suspend fun findLocal(sermon: Sermon): File? = withContext(Dispatchers.IO) {
-        ownCopy(sermon)?.let { return@withContext it }
+        val sizes = runCatching { catalogFiles(sermon) }.getOrDefault(emptyList()).map { it.size }.toSet()
+        ownCopy(sermon, sizes)?.let { return@withContext it }
         val names = listOfNotNull(runCatching { mediaFileId(sermon) }.getOrNull(), sermon.dateCode)
         names.firstNotNullOfOrNull { systemSearch(it) }
     }

@@ -74,10 +74,3 @@ class SameRecordingTest {
     // older hosts don't send their Table language
     @Test fun olderHostNeverUsesTheShortcut() = assertEquals(false, sameRecording("", "62-1014M", "en", "62-1014M"))
 }
-
-class TimeScaleTest {
-    // the real data: Swahili Table timings end at 97.1 min (English), the Swahili recording runs 127.3 min
-    @Test fun swahiliTimingsAreStretchedToTheSwahiliRecording() = assertEquals(7636.75 / 5825.36, timeScale(5825.36, 7636.75), 1e-9)
-    @Test fun timingsThatFitAreLeftAlone() = assertEquals(1.0, timeScale(5825.36, 5823.88))
-    @Test fun noTimingsNoScale() = assertEquals(1.0, timeScale(null, 7636.75))
-}

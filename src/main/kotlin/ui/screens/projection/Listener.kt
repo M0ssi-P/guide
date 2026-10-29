@@ -88,6 +88,7 @@ import ui.screens.reading.ReadingSettingsModal
 import ui.screens.reading.ReadingStores
 import ui.screens.thisweek.hand
 import ui.theme.Fraunces
+import parsers.vgr.toTimeline
 
 /** Join live and, once joined, the listening page. */
 @Composable
@@ -130,9 +131,9 @@ private fun ListenerPage() {
     val ownAudio = src != null && src === prepared && nowPlaying?.id?.startsWith("live:") == true && playerState == PlayerState.PLAYING
     val (idx, prog) = when {
         ownAudio && presentation.isTimed(items) -> {
-            // the words follow this listener's own audio, through timings stretched to its recording if needed
-            val k = live.timeScale(items.mapNotNull { it.end }.maxOrNull(), duration)
-            presentation.locateTime(items, (currentTime - p.offsetMs / 1000.0) / k, duration / k)
+            // the words follow this listener's own audio, through its recording's time map when it has one
+            val map = parsers.vgr.TimeMaps.get(src?.audio)
+            presentation.locateTime(items, map.toTimeline(currentTime - p.offsetMs / 1000.0), map.toTimeline(duration))
         }
         s != null -> ListenSession.locateIn(items, s)
         else -> 0 to 0f

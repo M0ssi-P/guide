@@ -46,6 +46,8 @@ data class LiveState(
     val span: Double = 0.0,
     /** Seconds into the host's own recording; only meaningful to someone playing the same file. */
     val position: Double = 0.0,
+    /** The host's place on the Table timeline (seconds), the same for every language: its recording time mapped through VGR's time map. 0 from older hosts. */
+    val timeline: Double = 0.0,
     val playing: Boolean = false,
     /** Bumped by "Resync everyone": listeners jump straight to the host's place. */
     val resync: Int = 0,
