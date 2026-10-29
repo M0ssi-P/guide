@@ -43,30 +43,21 @@ object SermonMedia {
     }
 
     /**
-     * Where we save this sermon's audio, with the extension of [url] (.opus from the catalog, .m4a otherwise).
+     * Where we save this sermon's audio: VGR's own naming, so The Table and The Guide find each other's files —
+     * "<ISO3 unless English><date code> <English title> VGR.opus" (e.g. "SWA62-1014E A Guide VGR.opus"), in the
+     * language's folder. Without the catalog's English title, the sermon's own title is used. .m4a when [url] is one.
      */
     fun audioFile(sermon: Sermon, url: String? = null): File {
-        val title = if(os.contains("win")) sermon.title else sermon.title.replace(Regex("[^\\w\\s]"), "")
         val iso3 = DB.connection("main.db").getCurrentTable(languageTag(sermon))?.iso63903?.uppercase() ?: "ENG"
         val ext = if (url == null || url.substringBefore('?').endsWith(".opus", true)) "opus" else "m4a"
-        return File(mediaDir(iso3), "${sermon.dateCode} $title VGR.$ext")
+        val title = vgrSafeTitle(OmegaCatalog.loaded?.sermons?.get(sermon.i)?.second ?: sermon.title)
+        return File(mediaDir(iso3), "${if (iso3 == "ENG") "" else iso3}${sermon.dateCode} $title VGR.$ext")
     }
 
-    /**
-     * Our own saved copy or VGR's (The Table names its downloads "SWA62-1014E A Guide VGR.opus") in the language's folder.
-     * The opus comes first because it carries VGR's time map; [sizes] (from the media catalog) pick the right file when
-     * several share the date code.
-     */
+    /** Our copy, VGR's copy, or an older download of ours, in the sermon's language folder (see [findVgrFile]). */
     fun ownCopy(sermon: Sermon, sizes: Set<Long> = emptySet()): File? {
-        val base = audioFile(sermon)
-        val iso3 = base.parentFile.parentFile.name
-        val candidates = listOf(File(base.parentFile, base.nameWithoutExtension + ".opus"), base) +
-            (base.parentFile.listFiles { f ->
-                f.isFile && f.extension.lowercase() in audioExtensions &&
-                    (f.name.startsWith("${sermon.dateCode} ") || f.name.startsWith("$iso3${sermon.dateCode} "))
-            }?.sortedBy { if (it.extension.equals("opus", true)) 0 else 1 } ?: emptyList())
-        val present = candidates.filter { it.isFile }.distinct()
-        return present.firstOrNull { it.length() in sizes } ?: present.firstOrNull()
+        val iso3 = DB.connection("main.db").getCurrentTable(languageTag(sermon))?.iso63903?.uppercase() ?: "ENG"
+        return findVgrFile(mediaDir(iso3), iso3, sermon.dateCode, sizes, OmegaCatalog.loaded?.sermons?.get(sermon.i)?.second ?: sermon.title)
     }
 
     private suspend fun catalogFiles(sermon: Sermon): List<OmegaFile> {
@@ -118,9 +109,8 @@ object SermonMedia {
     }
 
     private fun englishLocal(cat: OmegaCatalog.Parsed, f: OmegaFile): File? {
-        val dir = mediaDir("ENG")
-        val named = cat.englishName(f.sermonId, if (f.fileTypeId == OmegaCatalog.OPUS) "opus" else "m4a")?.let { File(dir, it) }
-        return named?.takeIf { it.isFile } ?: dir.listFiles { x -> x.isFile && x.length() == f.size }?.firstOrNull()
+        val (code, title) = cat.sermons[f.sermonId] ?: return null
+        return findVgrFile(mediaDir("ENG"), "ENG", code, setOf(f.size), title)
     }
 
     /**
@@ -139,6 +129,27 @@ object SermonMedia {
         val url = urlFor(f.fileId, f.mediaTypeId, f.fileTypeId) ?: return@withContext
         val name = cat.englishName(f.sermonId, "opus") ?: "${sermon.dateCode} VGR.opus"
         runCatching { download(url, File(mediaDir("ENG"), name)) {} }.onFailure { it.printStackTrace() }
+    }
+
+    /**
+     * The one local finder: "[<ISO3>]<date code> <title> VGR.opus" (or .m4a) in [dir], for language [iso3]. No prefix
+     * means English. The title is never required (VGR uses the English title for every language, and Windows drops
+     * characters like ? # ! from names). Our older downloads in a non-English folder have no prefix; they count only
+     * when nothing prefixed is there and, if the catalog size is known, the size matches. Ranking: catalog size, then
+     * the title (compared with [vgrSafeTitle] on both sides), then opus over m4a.
+     */
+    fun findVgrFile(dir: File, iso3: String, dateCode: String, sizes: Set<Long> = emptySet(), title: String? = null): File? {
+        val named = dir.listFiles { f -> f.isFile }?.mapNotNull { f -> vgrFileLanguage(f.name, dateCode)?.let { f to it } } ?: return null
+        val mine = named.filter { it.second.equals(iso3, true) }.map { it.first }.ifEmpty {
+            if (iso3.equals("ENG", true)) emptyList()
+            else named.filter { it.second == "ENG" }.map { it.first }.filter { sizes.isEmpty() || it.length() in sizes }
+        }
+        val want = title?.let { vgrSafeTitle(it).lowercase() }
+        return mine.sortedWith(compareBy<File>(
+            { it.length() !in sizes },
+            { want == null || !vgrSafeTitle(it.name).lowercase().contains(want) },
+            { !it.extension.equals("opus", true) },
+        )).firstOrNull()
     }
 
     private val audioExtensions = setOf("opus", "m4a", "mp3", "ogg", "aac", "wav")
@@ -202,3 +213,21 @@ object SermonMedia {
         }
     }
 }
+
+/**
+ * The language of a VGR-named audio file for [dateCode]: its ISO3 prefix ("SWA62-1014E A Guide VGR.opus" → SWA), or ENG
+ * with no prefix ("62-1014E A Guide VGR.opus"). Null when the name isn't that sermon's VGR opus or m4a.
+ */
+fun vgrFileLanguage(name: String, dateCode: String): String? =
+    Regex("^([A-Z]{3})?" + Regex.escape(dateCode) + " .* VGR\\.(opus|m4a)$", RegexOption.IGNORE_CASE).find(name)?.let { m ->
+        m.groupValues[1].uppercase().ifEmpty { "ENG" }
+    }
+
+/**
+ * A title as it is written into file names, used both to save and to look up so the two never disagree: Unicode
+ * normalised, everything that isn't a letter, digit, space or hyphen removed (Windows can't store ? * : " < > | / \
+ * at all, and VGR also drops # ! ' , . ;), spaces collapsed. "What Is The Holy Ghost?" → "What Is The Holy Ghost".
+ */
+fun vgrSafeTitle(title: String): String =
+    java.text.Normalizer.normalize(title, java.text.Normalizer.Form.NFC)
+        .replace(Regex("[^\\p{L}\\p{N}\\s-]"), "").replace(Regex("\\s+"), " ").trim()

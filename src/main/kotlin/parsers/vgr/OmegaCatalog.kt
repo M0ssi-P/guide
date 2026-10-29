@@ -23,11 +23,14 @@ object OmegaCatalog {
     private const val INFO = "https://updater.branham.org/api/table/omega-media-catalog"
     private val dir get() = File(System.getProperty("user.home"), "TheGuide/omega").apply { mkdirs() }
     private val lock = Mutex()
-    @Volatile private var loaded: Parsed? = null
+    /** The catalog once read (null before); for code that can't wait for [get]. */
+    @Volatile var loaded: Parsed? = null
+        private set
 
     class Parsed(val languages: Map<String, Int>, val files: Map<Triple<Int, Int, Int>, OmegaFile>, val sermons: Map<Int, Pair<String, String>> = emptyMap()) {
         /** VGR's English file name for a sermon, e.g. "62-1014E A Guide VGR.opus". */
-        fun englishName(sermonId: Int, ext: String) = sermons[sermonId]?.let { (code, title) -> "$code $title VGR.$ext" }
+        // VGR drops punctuation from file names ("Gods Way Thats Been Made For Us")
+        fun englishName(sermonId: Int, ext: String) = sermons[sermonId]?.let { (code, title) -> "$code ${vgrSafeTitle(title)} VGR.$ext" }
         /** [iso3] like "swa"; [fileTypeId] 6 = opus, 2 = m4a. */
         fun find(sermonId: Int, iso3: String, fileTypeId: Int): OmegaFile? =
             languages[iso3.lowercase()]?.let { files[Triple(sermonId, it, fileTypeId)] }
