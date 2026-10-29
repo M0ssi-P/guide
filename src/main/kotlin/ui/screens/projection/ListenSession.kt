@@ -84,6 +84,15 @@ object ListenSession {
     private var lastResync = -1
     /** When the last state arrived, to move its position on by the time it has been in flight here. */
     @Volatile private var receivedAt = 0L
+
+    init {
+        // the English voice underneath follows the host's English-timeline place while we're following a live host
+        player.EnglishBed.liveHost = {
+            val s = state
+            if (!listening || !connected || !following || s == null || s.timeline <= 0) null
+            else (s.timeline + if (s.playing) ((System.currentTimeMillis() - receivedAt) / 1000.0).coerceIn(0.0, 1.0) else 0.0) to s.playing
+        }
+    }
     private var lastSeek = 0L
     private var lastHostPlaying: Boolean? = null
     /** Debug readout (host place → our place, drift, rate); shown on the listener page while on. */
@@ -252,7 +261,8 @@ object ListenSession {
             is SyncAction.Hold -> if (!holding) { holding = true; engine.setPause(true) }
             is SyncAction.Seek -> {
                 if (holding) { holding = false; engine.setPause(false) }
-                if (action.fade) fadeSeek(engine, action.to.coerceIn(0.0, duration)) else engine.seek(action.to.coerceIn(0.0, duration))
+                // no volume fade: it dipped the English underneath too
+                engine.seek(action.to.coerceIn(0.0, duration))
                 lastSeek = now
             }
             is SyncAction.Play -> {
@@ -264,18 +274,6 @@ object ListenSession {
         }
         syncState = when (action) { is SyncAction.Hold -> "holding at boundary"; is SyncAction.Seek -> "jump"; else -> "playing" }
         if (debug) debugLine = "host ${s.sentence ?: s.paragraph} %.2f · lag %.2fs · %.2f× · %s".format(s.progress, lag, rate, syncState)
-    }
-
-    /** A 150ms fade out, the jump, and a fade back in, so a jump at a boundary doesn't click. */
-    private suspend fun fadeSeek(engine: AuraPlayer, to: Double) {
-        val v = engine.volume.value
-        try {
-            for (k in 4 downTo 0) { engine.setVolume(v * k / 5); delay(30) }
-            engine.seek(to)
-            for (k in 1..4) { delay(30); engine.setVolume(v * k / 5) }
-        } finally {
-            engine.setVolume(v) // also when the page closes mid-fade
-        }
     }
 
     /** A new audio was loaded: re-apply the host's play state and let the first sync seek straight away. */

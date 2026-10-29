@@ -170,6 +170,14 @@ fun VoicesMixer(language: String = EnglishBed.languageName) {
                 ) { Text(label, color = if (on) theme.colors.primaryBright else theme.colors.text, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) }
             }
         }
+        Row(
+            Modifier.clip(R4).clickable(role = Role.Switch) { EnglishBed.updateSeparate(!EnglishBed.separate) }.hand(),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Checkbox(EnglishBed.separate, { EnglishBed.updateSeparate(it) }, Modifier.size(16.dp), colors = CheckboxDefaults.colors(checkedColor = theme.colors.primary))
+            Text("Separate voices left/right", color = theme.colors.primaryText.copy(alpha = 0.85f), fontSize = 13.sp)
+            Text("$language right · English left", color = theme.colors.text, fontSize = 11.5.sp)
+        }
         Text("English stays underneath so you hear him sing and shout. Neither voice goes below 10%.", color = theme.colors.text, fontSize = 12.sp, lineHeight = 18.sp)
     }
 }

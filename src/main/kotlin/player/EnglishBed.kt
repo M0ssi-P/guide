@@ -23,22 +23,56 @@ sealed class BedAction {
 const val MIX_MIN = 10
 const val MIX_MAX = 90
 
+/** How far the English may run ahead of the translation before it waits (outside Live). */
+const val BED_LEAD = 2.0
+
 /**
- * [target] is where the English should be: the translation's time mapped onto the Table timeline, which is the English
- * recording's own time. English plays at the main player's speed; when it gets ahead (translations usually take longer)
- * it finishes the stretch it is in and waits at the next anchor [nextPoint], never mid-stretch. More than 1s behind,
- * or far ahead after a seek, it jumps.
+ * Normal listening. [target] is where the English should be: the translation's time mapped onto the Table timeline,
+ * which is the English recording's own time. English plays at 1.0×; the translation usually takes longer, so once the
+ * English is more than [BED_LEAD] ahead it waits — only at the END of a stretch ([nextPoint] just ahead), never just
+ * after a new one started, so no word is cut. More than 2.5s behind it jumps.
  */
-fun decideBed(target: Double, bedTime: Double, holding: Boolean, prevPoint: Double?, nextPoint: Double?, mainRate: Double = 1.0): BedAction {
+fun decideBed(target: Double, bedTime: Double, holding: Boolean, nextPoint: Double?): BedAction {
     val drift = target - bedTime
-    // at a boundary: just past an anchor point, or about to reach one
-    val atBoundary = (prevPoint != null && bedTime - prevPoint < 0.25) || (nextPoint != null && nextPoint - bedTime < 0.05)
     return when {
-        drift > 1.0 || drift < -3.0 -> BedAction.Seek(target)
-        holding -> if (drift >= 0) BedAction.Play(mainRate) else BedAction.Hold
-        drift < -0.05 && atBoundary -> BedAction.Hold
-        else -> BedAction.Play(mainRate)
+        drift > 2.5 || drift < -8.0 -> BedAction.Seek(target)
+        holding -> if (drift >= 0) BedAction.Play(1.0) else BedAction.Hold
+        drift < -BED_LEAD && nextPoint != null && nextPoint - bedTime < 0.25 -> BedAction.Hold
+        else -> BedAction.Play(1.0)
     }
+}
+
+/** Live: [target] is the host's place on the English timeline. Steady 1.0×; waits while ahead of the host, jumps when 1.5s behind. */
+fun decideLiveBed(target: Double, bedTime: Double, holding: Boolean): BedAction {
+    val drift = target - bedTime
+    return when {
+        drift > 1.5 || drift < -8.0 -> BedAction.Seek(target)
+        holding -> if (drift >= 0) BedAction.Play(1.0) else BedAction.Hold
+        drift < -0.3 -> BedAction.Hold
+        else -> BedAction.Play(1.0)
+    }
+}
+
+/** The least of a voice kept in the other ear, so with one earbud nothing is ever gone completely. */
+const val PAN_FLOOR = 0.18
+
+/**
+ * How far apart the voices sit for [mix] (English %): 0.2 near the ends ("Mostly …", both close to the centre) up to
+ * 1.0 at Even (fully apart). The translation leans right by this much, the English left.
+ */
+fun panSpread(mix: Int): Double = 0.2 + 0.8 * (1 - abs(mix.coerceIn(MIX_MIN, MIX_MAX) - 50) / 40.0).coerceIn(0.0, 1.0)
+
+/** (left, right) gains for a voice at [position] (−1 left … 1 right): equal power, the far ear never below [PAN_FLOOR]. */
+fun panGains(position: Double): Pair<Double, Double> {
+    val a = (position.coerceIn(-1.0, 1.0) + 1) * Math.PI / 4
+    return maxOf(kotlin.math.cos(a), PAN_FLOOR) to maxOf(kotlin.math.sin(a), PAN_FLOOR)
+}
+
+/** mpv audio filter placing a (downmixed) voice at [position]; empty = centred, as without the setting. */
+internal fun panFilter(position: Double?): String {
+    position ?: return ""
+    val (l, r) = panGains(position)
+    return "lavfi=[aformat=channel_layouts=mono,pan=stereo|c0=%.2f*c0|c1=%.2f*c0]".format(java.util.Locale.ROOT, l, r)
 }
 
 /** Loudness of (translation, English) for [mix] = English percent: main (100 − mix)%, English mix%, of the user's volume. */
@@ -69,6 +103,12 @@ object EnglishBed {
     /** A download that is waiting for the first-time question. */
     var asking by mutableStateOf<parsers.vgr.models.Sermon?>(null)
 
+    /**
+     * Set by Live while following a host: the host's place on the English timeline (seconds, already moved on by the
+     * time the message took) and whether the host is playing. Null outside Live.
+     */
+    @Volatile var liveHost: (() -> Pair<Double, Boolean>?)? = null
+
     private var bed: AuraPlayer? = null
     private var forMain: String? = null
     private var holding = false
@@ -76,6 +116,11 @@ object EnglishBed {
     private var lastMainSet = -1.0
     private var shownMain = -1.0
     private var shownBed = -1.0
+
+    /** "Separate voices left/right": translation right, English left. On by default; remembered. */
+    var separate by mutableStateOf(loadData<Boolean>("voice_separate") ?: true)
+        private set
+    fun updateSeparate(v: Boolean) { separate = v; saveData("voice_separate", v) }
 
     fun updateMix(v: Int) { mix = (Math.round(v / 5f) * 5).coerceIn(MIX_MIN, MIX_MAX); saveData("voice_mix", mix) }
     fun setAlways(v: Boolean?) { alwaysDownload = v; saveData("english_companion", v) }
@@ -111,10 +156,16 @@ object EnglishBed {
         val p = bed ?: return
         if (!active) return
         applyVolumes(main, p)
-        if (main.playerState.value != PlayerState.PLAYING) { p.setPause(true); return }
+        applyPan(main, p)
+        // in Live the English follows the host, not this listener's translation (its speed changes and waits)
+        val host = liveHost?.invoke()
+        val playing = host?.second ?: (main.playerState.value == PlayerState.PLAYING)
+        if (!playing) { p.setPause(true); return }
         if (p.duration.value <= 0) return // loading
-        val target = map.toTimeline(main.currentTime.value)
-        when (val a = decideBed(target, p.currentTime.value, holding, map?.previousTimelinePoint(p.currentTime.value), map?.nextTimelinePoint(p.currentTime.value), main.speed.value)) {
+        val bedTime = p.currentTime.value
+        val action = if (host != null) decideLiveBed(host.first, bedTime, holding)
+            else decideBed(map.toTimeline(main.currentTime.value), bedTime, holding, map?.nextTimelinePoint(bedTime))
+        when (val a = action) {
             is BedAction.Seek -> { p.seek(a.to.coerceAtLeast(0.0)); holding = false; p.setPause(false) }
             BedAction.Hold -> if (!holding) { holding = true; p.setPause(true) }
             is BedAction.Play -> {
@@ -138,6 +189,30 @@ object EnglishBed {
         p.setVolume(shownBed)
     }
 
+    private var panWanted = "" to ""
+    private var panSince = 0L
+    private var panApplied = "" to ""
+
+    /**
+     * Changing mpv's audio filter restarts it, so the pan is only changed once the slider has rested for 400ms: one
+     * smooth switch instead of a click on every step.
+     */
+    private fun applyPan(main: AuraPlayer, p: AuraPlayer) {
+        val s = panSpread(mix)
+        val want = if (separate) panFilter(s) to panFilter(-s) else "" to ""
+        val now = System.currentTimeMillis()
+        if (want != panWanted) { panWanted = want; panSince = now; return }
+        if (want == panApplied || now - panSince < 400) return
+        setFilter(main, want.first); setFilter(p, want.second)
+        panApplied = want
+    }
+
+    // shortcut: AuraPlayer keeps setPropertyString private; expose it there (and an af-command for gliding pans) in the next AuraPlayer release
+    private fun setFilter(player: AuraPlayer, af: String) = runCatching {
+        AuraPlayer::class.java.getDeclaredMethod("setPropertyString", java.lang.Long.TYPE, String::class.java, String::class.java)
+            .apply { isAccessible = true }.invoke(player, player.nativeCtx, "af", af)
+    }.onFailure { it.printStackTrace() }
+
     private fun shownFactor() = (shownMain / (userVolume ?: 100.0)).coerceAtLeast(0.1)
 
     private fun stop(main: AuraPlayer) {
@@ -145,6 +220,8 @@ object EnglishBed {
         active = false
         bed?.setPause(true)
         userVolume?.let { main.setVolume(it) }
+        if (panApplied.first.isNotEmpty()) setFilter(main, "")
+        panApplied = "" to ""; panWanted = "" to ""
         userVolume = null
         lastMainSet = -1.0; shownMain = -1.0; shownBed = -1.0
     }

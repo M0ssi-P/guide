@@ -51,13 +51,6 @@ class VgrTimeMap(private val timeline: LongArray, private val recording: LongArr
     /** This recording's time to the Table timeline, in seconds. */
     fun toTimeline(seconds: Double): Double = convert(seconds * 1000, recording, timeline) / 1000
 
-    /** The last anchor point on the timeline at or before [seconds]. */
-    fun previousTimelinePoint(seconds: Double): Double? {
-        val ms = (seconds * 1000).toLong()
-        val i = timeline.binarySearch(ms).let { if (it >= 0) it else -it - 2 }
-        return timeline.getOrNull(i)?.div(1000.0)
-    }
-
     /** The next anchor point on the timeline after [seconds] (a pair's start or end), where English can wait. */
     fun nextTimelinePoint(seconds: Double): Double? {
         val ms = (seconds * 1000).toLong()

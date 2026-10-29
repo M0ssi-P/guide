@@ -34,7 +34,7 @@ fun decideSync(
     val needed = if (hostLeft > 0.4) (sentenceEnd - ourTime) / hostLeft else baseRatio
     return when {
         // ahead: we've finished the host's sentence (or more); wait at the boundary we just crossed, never mid-sentence
-        ourTime >= sentenceEnd - 0.05 && error < -0.05 -> if (atBoundary) SyncAction.Hold else SyncAction.Play(MIN_RATE)
+        ourTime >= sentenceEnd - 0.05 && error < -1.0 -> if (atBoundary) SyncAction.Hold else SyncAction.Play(MIN_RATE)
         // behind: never skip words, play faster until caught up
         error > 1.5 -> SyncAction.Play(MAX_RATE)
         else -> SyncAction.Play(needed.coerceIn(MIN_RATE, MAX_RATE))

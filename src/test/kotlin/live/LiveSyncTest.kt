@@ -42,10 +42,12 @@ class LiveSyncTest {
     }
 
     @Test fun aheadHoldsOnlyAtASentenceBoundary() {
-        // finished Swahili sentence 1 and just started sentence 2 (6.0s) while the host is still in sentence 1
-        assertIs<SyncAction.Hold>(at(0.9, ourTime = 6.1, currentStart = 6.0))
+        // finished Swahili sentence 1 and just started sentence 2 at 6.6s, more than 1s ahead of the host (5.6s): waits
+        assertIs<SyncAction.Hold>(at(0.9, ourTime = 6.7, currentStart = 6.6))
         // already mid-way into sentence 2: don't stop mid-word, just slow down
         assertEquals(SyncAction.Play(MIN_RATE), at(0.9, ourTime = 7.0, currentStart = 6.0))
+        // less than 1s ahead: no wait at all
+        assertIs<SyncAction.Play>(at(0.9, ourTime = 6.1, currentStart = 6.0))
     }
 
     @Test fun farBehindNeverSkipsItJustPlaysFaster() {
