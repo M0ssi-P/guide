@@ -46,6 +46,7 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -766,6 +767,36 @@ private fun TransferTab(model: SongBookViewModal, onToast: (String) -> Unit) {
             }
             Spacer(Modifier.weight(1f))
             Text("Pick a USB stick or a synced folder to carry your books to another computer.", color = theme.colors.text, fontSize = 11.5.sp)
+        }
+        Card3(Modifier.weight(1f)) {
+            H2("Send to a phone or TV nearby")
+            Body("Open Move songs on the phone and choose From a computer nearby, or Import and export on the TV. It shows up here; the book chosen under Export goes across.")
+            var nearby by remember { mutableStateOf(emptyList<songs.DropReceiver>()) }
+            // the device last sent to, and how it went (null while sending)
+            var sent by remember { mutableStateOf<Pair<String, Boolean?>?>(null) }
+            DisposableEffect(Unit) { songs.SongDropSender.listen { nearby = it }; onDispose { songs.SongDropSender.stop() } }
+            if (nearby.isEmpty()) Text("Looking for The Guide on this Wi-Fi…", color = theme.colors.text.copy(alpha = 0.6f), fontSize = 12.5.sp)
+            nearby.forEach { r ->
+                val state = sent?.takeIf { it.first == r.address }
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        Text(r.name, color = theme.colors.primaryText, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(when (state?.second) { null -> if (state == null) "Code ${r.code}" else "Sending…"; true -> "Sent"; false -> "Couldn't reach it" }, color = if (state?.second == false) Color(0xFFF28B8B) else theme.colors.text, fontSize = 11.5.sp)
+                    }
+                    SmallBtn("Send") {
+                        val b = book ?: return@SmallBtn
+                        if (state != null && state.second == null) return@SmallBtn
+                        sent = r.address to null
+                        scope.launch {
+                            val ok = withContext(Dispatchers.IO) { runCatching { songs.SongDropSender.send(r, songs.guideZip(listOf(songs.Book(b.copy(saveName = b.id.ifBlank { b.saveName }), model.loadSongsFrom(b))))) }.getOrDefault(false) }
+                            sent = r.address to ok
+                            if (ok) onToast("Sent “${b.name}” to ${r.name}")
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            Text(if (book == null) "Choose a book under Export first." else "Sends “${book.name}”.", color = theme.colors.text, fontSize = 11.5.sp)
         }
     }
 }

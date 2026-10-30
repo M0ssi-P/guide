@@ -31,7 +31,7 @@ import player.LocalPlayer
 import player.LocalPlayerState
 import player.PlayerBar
 import player.PlayerUI
-import player.loadChapters
+import player.chaptersFrom
 import ui.theme.LocalTheme
 
 @Composable
@@ -55,29 +55,28 @@ fun BibleHome() {
     var projection by remember { mutableStateOf(false) }
     var showChrome by remember { mutableStateOf(true) }
     val selectedVerse = remember { mutableStateOf<MutableList<Int>>(mutableListOf()) }
-    val chapterName = model.currentChapter?.usfm?.replace(".", "-")
     val fontStep = remember { mutableStateOf(1) }
-    val sub = loadChapters(chapterName)
+    val sub = remember(model.chapterContent) { chaptersFrom(model.chapterContent) }
 
-    LaunchedEffect(model.chapterContent) {
-        model.chapterContent?.let {
-            it.audio?.let { audio ->
-                audio.find { i -> i.default }.let { default ->
-                    player.loadNowPlaying(GlobalPlayerViewModel.NowPlaying(
-                        id = default?.id?.toString() ?: "",
-                        title = if(model.currentChapter != null && model.currentChapter?.human != null) {
-                            "${model.currentBook?.human} Chapter ${model.currentChapter?.human}"
-                        } else "Untitled",
-                        subtitle = "The Listener's Bible:",
-                        type = GlobalPlayerType.BIBLE,
-                        isPlaying = false,
-                        currentPosition = 0L,
-                        url = "https:${default?.playOrDwnLoad?.formattedMp3?.split("?")?.first()}",
-                    ))
-                }
-            }
-        }
-    }
+//    LaunchedEffect(model.chapterContent) {
+//        model.chapterContent?.let {
+//            it.audio?.let { audio ->
+//                audio.find { i -> i.default }.let { default ->
+//                    player.loadNowPlaying(GlobalPlayerViewModel.NowPlaying(
+//                        id = default?.id?.toString() ?: "",
+//                        title = if(model.currentChapter != null && model.currentChapter?.human != null) {
+//                            "${model.currentBook?.human} Chapter ${model.currentChapter?.human}"
+//                        } else "Untitled",
+//                        subtitle = "The Listener's Bible:",
+//                        type = GlobalPlayerType.BIBLE,
+//                        isPlaying = false,
+//                        currentPosition = 0L,
+//                        url = default?.playOrDwnLoad?.formattedMp3?.substringBefore("?")?.let { if (it.startsWith("//")) "https:$it" else it } ?: "",
+//                    ))
+//                }
+//            }
+//        }
+//    }
 
     val chromeVisible = !projection || showChrome
 

@@ -6,6 +6,10 @@ plugins {
     java
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
+    // loaded here, next to the Kotlin plugin, so :shared's Android target and :app can find them
+    id("com.android.application") apply false
+    id("com.android.library") apply false
+    kotlin("android") apply false
 }
 
 group = "com.game"
@@ -33,6 +37,7 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    implementation(project(":shared"))
     // Note, if you develop a library, you should use compose.desktop.common.
     // compose.desktop.currentOs should be used in launcher-sourceSet
     // (in a separate module for demo project and in testMain).

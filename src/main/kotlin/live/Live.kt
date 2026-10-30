@@ -25,53 +25,9 @@ import kotlin.concurrent.thread
  * WebSocket a few times a second; listeners report back (language, mode, how far off they are) on the same socket.
  */
 
-const val LIVE_WS_PORT = 47802
-const val LIVE_DISCOVERY_PORT = 47801
-private const val MAGIC = "THEGUIDE-LIVE"
-
 private val gson = Gson()
 
-/** What the host is showing and playing right now. */
-data class LiveState(
-    val title: String = "",
-    val code: String = "",
-    val location: String = "",
-    val paragraph: Int? = null,
-    /** How far into [paragraph] the host is, 0..1 by characters, for listeners whose text has no matching index. */
-    val fraction: Float = 0f,
-    /** The live Table sentence as its segment index [section, block, sentence], and how much of it is spoken. */
-    val sentence: List<Int>? = null,
-    val progress: Float = 0f,
-    /** Seconds the host's recording takes for [sentence], so a listener can say it in the same time. 0 = unknown. */
-    val span: Double = 0.0,
-    /** Seconds into the host's own recording; only meaningful to someone playing the same file. */
-    val position: Double = 0.0,
-    /** The host's place on the Table timeline (seconds), the same for every language: its recording time mapped through VGR's time map. 0 from older hosts. */
-    val timeline: Double = 0.0,
-    val playing: Boolean = false,
-    /** Bumped by "Resync everyone": listeners jump straight to the host's place. */
-    val resync: Int = 0,
-    val hostName: String = "",
-    val language: String = "",
-    /** The Table language the host reads from (e.g. "en"). Empty from older hosts, which then never use the same-recording shortcut. */
-    val tableLanguage: String = "",
-)
-
-data class ListenerReport(
-    val id: String = "",
-    val name: String = "",
-    val language: String = "",
-    val mode: String = "",
-    val lag: Double = 0.0,
-    val audio: Boolean = true,
-)
-
 data class ConnectedListener(val report: ListenerReport, val lastSeen: Long)
-
-data class LiveHostInfo(
-    val address: String, val port: Int, val name: String, val title: String, val code: String,
-    val listeners: Int, val seenAt: Long, val joinCode: String = "", val startedAt: Long = 0,
-)
 
 object LiveHost {
     val running = mutableStateOf(false)
@@ -123,7 +79,7 @@ object LiveHost {
                 DatagramSocket().use { socket ->
                     socket.broadcast = true
                     while (running.value) {
-                        val msg = listOf(MAGIC, "2", LIVE_WS_PORT, hostName, state.title, state.code, active().size, joinCode.value, startedAt)
+                        val msg = listOf(LIVE_MAGIC, "2", LIVE_WS_PORT, hostName, state.title, state.code, active().size, joinCode.value, startedAt)
                             .joinToString("|") { it.toString().replace("|", "/") }.toByteArray()
                         broadcastAddresses().forEach { addr -> runCatching { socket.send(DatagramPacket(msg, msg.size, addr, LIVE_DISCOVERY_PORT)) } }
                         Thread.sleep(2000)
@@ -171,14 +127,9 @@ object LiveDiscovery {
                         val got = runCatching { socket.receive(packet) }.isSuccess
                         val now = System.currentTimeMillis()
                         if (got) {
-                            val parts = String(packet.data, 0, packet.length).split("|")
                             val address = packet.address.hostAddress
-                            if (parts.size >= 8 && parts[0] == MAGIC && !(LiveHost.running.value && address in own)) {
-                                seen[address] = LiveHostInfo(
-                                    address, parts[2].toIntOrNull() ?: LIVE_WS_PORT, parts[3], parts[4], parts[5],
-                                    parts[6].toIntOrNull() ?: 0, now, parts[7], parts.getOrNull(8)?.toLongOrNull() ?: 0
-                                )
-                            }
+                            val info = parseAnnouncement(String(packet.data, 0, packet.length), address, now)
+                            if (info != null && !(LiveHost.running.value && address in own)) seen[address] = info
                         }
                         seen.entries.removeAll { now - it.value.seenAt > 6000 }
                         _hosts.value = seen.values.sortedBy { it.name }

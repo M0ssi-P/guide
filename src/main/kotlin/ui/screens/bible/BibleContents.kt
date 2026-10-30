@@ -100,7 +100,6 @@ import parsers.vgr.models.Segment
 import perVerseMode
 import player.Chapter
 import player.LocalPlayerState
-import player.loadChapters
 import ui.theme.Inter
 import ui.theme.LocalTheme
 import kotlin.collections.forEachIndexed
@@ -152,8 +151,7 @@ fun BibleContents(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .crossfadeOn(shownVersion)
-                .then(if (!localFullscreen.value) Modifier.background(readPrefs.theme.bgC) else Modifier),
+                .crossfadeOn(shownVersion),
             contentAlignment = Alignment.Center
         ) {
             when(tab) {

@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phone library</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1322}
+button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid #F3C969;outline-offset:2px}
+@keyframes enter{from{opacity:0;filter:blur(8px);transform:translateY(10px)}to{opacity:1;filter:none;transform:none}}
+@keyframes enterB{from{opacity:0;filter:blur(8px);transform:translateY(10px)}to{opacity:1;filter:none;transform:none}}
+@keyframes sheetUp{from{transform:translateY(105%)}to{transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes ripple{0%{transform:scale(.4);opacity:.55}100%{transform:scale(2.6);opacity:0}}
+@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+@keyframes flicker{0%,100%{transform:scaleY(1) skewX(0)}25%{transform:scaleY(1.06) skewX(-2deg)}50%{transform:scaleY(.95) skewX(1.5deg)}75%{transform:scaleY(1.03) skewX(-1deg)}}
+@keyframes halo{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.85;transform:scale(1.08)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes unfold{from{transform:perspective(900px) rotateX(-70deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes swing{0%{transform:rotate(-3deg)}50%{transform:rotate(-1.2deg)}100%{transform:rotate(-3deg)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes shimmer{from{background-position:-200px 0}to{background-position:200px 0}}
+@keyframes drift{0%{transform:translate(-8%,-4%) scale(1)}50%{transform:translate(6%,5%) scale(1.12)}100%{transform:translate(-8%,-4%) scale(1)}}
+.press{transition:transform .18s cubic-bezier(.3,.7,.2,1),background-color .25s,box-shadow .25s,color .25s}
+.press:active{transform:scale(.96)}
+.lit{background-repeat:no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:6px;transition:background-size .6s linear,color .5s}
+.wave i{display:inline-block;width:3px;border-radius:2px;animation:wave 1s ease-in-out infinite}
+.noscroll{scrollbar-width:none}.noscroll::-webkit-scrollbar{display:none}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.35;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27160%27%20height%3D%27160%27%3E%3Cfilter%20id%3D%27n%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%27.9%27%20numOctaves%3D%272%27%20stitchTiles%3D%27stitch%27/%3E%3CfeColorMatrix%20values%3D%270%200%200%200%200%20%200%200%200%200%200%20%200%200%200%200%200%20%200%200%200%20.5%200%27/%3E%3C/filter%3E%3Crect%20width%3D%27100%25%27%20height%3D%27100%25%27%20filter%3D%27url%28%23n%29%27/%3E%3C/svg%3E")}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:36px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#FBF6EA;box-shadow:0 0 0 6px rgba(243,201,105,.18),0 6px 16px rgba(0,0,0,.5)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border:0;border-radius:50%;background:#FBF6EA}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0E1322; font-family: Inter, -apple-system, system-ui, sans-serif; color: #ECE6D8; display: flex; gap: 64px; justify-content: center; align-items: center; padding: 40px 16px; box-sizing: border-box; flex-wrap: wrap; position: relative; overflow: hidden;">
+  <span aria-hidden="true" style="position: absolute; width: 900px; height: 900px; left: 50%; top: 50%; margin: -450px 0 0 -300px; border-radius: 50%; background: radial-gradient(circle, rgba(243,201,105,.09), transparent 62%); animation: drift 18s ease-in-out infinite; pointer-events: none;"></span>
+  <aside style="position: relative; width: 300px; display: flex; flex-direction: column; gap: 16px;">
+    <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-weight: 300; font-size: 40px; line-height: 1.04; letter-spacing: -.5px; color: #FBF6EA;">Your <span style="font-style: italic; color: #F3C969;">library</span></h1>
+    <p style="margin: 0; font-size: 14.5px; line-height: 22px; color: #9AA1B8;">This week’s letter, every letter before it, what you have read and heard, and everything you kept.</p>
+    <div role="tablist" aria-label="Screens" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
+      <sc-for list="{{jumps}}" as="j" hint-placeholder-count="5">
+        <button class="press" role="tab" aria-selected="{{j.sel}}" onClick="{{j.go}}" style="cursor: pointer; height: 32px; padding: 0 13px; border-radius: 16px; border: 1px solid {{j.border}}; background: {{j.bg}}; color: {{j.fg}}; font-size: 12.5px; font-weight: 500;">{{j.label}}</button>
+      </sc-for>
+    </div>
+    <p style="margin: 6px 0 0; font-size: 12.5px; line-height: 19px; color: #6B7391;">{{note}}</p>
+  </aside>
+  <div style="position: relative; width: 392px; height: 848px; border-radius: 58px; padding: 11px; background: linear-gradient(145deg, #2A3048, #10141F 40%, #1C2134); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.08), 0 80px 140px -50px rgba(0,0,0,.95), 0 0 0 1px #05070C; flex: none;">
+    <div style="position: relative; width: 100%; height: 100%; border-radius: 47px; overflow: hidden; background: {{bg}}; transition: background .6s;">
+      <span aria-hidden="true" style="position: absolute; left: -40%; top: -30%; width: 180%; height: 90%; background: radial-gradient(ellipse at 50% 30%, {{glow}}, transparent 60%); transition: background 1.2s ease; pointer-events: none;"></span>
+      <div style="position: absolute; left: 0; right: 0; top: 0; height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; font-size: 15px; font-weight: 600; color: {{ink}}; z-index: 20; pointer-events: none;">
+        <span>9:41</span>
+        <span aria-hidden="true" style="position: absolute; left: 50%; top: 11px; transform: translateX(-50%); width: 122px; height: 36px; border-radius: 18px; background: #000;"></span>
+        <span aria-hidden="true" style="font-size: 12px; letter-spacing: 1px;">▮▮▮ ▭</span>
+      </div>
+      <div class="noscroll" style="position: absolute; left: 0; right: 0; top: 54px; bottom: 0; overflow-y: auto; animation: {{swap}} .5s cubic-bezier(.2,.8,.2,1) both;">
+        <div style="padding: 8px 20px 60px;">
+          <h2 style="margin: 0; font-family: Fraunces, Georgia, serif; font-weight: 300; font-size: 32px; letter-spacing: -.4px; color: #FBF6EA;">Library</h2>
+          <div role="tablist" aria-label="Library" style="position: relative; display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 14px; height: 40px; border-radius: 20px; background: rgba(255,255,255,.06); padding: 3px;">
+            <span aria-hidden="true" style="position: absolute; top: 3px; bottom: 3px; left: calc(3px + {{tabIx}} * (100% - 6px) / 4); width: calc((100% - 6px) / 4); border-radius: 17px; background: rgba(255,255,255,.14); transition: left .45s cubic-bezier(.2,.9,.1,1.15);"></span>
+            <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4"><button role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="cursor: pointer; position: relative; border: 0; background: transparent; font-size: 12.5px; font-weight: 600; color: {{t.fg}};">{{t.label}}</button></sc-for>
+          </div>
+
+          <div style="animation: {{swapA}} .5s cubic-bezier(.2,.8,.2,1) both;">
+          <!-- THIS WEEK: the letter itself -->
+          <sc-if value="{{isWeek}}" hint-placeholder-val="{{true}}">
+            <div style="position: relative; margin-top: 22px; padding: 30px 24px 26px; background: #F2E9D6; color: #2A2418; clip-path: polygon(0 2%, 6% 0, 14% 1.2%, 25% .2%, 37% 1.4%, 50% .3%, 63% 1.1%, 76% 0, 88% 1.3%, 100% .4%, 100% 98.6%, 92% 100%, 80% 98.9%, 66% 99.8%, 52% 98.7%, 38% 99.9%, 24% 98.8%, 11% 99.7%, 0 98.5%); animation: unfold .8s cubic-bezier(.2,.8,.2,1) both; transform-origin: top center;">
+              <span class="grain" style="opacity: .35;"></span>
+              <span aria-hidden="true" style="position: absolute; right: 18px; top: 16px; width: 54px; height: 54px; border-radius: 47% 53% 50% 50% / 52% 48% 52% 48%; background: radial-gradient(circle at 38% 32%, #B8394A, #8E1F2C 60%, #6A1420); box-shadow: 0 3px 6px rgba(60,10,15,.4), inset 0 0 0 5px rgba(0,0,0,.08); display: grid; place-items: center; font-family: Fraunces, serif; font-size: 18px; color: rgba(255,220,200,.75); transform: rotate(-8deg);">BT</span>
+              <div style="position: relative;">
+            <div role="radiogroup" aria-label="Letter language" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 17px;"><sc-for list="{{L.langs}}" as="lx" hint-placeholder-count="3"><button class="press" role="radio" aria-checked="{{lx.sel}}" onClick="{{lx.pick}}" style="cursor: pointer; border: 0; height: 28px; padding: 0 11px; border-radius: 14px; background: {{lx.bg}}; color: {{lx.fg}}; font-size: 11px; font-weight: 600;">{{lx.name}}</button></sc-for></div>
+            <div style="animation: {{L.swap}} .5s cubic-bezier(.2,.8,.2,1) both;">
+              <p style="margin: 0; font-family: Fraunces, serif; font-style: italic; font-size: 13px; color: #7D735F;">{{L.date}}</p>
+              <p style="margin: 10px 0 0; font-family: Fraunces, serif; font-size: 24px; line-height: 1.2; color: #2A2418;">{{L.greeting}}</p>
+              <sc-for list="{{L.blocks}}" as="bl" hint-placeholder-count="4">
+                <sc-if value="{{bl.p}}" hint-placeholder-val="{{true}}"><p style="margin: 13px 0 0; font-family: Fraunces, serif; font-size: 16px; line-height: 1.7; color: #3A2E1E;">{{bl.text}}</p></sc-if>
+                <sc-if value="{{bl.q}}" hint-placeholder-val="{{false}}"><blockquote style="position: relative; margin: 15px 0 0; padding: 4px 0 4px 17px; border-left: 3px solid #8E1F2C; font-family: Fraunces, serif; font-style: italic; font-size: 17px; line-height: 1.6; color: #2A2418;"><span aria-hidden="true" style="position: absolute; left: 8px; top: -13px; font-size: 44px; color: #8E1F2C; opacity: .18;">“</span>{{bl.text}}</blockquote></sc-if>
+              </sc-for>
+              <p style="margin: 19px 0 0; font-family: Fraunces, serif; font-style: italic; font-size: 17px; color: #4A3F2C;">Bro. Joseph Branham</p>
+              <div style="margin-top: 17px; padding-top: 13px; border-top: 1px dashed rgba(42,36,24,.25); display: grid; grid-template-columns: auto 1fr; gap: 6px 13px; font-size: 13px; color: #4A3F2C;">
+                <span style="color: #8E1F2C; font-weight: 600;">{{L.msgLabel}}</span><span style="font-family: Fraunces, serif; font-size: 14px;">{{L.message}}</span>
+                <span style="color: #8E1F2C; font-weight: 600;">{{L.scrLabel}}</span><span style="font-family: Fraunces, serif; font-size: 14px;">{{L.scripture}}</span>
+              </div>
+            </div>
+            <p style="margin: 21px 0 8px; font-size: 12px; font-weight: 600; color: #7D735F;">{{L.svcLabel}}</p>
+            <div style="position: relative; display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: 21px; background: #2A2418; color: #F2E9D6; overflow: hidden;">
+              <span aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: {{L.pct}}; background: rgba(243,201,105,.14); transition: width .45s linear;"></span>
+              <button class="press" onClick="{{L.toggle}}" aria-label="{{L.playAria}}" style="cursor: pointer; border: 0; position: relative; flex: none; width: 42px; height: 42px; border-radius: 50%; background: #F3C969; display: grid; place-items: center;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="#1A1608"><path d="{{L.playPath}}"/></svg></button>
+              <span style="position: relative; flex: 1; min-width: 0;"><span style="display: block; font-family: Fraunces, serif; font-size: 15px;">{{L.svcTitle}}</span><span style="display: block; font-size: 11px; color: #B8AE98;">{{L.svcMeta}}</span></span>
+              <span style="position: relative; height: 21px; padding: 0 9px; border-radius: 10px; background: rgba(243,201,105,.16); color: #F3C969; font-size: 10px; font-weight: 700; letter-spacing: .5px; display: inline-flex; align-items: center;">{{L.place}}</span>
+            </div>
+          </div>
+            </div>
+          </sc-if>
+
+          <!-- LETTERS: a stack of envelopes per month -->
+          <sc-if value="{{isLetters}}" hint-placeholder-val="{{false}}">
+            <div role="radiogroup" aria-label="Letters in" style="display: flex; gap: 6px; margin-top: 18px;"><sc-for list="{{archLangs}}" as="al" hint-placeholder-count="3"><button class="press" role="radio" aria-checked="{{al.sel}}" onClick="{{al.pick}}" style="cursor: pointer; height: 34px; padding: 0 14px; border-radius: 17px; border: 0; background: {{al.bg}}; color: {{al.fg}}; font-size: 12.5px; font-weight: 600;">{{al.name}}</button></sc-for></div>
+            <sc-for list="{{months}}" as="mo" hint-placeholder-count="2">
+              <p style="margin: 22px 0 10px; font-family: Fraunces, serif; font-size: 20px; color: #FBF6EA;">{{mo.name}}</p>
+              <sc-for list="{{mo.letters}}" as="lt" hint-placeholder-count="4">
+                <button class="press" onClick="{{lt.open}}" style="cursor: pointer; position: relative; width: 100%; height: 84px; margin-top: {{lt.overlap}}; border: 0; padding: 0; background: transparent; text-align: left; transform: rotate({{lt.tilt}}); z-index: {{lt.z}}; animation: rise .5s {{lt.delay}} cubic-bezier(.2,.8,.2,1) both;">
+                  <span aria-hidden="true" style="position: absolute; inset: 0; border-radius: 6px; background: {{lt.paper}}; box-shadow: 0 -6px 18px -8px rgba(0,0,0,.6);"></span>
+                  <svg aria-hidden="true" viewBox="0 0 350 84" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%;"><path d="M0 0 L316 34 L350 0" fill="none" stroke="rgba(42,36,24,.18)" stroke-width="1.2"/></svg>
+                  <span aria-hidden="true" style="position: absolute; right: 22px; top: 34px; width: 24px; height: 24px; border-radius: 48% 52% 50% 50%; background: radial-gradient(circle at 38% 32%, #B8394A, #8E1F2C 65%); box-shadow: 0 2px 4px rgba(60,10,15,.4);"></span>
+                  <span style="position: absolute; left: 16px; top: 12px; max-width: 72%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: Fraunces, serif; font-size: 15px; color: #2A2418;">{{lt.title}}</span><span style="position: absolute; left: 16px; top: 33px; font-size: 11.5px; color: #7D735F;">{{lt.msg}}</span>
+                  <span style="position: absolute; right: 16px; top: 14px; font-size: 11.5px; color: #7D735F;">{{lt.date}}</span>
+                  <sc-if value="{{lt.unread}}" hint-placeholder-val="{{false}}"><span style="position: absolute; right: 16px; bottom: 12px; font-size: 11.5px; font-weight: 600; color: #8E1F2C;">Unread</span></sc-if>
+                </button>
+              </sc-for>
+            </sc-for>
+          </sc-if>
+
+          <!-- ACTIVITY -->
+          <sc-if value="{{isActivity}}" hint-placeholder-val="{{false}}">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 22px;">
+              <sc-for list="{{stats}}" as="st" hint-placeholder-count="3">
+                <div style="position: relative; padding: 4px 0 0;">
+                  <p style="margin: 0; font-family: Fraunces, serif; font-weight: 300; font-size: 40px; line-height: 1; color: {{st.c}};">{{st.n}}</p>
+                  <p style="margin: 4px 0 6px; font-size: 12px; color: #9AA1B8;">{{st.label}}</p>
+                  <svg aria-hidden="true" width="100%" height="24" viewBox="0 0 100 24" preserveAspectRatio="none"><path d="{{st.path}}" fill="none" stroke="{{st.c}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" opacity=".8"/></svg>
+                </div>
+              </sc-for>
+            </div>
+            <p style="margin: 22px 0 10px; display: flex; justify-content: space-between; font-size: 13px; color: #9AA1B8;"><span>Lamps lit, last six months</span><span>{{litDays}} days</span></p>
+            <div role="img" aria-label="Days with reading or listening over six months" style="display: grid; grid-template-columns: repeat(26, 1fr); grid-auto-flow: column; grid-template-rows: repeat(7, 1fr); gap: 3px;">
+              <sc-for list="{{heat}}" as="hx" hint-placeholder-count="182"><i style="aspect-ratio: 1; border-radius: 50%; background: {{hx.c}}; box-shadow: {{hx.g}};"></i></sc-for>
+            </div>
+            <p style="margin: 24px 0 6px; font-family: Fraunces, serif; font-size: 20px; color: #FBF6EA;">Lately</p>
+            <div style="position: relative; padding-left: 22px;">
+              <span aria-hidden="true" style="position: absolute; left: 5px; top: 8px; bottom: 8px; width: 1.5px; background: linear-gradient(#F3C969, rgba(243,201,105,0));"></span>
+              <sc-for list="{{recent}}" as="rc" hint-placeholder-count="4">
+                <div style="position: relative; padding: 9px 0;">
+                  <span aria-hidden="true" style="position: absolute; left: -21px; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: #121829; box-shadow: inset 0 0 0 2px {{rc.c}};"></span>
+                  <p style="margin: 0; font-family: Fraunces, serif; font-size: 16px; color: #FBF6EA;">{{rc.what}}</p>
+                  <p style="margin: 1px 0 0; font-size: 12px; color: #8189A6;">{{rc.when}}</p>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- SAVED and HIGHLIGHTS -->
+          <sc-if value="{{isSaved}}" hint-placeholder-val="{{false}}">
+            <div role="radiogroup" aria-label="Show" class="noscroll" style="display: flex; gap: 6px; margin: 18px -20px 6px; padding: 0 20px; overflow-x: auto;">
+              <sc-for list="{{filters}}" as="fl" hint-placeholder-count="4"><button class="press" role="radio" aria-checked="{{fl.sel}}" onClick="{{fl.pick}}" style="cursor: pointer; flex: none; height: 34px; padding: 0 14px; border-radius: 17px; border: 0; background: {{fl.bg}}; color: {{fl.fg}}; font-size: 12.5px; font-weight: 600;">{{fl.label}}</button></sc-for>
+            </div>
+            <sc-for list="{{saved}}" as="sv" hint-placeholder-count="4">
+              <div style="position: relative; display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,.06); animation: rise .45s {{sv.delay}} cubic-bezier(.2,.8,.2,1) both;">
+                <span aria-hidden="true" style="flex: none; width: 4px; border-radius: 2px; background: {{sv.c}}; box-shadow: 0 0 12px {{sv.c}};"></span>
+                <div style="flex: 1; min-width: 0;">
+                  <p style="margin: 0; font-family: Fraunces, serif; font-weight: 300; font-size: 18px; line-height: 1.45; color: #FBF6EA;"><span style="background: {{sv.hl}}; border-radius: 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; padding: 0 2px;">{{sv.text}}</span></p>
+                  <p style="margin: 8px 0 0; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8189A6;"><span style="color: {{sv.c}}; font-weight: 600;">{{sv.kind}}</span><span>{{sv.src}}</span></p>
+                </div>
+                <button class="press" onClick="{{sv.remove}}" aria-label="Remove from saved" style="cursor: pointer; flex: none; align-self: flex-start; width: 34px; height: 34px; border-radius: 50%; border: 0; background: transparent; display: grid; place-items: center;"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="{{sv.c}}" stroke="{{sv.c}}" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg></button>
+              </div>
+            </sc-for>
+            <sc-if value="{{noneSaved}}" hint-placeholder-val="{{false}}"><p style="margin: 40px 0; text-align: center; font-family: Fraunces, serif; font-style: italic; color: #8189A6;">Nothing here yet. Tap a verse or a quote to keep it.</p></sc-if>
+          </sc-if>
+          </div>
+        </div>
+      </div>
+      <sc-if value="{{letterOpen}}" hint-placeholder-val="{{false}}">
+        <div onClick="{{closeLetter}}" aria-hidden="true" style="position: absolute; inset: 0; z-index: 14; background: rgba(5,8,16,.6); backdrop-filter: blur(4px); animation: fade .3s both;"></div>
+        <div role="dialog" aria-modal="true" aria-label="A letter from Bro. Joseph" style="position: absolute; z-index: 15; left: 14px; right: 14px; top: 70px; bottom: 40px; padding: 30px 24px; background: #F2E9D6; color: #2A2418; border-radius: 4px; box-shadow: 0 40px 80px -20px rgba(0,0,0,.9); overflow-y: auto; animation: unfold .7s cubic-bezier(.2,.8,.2,1) both; transform-origin: top center;" class="noscroll">
+          <span class="grain" style="opacity: .35;"></span>
+          <button class="press" onClick="{{closeLetter}}" aria-label="Close the letter" style="cursor: pointer; position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(0,0,0,.06); display: grid; place-items: center;"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2A2418" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          <div style="position: relative;">
+            <div role="radiogroup" aria-label="Letter language" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 17px;"><sc-for list="{{L.langs}}" as="lx" hint-placeholder-count="3"><button class="press" role="radio" aria-checked="{{lx.sel}}" onClick="{{lx.pick}}" style="cursor: pointer; border: 0; height: 28px; padding: 0 11px; border-radius: 14px; background: {{lx.bg}}; color: {{lx.fg}}; font-size: 11px; font-weight: 600;">{{lx.name}}</button></sc-for></div>
+            <div style="animation: {{L.swap}} .5s cubic-bezier(.2,.8,.2,1) both;">
+              <p style="margin: 0; font-family: Fraunces, serif; font-style: italic; font-size: 13px; color: #7D735F;">{{L.date}}</p>
+              <p style="margin: 10px 0 0; font-family: Fraunces, serif; font-size: 24px; line-height: 1.2; color: #2A2418;">{{L.greeting}}</p>
+              <sc-for list="{{L.blocks}}" as="bl" hint-placeholder-count="4">
+                <sc-if value="{{bl.p}}" hint-placeholder-val="{{true}}"><p style="margin: 13px 0 0; font-family: Fraunces, serif; font-size: 16px; line-height: 1.7; color: #3A2E1E;">{{bl.text}}</p></sc-if>
+                <sc-if value="{{bl.q}}" hint-placeholder-val="{{false}}"><blockquote style="position: relative; margin: 15px 0 0; padding: 4px 0 4px 17px; border-left: 3px solid #8E1F2C; font-family: Fraunces, serif; font-style: italic; font-size: 17px; line-height: 1.6; color: #2A2418;"><span aria-hidden="true" style="position: absolute; left: 8px; top: -13px; font-size: 44px; color: #8E1F2C; opacity: .18;">“</span>{{bl.text}}</blockquote></sc-if>
+              </sc-for>
+              <p style="margin: 19px 0 0; font-family: Fraunces, serif; font-style: italic; font-size: 17px; color: #4A3F2C;">Bro. Joseph Branham</p>
+              <div style="margin-top: 17px; padding-top: 13px; border-top: 1px dashed rgba(42,36,24,.25); display: grid; grid-template-columns: auto 1fr; gap: 6px 13px; font-size: 13px; color: #4A3F2C;">
+                <span style="color: #8E1F2C; font-weight: 600;">{{L.msgLabel}}</span><span style="font-family: Fraunces, serif; font-size: 14px;">{{L.message}}</span>
+                <span style="color: #8E1F2C; font-weight: 600;">{{L.scrLabel}}</span><span style="font-family: Fraunces, serif; font-size: 14px;">{{L.scripture}}</span>
+              </div>
+            </div>
+            <p style="margin: 21px 0 8px; font-size: 12px; font-weight: 600; color: #7D735F;">{{L.svcLabel}}</p>
+            <div style="position: relative; display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: 21px; background: #2A2418; color: #F2E9D6; overflow: hidden;">
+              <span aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: {{L.pct}}; background: rgba(243,201,105,.14); transition: width .45s linear;"></span>
+              <button class="press" onClick="{{L.toggle}}" aria-label="{{L.playAria}}" style="cursor: pointer; border: 0; position: relative; flex: none; width: 42px; height: 42px; border-radius: 50%; background: #F3C969; display: grid; place-items: center;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="#1A1608"><path d="{{L.playPath}}"/></svg></button>
+              <span style="position: relative; flex: 1; min-width: 0;"><span style="display: block; font-family: Fraunces, serif; font-size: 15px;">{{L.svcTitle}}</span><span style="display: block; font-size: 11px; color: #B8AE98;">{{L.svcMeta}}</span></span>
+              <span style="position: relative; height: 21px; padding: 0 9px; border-radius: 10px; background: rgba(243,201,105,.16); color: #F3C969; font-size: 10px; font-weight: 700; letter-spacing: .5px; display: inline-flex; align-items: center;">{{L.place}}</span>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <span aria-hidden="true" style="position: absolute; z-index: 30; left: 50%; bottom: 8px; transform: translateX(-50%); width: 134px; height: 5px; border-radius: 3px; background: {{ink}}; opacity: .55;"></span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960},"initialTab":{"type":"enum","options":["week","letters","activity","saved"],"default":"week"}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const p = props || {};
+    this.state = { tab: p.initialTab || 'week', flip: 0, done: [true, true, false, false], letter: -1, filter: 'all', removed: {} };
+  }
+  jumpsFor(list, cur, go) { return list.map(([id, label]) => ({ label, sel: cur === id ? 'true' : 'false', go: () => go(id),
+    border: cur === id ? 'rgba(243,201,105,.6)' : 'rgba(255,255,255,.1)', bg: cur === id ? 'rgba(243,201,105,.12)' : 'transparent', fg: cur === id ? '#F3C969' : '#9AA1B8' })); }
+  letterVals(s) {
+    const LET = {
+      en: { date: 'Saturday, October 24, 2026', greeting: 'Dear Faithful in Christ Jesus,', msgLabel: 'Message:', scrLabel: 'Scripture:', svcLabel: 'Associated Services', blocks: [['p', 'What a privilege it is to come together again around His Word. This Sunday we will hear Adoption #1, and we believe every word of it is for this very hour.'], ['q', 'God has a place for every son. He does not leave His children standing outside; He brings them in, and He sets them in their place.'], ['p', 'Wherever you are, in your home or in your church, let us sit down together at the same hour and let the Word place us where He wants us.'], ['q', 'Stay with the Word. When everything else is shaking, the Word stands.']] },
+      fr: { date: 'Samedi 24 octobre 2026', greeting: 'Chers fidèles en Jésus-Christ,', msgLabel: 'Message :', scrLabel: 'Écriture :', svcLabel: 'Services associés', blocks: [['p', 'Quel privilège de nous retrouver de nouveau autour de Sa Parole. Ce dimanche, nous écouterons L’adoption n° 1, et nous croyons que chaque mot est pour cette heure même.'], ['q', 'Dieu a une place pour chaque fils. Il ne laisse pas Ses enfants dehors ; Il les fait entrer et Il les établit à leur place.'], ['p', 'Où que vous soyez, chez vous ou dans votre église, asseyons-nous ensemble à la même heure, et laissons la Parole nous placer là où Il nous veut.'], ['q', 'Restez avec la Parole. Quand tout le reste vacille, la Parole demeure.']] },
+      es: { date: 'Sábado, 24 de octubre de 2026', greeting: 'Queridos fieles en Cristo Jesús:', msgLabel: 'Mensaje:', scrLabel: 'Escritura:', svcLabel: 'Servicios asociados', blocks: [['p', 'Qué privilegio es reunirnos otra vez alrededor de Su Palabra. Este domingo escucharemos La adopción n.º 1, y creemos que cada palabra es para esta misma hora.'], ['q', 'Dios tiene un lugar para cada hijo. No deja a Sus hijos afuera; los hace entrar y los pone en su lugar.'], ['p', 'Dondequiera que estén, en su hogar o en su iglesia, sentémonos juntos a la misma hora y dejemos que la Palabra nos coloque donde Él nos quiere.'], ['q', 'Quédense con la Palabra. Cuando todo lo demás tiembla, la Palabra permanece.']] }
+    };
+    const NAMES = { en: 'English', fr: 'Français', es: 'Español' };
+    const lg = LET[s.llang] ? s.llang : 'en'; const d = LET[lg];
+    const pct = Math.round((s.lpos || 0) * 100);
+    const m = s.lmeta; const day = m ? m[0].replace('Oct', 'October').replace('Sep', 'September') : '';
+    const sun = m ? day.replace(/\d+$/, (n) => String(Number(n) + 1)) : '';
+    return {
+      langs: Object.keys(LET).map((id) => ({ name: NAMES[id], sel: lg === id ? 'true' : 'false', bg: lg === id ? '#2A2418' : 'rgba(42,36,24,.08)', fg: lg === id ? '#F2E9D6' : '#4A3F2C', pick: () => this.setState({ llang: id }) })),
+      swap: (lg === 'fr') !== !!m ? 'enter' : 'enterB', date: m ? 'Saturday, ' + day + ', 2026' : d.date, greeting: m ? m[1] : d.greeting, msgLabel: d.msgLabel, scrLabel: d.scrLabel, svcLabel: d.svcLabel,
+      blocks: d.blocks.map(([t, text]) => ({ p: t === 'p', q: t === 'q', text })),
+      message: m ? m[2] : '60-0515E Adoption #1', scripture: 'Ephesians 1:3-5, Romans 8:14-23, Galatians 4:1-7',
+      svcTitle: m ? sun + ', 2026: ' + m[2] : 'October 25, 2026: 60-0515E Adoption #1', svcMeta: s.lplay ? 'Playing, ' + pct + '% of 2 h 6 min' : 'Sunday service, 2 h 6 min, on this device', place: 'YFYC', pct: pct + '%',
+      toggle: () => { const on = !s.lplay; this.setState({ lplay: on }); clearInterval(this.lp); if (on) this.lp = setInterval(() => { const v = Math.min(1, (this.state.lpos || 0) + 0.01); this.setState({ lpos: v, lplay: v < 1 }); if (v >= 1) clearInterval(this.lp); }, 400); },
+      playAria: s.lplay ? 'Pause the service' : 'Play the service', playPath: s.lplay ? 'M6 5h4v14H6zM14 5h4v14h-4z' : 'M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z'
+    };
+  }
+  renderVals() {
+    const s = this.state;
+    const tabs = [['week', 'This week'], ['letters', 'Letters'], ['activity', 'Activity'], ['saved', 'Saved']];
+    const ARCH = [['October', [['Oct 24', 'Dear Faithful in Christ Jesus,', '60-0515E Adoption #1', 'EN FR ES'], ['Oct 17', 'Dear Powerhouse,', '62-1014E A Guide', 'EN FR ES'], ['Oct 10', 'Dear Stature Of A Perfect Man,', '62-1014M The Stature Of A Perfect Man', 'EN FR'], ['Oct 3', 'Dear Micaiahs,', '65-1127B I Have Heard But Now I See', 'EN FR ES']]], ['September', [['Sep 26', 'Dear Attributes Of God,', '65-0725M The Anointed Ones At The End Time', 'EN FR'], ['Sep 19', 'Dear Bride of Christ,', '60-1208 The Thyatirean Church Age', 'EN']]]];
+    const PAPERS = ['#F2E9D6', '#EADFC6', '#F5EEDD', '#E6D9BD'];
+    let li = 0;
+    const KIND = { quote: ['Quote', '#F3C969', 'transparent'], verse: ['Verse', '#8FB7FF', 'transparent'], hl: ['Highlight', '#FF9E8E', 'rgba(255,122,102,.22)'] };
+    const SAVED = [['quote', 'Take God at His Word, no matter what anything else says.', 'Hear Ye Him, 1960'], ['hl', 'Except a man be born again, he cannot see the kingdom of God.', 'John 3:3, KJV'], ['verse', 'Lakini yeye atakapokuja, huyo Roho wa kweli, atawaongoza awatie kwenye kweli yote.', 'Yohana 16:13, SUV'], ['quote', 'The Holy Spirit is our Guide today. He will not leave us.', 'A Guide, paragraph 23'], ['hl', 'In him was life; and the life was the light of men.', 'John 1:4, KJV']];
+    const seen = SAVED.map((x, i) => [x, i]).filter(([x, i]) => !s.removed[i] && (s.filter === 'all' || s.filter === x[0]));
+    const rnd = (n) => { const x = Math.sin(n * 91.7) * 1e4; return x - Math.floor(x); };
+    const heat = Array.from({ length: 182 }, (_, i) => { const r = rnd(i + 3), on = i > 150 ? i < 180 : r > 0.38, lvl = on ? (r > 0.8 ? 3 : r > 0.6 ? 2 : 1) : 0; return { c: ['rgba(255,255,255,.07)', 'rgba(243,201,105,.35)', 'rgba(243,201,105,.65)', '#F3C969'][lvl], g: lvl === 3 ? '0 0 6px rgba(243,201,105,.7)' : 'none' }; });
+    const spark = (seed) => 'M' + Array.from({ length: 12 }, (_, i) => (i * 9.09).toFixed(1) + ' ' + (20 - 16 * rnd(seed + i)).toFixed(1)).join(' L');
+    
+    return { L: this.letterVals(s),
+      jumps: this.jumpsFor(tabs, s.tab, (id) => this.setState({ tab: id, flip: s.flip + 1, letter: -1, lmeta: null })),
+      note: 'This week’s letter from Bro. Joseph as Branham Tabernacle sends it: the quotes, the Message and Scripture, and the Sunday service to play. Quote text here is sample text. Older letters stack as sealed envelopes, your activity is a field of small lamps, and everything you kept sits in one place.',
+      bg: '#121829', glow: 'rgba(243,201,105,.12)', ink: '#FBF6EA', swap: 'enterB', swapA: s.flip % 2 ? 'enter' : 'enterB',
+      tabIx: tabs.findIndex((t) => t[0] === s.tab), tabs: tabs.map(([id, label]) => ({ label, sel: s.tab === id ? 'true' : 'false', fg: s.tab === id ? '#FBF6EA' : '#9AA1B8', pick: () => this.setState({ tab: id, flip: s.flip + 1 }) })),
+      isWeek: s.tab === 'week', isLetters: s.tab === 'letters', isActivity: s.tab === 'activity', isSaved: s.tab === 'saved',
+      archLangs: [['en', 'English'], ['fr', 'Français'], ['es', 'Español']].map(([id, name]) => ({ name, sel: (s.alang || 'en') === id ? 'true' : 'false', bg: (s.alang || 'en') === id ? '#F3C969' : 'rgba(255,255,255,.06)', fg: (s.alang || 'en') === id ? '#1A1608' : '#D9D1C0', pick: () => this.setState({ alang: id, llang: id }) })),
+      months: ARCH.map(([name, list]) => ({ name, letters: list.filter((x) => x[3].includes((s.alang || 'en').toUpperCase())).map(([date, title, msg], j) => { const n = li++; return { title, date, msg, unread: n === 0, paper: PAPERS[n % 4], tilt: (j % 2 ? 0.6 : -0.5) + 'deg', overlap: j ? '-30px' : '0', z: j + 1, delay: (n * 0.05).toFixed(2) + 's', open: () => this.setState({ letter: n, lmeta: n === 0 ? null : [date, title, msg], llang: s.alang || 'en', lpos: 0, lplay: false }) }; }) })),
+      letterOpen: s.letter >= 0, closeLetter: () => this.setState({ letter: -1 }),
+      stats: [['38', 'hours listened', '#F3C969', 1], ['11', 'sermons finished', '#8FB7FF', 20], ['64', 'chapters read', '#FF9E8E', 40]].map(([n, label, c, seed]) => ({ n, label, c, path: spark(seed) })),
+      heat, litDays: heat.filter((h) => h.c !== 'rgba(255,255,255,.07)').length,
+      recent: [['Listened to Kiongozi, paragraph 23', 'Tonight, 41 minutes', '#F3C969'], ['Read John 3 in Swahili and English', 'This morning', '#8FB7FF'], ['Joined Church PC live', 'Sunday, 2 h 4 min', '#FF7A66'], ['Saved a quote from Hear Ye Him', 'Saturday', '#F3C969']].map(([what, when, c]) => ({ what, when, c })),
+      filters: [['all', 'All'], ['quote', 'Quotes'], ['verse', 'Verses'], ['hl', 'Highlights']].map(([id, label]) => ({ label, sel: s.filter === id ? 'true' : 'false', bg: s.filter === id ? '#F3C969' : 'rgba(255,255,255,.06)', fg: s.filter === id ? '#1A1608' : '#D9D1C0', pick: () => this.setState({ filter: id }) })),
+      saved: seen.map(([x, i], j) => ({ text: x[1], src: x[2], kind: KIND[x[0]][0], c: KIND[x[0]][1], hl: KIND[x[0]][2], delay: (j * 0.05).toFixed(2) + 's', remove: () => this.setState({ removed: Object.assign({}, s.removed, { [i]: true }) }) })),
+      noneSaved: seen.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

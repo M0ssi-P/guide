@@ -90,7 +90,7 @@ fun ChapterContent(
     ) {
         if (sections.hasHeading && sections.heading != null && !localFullscreen.value && (look?.headings ?: true)) {
             Row(modifier = Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 12.dp)) {
-                Text("${sections.heading.heading}", style = theme.typography.h2, color = look?.head ?: theme.colors.night, fontSize = 28.sp)
+                Text("${sections.heading!!.heading}", style = theme.typography.h2, color = look?.head ?: theme.colors.night, fontSize = 28.sp)
             }
         }
 

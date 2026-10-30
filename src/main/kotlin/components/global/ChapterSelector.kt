@@ -149,7 +149,7 @@ fun BookChapterSelectorPopup(state: MutableState<Boolean>, model: BibleViewModel
                 ) {
                     currentVersion?.let { version ->
                         if(!version.books.isNullOrEmpty()) {
-                            itemsIndexed(version.books) { index, book ->
+                            itemsIndexed(version.books!!) { index, book ->
                                 SelectorOption(book.human, isActive = model.currentBook?.human == book.human, onClick = {
                                     model.putCurrentBook(book)
                                 })

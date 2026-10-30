@@ -1,28 +1,18 @@
 package parsers.vgr
 
-import client
 import db.controller.table.Languages.getCurrentTable
-import defaultHeaders
 import loadData
 import saveData
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
-import okHttpClient
-import okhttp3.Request
 import parsers.vgr.models.Sermon
 import ui.config.DB
 import ui.settings.UserInterfaceSettings
 import java.io.File
-import java.io.IOException
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.coroutineContext
 
 object SermonMedia {
-    private const val updaterUrl = "https://updater.branham.org"
-    private val mediaIdRegex = Regex("""/repo/[^/"']+/([0-9a-fA-F]{32,})\.(?:m4a|mp3|opus)""")
-    private val urlRegex = Regex("""https?:(?:\\?/)+[^"'\s<>]+""")
 
     private val os = System.getProperty("os.name").lowercase()
 
@@ -66,21 +56,11 @@ object SermonMedia {
         return listOfNotNull(cat.find(sermon.i, iso3, OmegaCatalog.OPUS), cat.find(sermon.i, iso3, OmegaCatalog.M4A))
     }
 
-    private suspend fun urlFor(fileId: String, mediaTypeId: Int, fileTypeId: Int): String? {
-        val res = client.get("$updaterUrl/api/table/omega-media-catalog/media-files/$fileId/url?mediaTypeId=$mediaTypeId&fileTypeId=$fileTypeId&bulkDownload=False")
-        // works whether the body is the bare link, a JSON string, or a JSON object holding it
-        return if (res.isSuccessful) urlRegex.find(res.text)?.value?.replace("\\/", "/") else null
-    }
+    private suspend fun urlFor(fileId: String, mediaTypeId: Int, fileTypeId: Int): String? = VgrMedia.urlFor(fileId, mediaTypeId, fileTypeId)
 
-    /**
-     * branham.org's message stream page is server-rendered with an audio link like
-     * `https://….cloudfront.net/repo/947/<media id>.m4a`; the media id is the file name.
-     */
     private suspend fun mediaFileId(sermon: Sermon): String? {
         val iso3 = DB.connection("main.db").getCurrentTable(languageTag(sermon))?.iso63903?.uppercase() ?: return null
-        val res = client.get("https://branham.org/en/messagestream/$iso3=${sermon.dateCode}", headers = defaultHeaders)
-        if (!res.isSuccessful) return null
-        return mediaIdRegex.find(res.text)?.groupValues?.get(1)
+        return VgrMedia.mediaFileId(iso3, sermon.dateCode)
     }
 
     /**
@@ -131,26 +111,9 @@ object SermonMedia {
         runCatching { download(url, File(mediaDir("ENG"), name)) {} }.onFailure { it.printStackTrace() }
     }
 
-    /**
-     * The one local finder: "[<ISO3>]<date code> <title> VGR.opus" (or .m4a) in [dir], for language [iso3]. No prefix
-     * means English. The title is never required (VGR uses the English title for every language, and Windows drops
-     * characters like ? # ! from names). Our older downloads in a non-English folder have no prefix; they count only
-     * when nothing prefixed is there and, if the catalog size is known, the size matches. Ranking: catalog size, then
-     * the title (compared with [vgrSafeTitle] on both sides), then opus over m4a.
-     */
-    fun findVgrFile(dir: File, iso3: String, dateCode: String, sizes: Set<Long> = emptySet(), title: String? = null): File? {
-        val named = dir.listFiles { f -> f.isFile }?.mapNotNull { f -> vgrFileLanguage(f.name, dateCode)?.let { f to it } } ?: return null
-        val mine = named.filter { it.second.equals(iso3, true) }.map { it.first }.ifEmpty {
-            if (iso3.equals("ENG", true)) emptyList()
-            else named.filter { it.second == "ENG" }.map { it.first }.filter { sizes.isEmpty() || it.length() in sizes }
-        }
-        val want = title?.let { vgrSafeTitle(it).lowercase() }
-        return mine.sortedWith(compareBy<File>(
-            { it.length() !in sizes },
-            { want == null || !vgrSafeTitle(it.name).lowercase().contains(want) },
-            { !it.extension.equals("opus", true) },
-        )).firstOrNull()
-    }
+    /** See [VgrMedia.findVgrFile]. */
+    fun findVgrFile(dir: File, iso3: String, dateCode: String, sizes: Set<Long> = emptySet(), title: String? = null): File? =
+        VgrMedia.findVgrFile(dir, iso3, dateCode, sizes, title)
 
     private val audioExtensions = setOf("opus", "m4a", "mp3", "ogg", "aac", "wav")
 
@@ -182,52 +145,9 @@ object SermonMedia {
         paths.map(::File).firstOrNull { it.isFile && it.extension.lowercase() in audioExtensions }
     }.getOrNull()
 
-    /** Downloads to a .part file first so a cancelled or failed download never leaves a broken file behind. */
-    suspend fun download(url: String, target: File, onProgress: (Float) -> Unit) = withContext(Dispatchers.IO) {
-        val part = File(target.parentFile, target.name + ".part")
-        try {
-            okHttpClient.newCall(Request.Builder().url(url).build()).execute().use { res ->
-                if (!res.isSuccessful) throw IOException("HTTP ${res.code}")
-                val body = res.body ?: throw IOException("Empty response")
-                val total = body.contentLength()
-                body.byteStream().use { input ->
-                    part.outputStream().use { out ->
-                        val buf = ByteArray(64 * 1024)
-                        var read = 0L
-                        while (true) {
-                            coroutineContext.ensureActive()
-                            val n = input.read(buf)
-                            if (n < 0) break
-                            out.write(buf, 0, n)
-                            read += n
-                            if (total > 0) onProgress(read.toFloat() / total)
-                        }
-                    }
-                }
-            }
-            if (!part.renameTo(target)) throw IOException("Couldn't save ${target.name}")
-            // remembered so Saved › Downloads can tell our files from other apps' copies in the same folder
-            saveData("guide_downloads", HashSet(loadData<HashSet<String>>("guide_downloads") ?: hashSetOf()).apply { add(target.absolutePath) })
-        } finally {
-            part.delete()
-        }
+    /** [VgrMedia.download], remembering the file so Saved > Downloads can tell our files from other apps' copies in the same folder. */
+    suspend fun download(url: String, target: File, onProgress: (Float) -> Unit) {
+        VgrMedia.download(url, target, onProgress)
+        saveData("guide_downloads", HashSet(loadData<HashSet<String>>("guide_downloads") ?: hashSetOf()).apply { add(target.absolutePath) })
     }
 }
-
-/**
- * The language of a VGR-named audio file for [dateCode]: its ISO3 prefix ("SWA62-1014E A Guide VGR.opus" → SWA), or ENG
- * with no prefix ("62-1014E A Guide VGR.opus"). Null when the name isn't that sermon's VGR opus or m4a.
- */
-fun vgrFileLanguage(name: String, dateCode: String): String? =
-    Regex("^([A-Z]{3})?" + Regex.escape(dateCode) + " .* VGR\\.(opus|m4a)$", RegexOption.IGNORE_CASE).find(name)?.let { m ->
-        m.groupValues[1].uppercase().ifEmpty { "ENG" }
-    }
-
-/**
- * A title as it is written into file names, used both to save and to look up so the two never disagree: Unicode
- * normalised, everything that isn't a letter, digit, space or hyphen removed (Windows can't store ? * : " < > | / \
- * at all, and VGR also drops # ! ' , . ;), spaces collapsed. "What Is The Holy Ghost?" → "What Is The Holy Ghost".
- */
-fun vgrSafeTitle(title: String): String =
-    java.text.Normalizer.normalize(title, java.text.Normalizer.Form.NFC)
-        .replace(Regex("[^\\p{L}\\p{N}\\s-]"), "").replace(Regex("\\s+"), " ").trim()

@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phone Bible</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1322}
+button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid #F3C969;outline-offset:2px}
+@keyframes enter{from{opacity:0;filter:blur(8px);transform:translateY(10px)}to{opacity:1;filter:none;transform:none}}
+@keyframes enterB{from{opacity:0;filter:blur(8px);transform:translateY(10px)}to{opacity:1;filter:none;transform:none}}
+@keyframes sheetUp{from{transform:translateY(105%)}to{transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes ripple{0%{transform:scale(.4);opacity:.55}100%{transform:scale(2.6);opacity:0}}
+@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+@keyframes flicker{0%,100%{transform:scaleY(1) skewX(0)}25%{transform:scaleY(1.06) skewX(-2deg)}50%{transform:scaleY(.95) skewX(1.5deg)}75%{transform:scaleY(1.03) skewX(-1deg)}}
+@keyframes halo{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.85;transform:scale(1.08)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes unfold{from{transform:perspective(900px) rotateX(-70deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes swing{0%{transform:rotate(-3deg)}50%{transform:rotate(-1.2deg)}100%{transform:rotate(-3deg)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes shimmer{from{background-position:-200px 0}to{background-position:200px 0}}
+@keyframes drift{0%{transform:translate(-8%,-4%) scale(1)}50%{transform:translate(6%,5%) scale(1.12)}100%{transform:translate(-8%,-4%) scale(1)}}
+.press{transition:transform .18s cubic-bezier(.3,.7,.2,1),background-color .25s,box-shadow .25s,color .25s}
+.press:active{transform:scale(.96)}
+.lit{background-repeat:no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:6px;transition:background-size .6s linear,color .5s}
+.wave i{display:inline-block;width:3px;border-radius:2px;animation:wave 1s ease-in-out infinite}
+.noscroll{scrollbar-width:none}.noscroll::-webkit-scrollbar{display:none}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.35;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27160%27%20height%3D%27160%27%3E%3Cfilter%20id%3D%27n%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%27.9%27%20numOctaves%3D%272%27%20stitchTiles%3D%27stitch%27/%3E%3CfeColorMatrix%20values%3D%270%200%200%200%200%20%200%200%200%200%200%20%200%200%200%200%200%20%200%200%200%20.5%200%27/%3E%3C/filter%3E%3Crect%20width%3D%27100%25%27%20height%3D%27100%25%27%20filter%3D%27url%28%23n%29%27/%3E%3C/svg%3E")}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:36px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#FBF6EA;box-shadow:0 0 0 6px rgba(243,201,105,.18),0 6px 16px rgba(0,0,0,.5)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border:0;border-radius:50%;background:#FBF6EA}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0E1322; font-family: Inter, -apple-system, system-ui, sans-serif; color: #ECE6D8; display: flex; gap: 64px; justify-content: center; align-items: center; padding: 40px 16px; box-sizing: border-box; flex-wrap: wrap; position: relative; overflow: hidden;">
+  <span aria-hidden="true" style="position: absolute; width: 900px; height: 900px; left: 50%; top: 50%; margin: -450px 0 0 -300px; border-radius: 50%; background: radial-gradient(circle, rgba(243,201,105,.09), transparent 62%); animation: drift 18s ease-in-out infinite; pointer-events: none;"></span>
+  <aside style="position: relative; width: 300px; display: flex; flex-direction: column; gap: 16px;">
+    <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-weight: 300; font-size: 40px; line-height: 1.04; letter-spacing: -.5px; color: #FBF6EA;">The Bible, <span style="font-style: italic; color: #F3C969;">four ways</span></h1>
+    <p style="margin: 0; font-size: 14.5px; line-height: 22px; color: #9AA1B8;">Choose any book and chapter, change version, read in scroll, pages, one verse at a time or two versions side by side, and move chapter to chapter from the bar at the bottom.</p>
+    <div role="tablist" aria-label="Screens" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
+      <sc-for list="{{jumps}}" as="j" hint-placeholder-count="5">
+        <button class="press" role="tab" aria-selected="{{j.sel}}" onClick="{{j.go}}" style="cursor: pointer; height: 32px; padding: 0 13px; border-radius: 16px; border: 1px solid {{j.border}}; background: {{j.bg}}; color: {{j.fg}}; font-size: 12.5px; font-weight: 500;">{{j.label}}</button>
+      </sc-for>
+    </div>
+    <p style="margin: 6px 0 0; font-size: 12.5px; line-height: 19px; color: #6B7391;">{{note}}</p>
+  </aside>
+  <div style="position: relative; width: 392px; height: 848px; border-radius: 58px; padding: 11px; background: linear-gradient(145deg, #2A3048, #10141F 40%, #1C2134); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.08), 0 80px 140px -50px rgba(0,0,0,.95), 0 0 0 1px #05070C; flex: none;">
+    <div style="position: relative; width: 100%; height: 100%; border-radius: 47px; overflow: hidden; background: {{bg}}; transition: background .6s;">
+      <span aria-hidden="true" style="position: absolute; left: -40%; top: -30%; width: 180%; height: 90%; background: radial-gradient(ellipse at 50% 30%, {{glow}}, transparent 60%); transition: background 1.2s ease; pointer-events: none;"></span>
+      <div style="position: absolute; left: 0; right: 0; top: 0; height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; font-size: 15px; font-weight: 600; color: {{ink}}; z-index: 20; pointer-events: none;">
+        <span>9:41</span>
+        <span aria-hidden="true" style="position: absolute; left: 50%; top: 11px; transform: translateX(-50%); width: 122px; height: 36px; border-radius: 18px; background: #000;"></span>
+        <span aria-hidden="true" style="font-size: 12px; letter-spacing: 1px;">▮▮▮ ▭</span>
+      </div>
+      <div class="noscroll" style="position: absolute; left: 0; right: 0; top: 54px; bottom: 0; overflow-y: auto; animation: {{swap}} .5s cubic-bezier(.2,.8,.2,1) both;">
+        <div style="padding: 8px 20px 150px; color: {{tx}};">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="press" onClick="{{openPick}}" aria-label="Choose a book and chapter" style="cursor: pointer; flex: 1; min-width: 0; border: 0; background: transparent; text-align: left; color: {{tx}}; padding: 0 4px; display: flex; align-items: baseline; gap: 8px;">
+              <span style="font-family: Fraunces, Georgia, serif; font-weight: 300; font-size: 30px; letter-spacing: -.3px;">{{ref}}</span><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <button class="press" onClick="{{openVer}}" aria-label="Version, {{verName}}" style="cursor: pointer; height: 40px; padding: 0 14px; border-radius: 20px; border: 0; background: {{chip}}; color: {{tx}}; font-size: 12.5px; font-weight: 600;">{{verShort}}</button>
+            <button class="press" onClick="{{openSet}}" aria-label="Reading settings" style="cursor: pointer; width: 40px; height: 40px; border-radius: 50%; border: 0; background: {{chip}}; display: grid; place-items: center; color: {{tx}}; font-family: Fraunces, serif; font-size: 16px;">Aa</button>
+          </div>
+          <div role="tablist" aria-label="Reading mode" style="position: relative; display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 14px; height: 40px; border-radius: 20px; background: {{chip}}; padding: 3px;">
+            <span aria-hidden="true" style="position: absolute; top: 3px; bottom: 3px; left: calc(3px + {{modeIx}} * (100% - 6px) / 4); width: calc((100% - 6px) / 4); border-radius: 17px; background: {{pill}}; box-shadow: 0 4px 12px -4px rgba(0,0,0,.4); transition: left .45s cubic-bezier(.2,.9,.1,1.15);"></span>
+            <sc-for list="{{modes}}" as="m" hint-placeholder-count="4"><button role="tab" aria-selected="{{m.sel}}" onClick="{{m.pick}}" style="cursor: pointer; position: relative; border: 0; background: transparent; font-size: 13px; font-weight: 600; color: {{m.fg}}; transition: color .3s;">{{m.label}}</button></sc-for>
+          </div>
+
+          <div style="margin-top: 22px; animation: {{bodySwap}} .55s cubic-bezier(.2,.8,.2,1) both;">
+            <sc-if value="{{mScroll}}" hint-placeholder-val="{{true}}">
+              <p style="margin: 0; font-family: {{font}}; font-size: {{fs}}; line-height: {{lh}};"><sc-for list="{{verses}}" as="v" hint-placeholder-count="5"><span onClick="{{v.pick}}" role="button" tabindex="0" aria-pressed="{{v.selA}}" style="cursor: pointer; border-radius: 6px; padding: 1px 0; background: {{v.hl}}; box-shadow: {{v.under}}; transition: background .35s;"><sup style="font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; color: {{acc}}; margin-right: 3px;">{{v.n}}</sup>{{v.t}} </span></sc-for></p>
+            </sc-if>
+            <sc-if value="{{mPages}}" hint-placeholder-val="{{false}}">
+              <div style="position: relative; perspective: 1400px;">
+                <div style="position: relative; min-height: 470px; padding: 26px 24px 46px; border-radius: 8px 22px 22px 8px; background: {{pageBg}}; color: {{pageInk}}; box-shadow: inset 14px 0 18px -14px rgba(0,0,0,.35), 0 30px 50px -30px rgba(0,0,0,.7), 4px 4px 0 -1px {{pageEdge}}, 8px 8px 0 -2px {{pageEdge2}}; transform-origin: left center; animation: {{turn}} .7s cubic-bezier(.2,.8,.2,1) both;">
+                  <span class="grain" style="border-radius: 8px 22px 22px 8px; opacity: .25;"></span>
+                  <sc-if value="{{dropCap}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="float: left; font-family: Fraunces, serif; font-size: 64px; line-height: .85; margin: 6px 10px 0 0; color: {{acc}};">{{ch}}</span></sc-if>
+                  <p style="position: relative; margin: 0; font-family: {{font}}; font-size: {{fs}}; line-height: {{lh}};"><sc-for list="{{pageVerses}}" as="pv" hint-placeholder-count="3"><sup style="font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; color: {{acc}}; margin-right: 3px;">{{pv.n}}</sup>{{pv.t}} </sc-for></p>
+                  <span style="position: absolute; left: 0; right: 0; bottom: 16px; text-align: center; font-family: Fraunces, serif; font-style: italic; font-size: 13px; opacity: .6;">{{pageNo}}</span>
+                  <button class="press" onClick="{{nextPage}}" aria-label="Turn the page" style="cursor: pointer; position: absolute; right: 0; bottom: 0; width: 64px; height: 64px; border: 0; padding: 0; background: linear-gradient(315deg, transparent 50%, {{curl}} 50%, {{pageBg}} 72%); border-radius: 0 0 22px 0; filter: drop-shadow(-4px -4px 6px rgba(0,0,0,.25));"></button>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{mVerse}}" hint-placeholder-val="{{false}}">
+              <div style="position: relative; min-height: 430px; display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <span aria-hidden="true" style="display: block; font-family: Fraunces, serif; font-weight: 300; font-size: 120px; line-height: .9; color: {{acc}}; opacity: .22; margin-bottom: 14px; animation: {{vSwap}} .5s cubic-bezier(.2,.8,.2,1) both;">{{vNum}}</span>
+                <p style="position: relative; margin: 0; font-family: {{font}}; font-weight: 300; font-size: {{vfs}}; line-height: 1.4; animation: {{vSwap}} .5s cubic-bezier(.2,.8,.2,1) both;">{{vText}}</p>
+                <p style="position: relative; margin: 16px 0 0; font-family: Fraunces, serif; font-style: italic; font-size: 14px; color: {{sub}};">{{ref}}:{{vNum}}</p>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 28px;">
+                  <button class="press" onClick="{{prevVerse}}" aria-label="Previous verse" style="cursor: pointer; width: 40px; height: 40px; border-radius: 50%; border: 0; background: {{chip}}; display: grid; place-items: center; color: {{tx}};"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+                  <span aria-hidden="true" style="display: flex; gap: 6px;"><sc-for list="{{vDots}}" as="vd" hint-placeholder-count="5"><i style="width: {{vd.w}}; height: 6px; border-radius: 3px; background: {{vd.c}}; transition: width .35s, background .35s;"></i></sc-for></span>
+                  <button class="press" onClick="{{nextVerse}}" aria-label="Next verse" style="cursor: pointer; width: 40px; height: 40px; border-radius: 50%; border: 0; background: {{chip}}; display: grid; place-items: center; color: {{tx}};"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{mPar}}" hint-placeholder-val="{{false}}">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; font-size: 12px; color: {{sub}}; margin-bottom: 10px;"><span>{{verName}}</span><span>{{otherName}}</span></div>
+              <sc-for list="{{pairs}}" as="pr" hint-placeholder-count="5">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; padding: 10px 0; border-top: 1px solid {{hair}};">
+                  <p style="margin: 0; font-family: {{font}}; font-size: {{pfs}}; line-height: 1.5;"><sup style="font-family: Inter, sans-serif; font-size: 10px; font-weight: 600; color: {{acc}}; margin-right: 2px;">{{pr.n}}</sup>{{pr.a}}</p>
+                  <p style="margin: 0; font-family: {{font}}; font-size: {{pfs}}; line-height: 1.5; color: {{sub}};">{{pr.b}}</p>
+                </div>
+              </sc-for>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+      <sc-if value="{{selBar}}" hint-placeholder-val="{{false}}">
+        <div role="toolbar" aria-label="Verse {{selN}}" style="position: absolute; z-index: 13; left: 50%; bottom: 110px; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 28px; background: #1B2340; box-shadow: 0 20px 40px -14px rgba(0,0,0,.8); animation: pop .4s cubic-bezier(.2,.9,.1,1.3) both;">
+          <sc-for list="{{hlColors}}" as="hc" hint-placeholder-count="4"><button class="press" onClick="{{hc.pick}}" aria-label="Highlight {{hc.name}}" style="cursor: pointer; width: 30px; height: 30px; border-radius: 50%; border: 0; background: {{hc.c}}; box-shadow: {{hc.ring}};"></button></sc-for>
+          <span aria-hidden="true" style="width: 1px; height: 22px; background: rgba(255,255,255,.12); margin: 0 4px;"></span>
+          <button class="press" onClick="{{saveVerse}}" aria-pressed="{{savedA}}" style="cursor: pointer; height: 34px; padding: 0 12px; border-radius: 17px; border: 0; background: rgba(255,255,255,.08); color: #FBF6EA; font-size: 12.5px; font-weight: 600;">{{saveLabel}}</button>
+          <button class="press" aria-label="Share" style="cursor: pointer; width: 34px; height: 34px; border-radius: 50%; border: 0; background: rgba(255,255,255,.08); display: grid; place-items: center;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ECE6D8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M7 8l5-5 5 5M5 14v5h14v-5"/></svg></button>
+        </div>
+      </sc-if>
+      <div style="position: absolute; z-index: 12; left: 12px; right: 12px; bottom: 24px; height: 64px; border-radius: 32px; background: {{deckBg}}; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 24px 40px -20px rgba(0,0,0,.8); display: flex; align-items: center; padding: 0 8px; color: #FBF6EA;">
+        <button class="press" onClick="{{prevCh}}" aria-label="Previous chapter, {{prevLabel}}" style="cursor: pointer; height: 48px; padding: 0 14px 0 8px; border-radius: 24px; border: 0; background: transparent; display: flex; align-items: center; gap: 6px; font-family: Fraunces, serif; font-size: 15px; opacity: {{prevOp}};"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>{{prevLabel}}</button>
+        <span aria-hidden="true" style="flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,.12); position: relative; overflow: hidden;"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{bookPct}}; background: #F3C969; transition: width .5s;"></span></span>
+        <button class="press" onClick="{{nextCh}}" aria-label="Next chapter, {{nextLabel}}" style="cursor: pointer; height: 48px; padding: 0 8px 0 14px; border-radius: 24px; border: 0; background: transparent; display: flex; align-items: center; gap: 6px; font-family: Fraunces, serif; font-size: 15px;">{{nextLabel}}<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>      <sc-if value="{{pickOpen}}" hint-placeholder-val="{{false}}">
+        <div onClick="{{closeAll}}" aria-hidden="true" style="position: absolute; inset: 0; z-index: 15; background: rgba(5,8,16,.5); backdrop-filter: blur(3px); animation: fade .3s both;"></div>
+        <div role="dialog" aria-modal="true" aria-label="Choose a book and chapter" class="noscroll" style="position: absolute; z-index: 16; left: 8px; right: 8px; bottom: 8px; max-height: 720px; overflow-y: auto; padding: 12px 20px 26px; border-radius: 38px; background: {{sheetBg}}; color: {{tx}}; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 -30px 60px -30px rgba(0,0,0,.6); animation: sheetUp .5s cubic-bezier(.2,.9,.1,1) both;">
+          <span aria-hidden="true" style="display: block; margin: 0 auto 12px; width: 40px; height: 5px; border-radius: 3px; background: {{line}};"></span>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <sc-if value="{{inChapters}}" hint-placeholder-val="{{false}}"><button class="press" onClick="{{backBooks}}" aria-label="Back to books" style="cursor: pointer; width: 40px; height: 40px; border-radius: 50%; border: 0; background: {{chip}}; display: grid; place-items: center; color: {{tx}};"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button></sc-if>
+            <p style="margin: 0; flex: 1; font-family: Fraunces, Georgia, serif; font-size: 24px;">{{pickTitle}}</p>
+          </div>
+          <sc-if value="{{inBooks}}" hint-placeholder-val="{{true}}">
+            <div role="tablist" aria-label="Testament" style="position: relative; display: grid; grid-template-columns: 1fr 1fr; margin-top: 14px; height: 40px; border-radius: 20px; background: {{chip}}; padding: 3px;">
+              <span aria-hidden="true" style="position: absolute; top: 3px; bottom: 3px; left: calc(3px + {{testIx}} * (100% - 6px) / 2); width: calc((100% - 6px) / 2); border-radius: 17px; background: {{pill}}; transition: left .4s cubic-bezier(.2,.9,.1,1.15);"></span>
+              <sc-for list="{{testaments}}" as="ts" hint-placeholder-count="2"><button role="tab" aria-selected="{{ts.sel}}" onClick="{{ts.pick}}" style="cursor: pointer; position: relative; border: 0; background: transparent; font-size: 13px; font-weight: 600; color: {{ts.fg}};">{{ts.label}}</button></sc-for>
+            </div>
+            <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+              <p style="margin: 16px 0 8px; display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: {{sub}};"><i aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{g.c}};"></i>{{g.name}}</p>
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                <sc-for list="{{g.books}}" as="bk" hint-placeholder-count="8"><button class="press" onClick="{{bk.pick}}" aria-label="{{bk.name}}" style="cursor: pointer; height: 42px; border: 0; border-radius: 14px; background: {{bk.bg}}; color: {{tx}}; font-family: Fraunces, serif; font-size: 15px; box-shadow: inset 0 -2px 0 {{bk.tint}};">{{bk.short}}</button></sc-for>
+              </div>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{inChapters}}" hint-placeholder-val="{{false}}">
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 16px;">
+              <sc-for list="{{chapters}}" as="c" hint-placeholder-count="21"><button class="press" onClick="{{c.pick}}" aria-current="{{c.cur}}" style="cursor: pointer; aspect-ratio: 1; border: 0; border-radius: 50%; background: {{c.bg}}; color: {{c.fg}}; font-family: Fraunces, serif; font-size: 17px; animation: pop .4s {{c.delay}} cubic-bezier(.2,.9,.1,1.3) both;">{{c.n}}</button></sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>      <sc-if value="{{verOpen}}" hint-placeholder-val="{{false}}">
+        <div onClick="{{closeAll}}" aria-hidden="true" style="position: absolute; inset: 0; z-index: 15; background: rgba(5,8,16,.5); backdrop-filter: blur(3px); animation: fade .3s both;"></div>
+        <div role="dialog" aria-modal="true" aria-label="Version" class="noscroll" style="position: absolute; z-index: 16; left: 8px; right: 8px; bottom: 8px; max-height: 720px; overflow-y: auto; padding: 12px 20px 26px; border-radius: 38px; background: {{sheetBg}}; color: {{tx}}; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 -30px 60px -30px rgba(0,0,0,.6); animation: sheetUp .5s cubic-bezier(.2,.9,.1,1) both;">
+          <span aria-hidden="true" style="display: block; margin: 0 auto 12px; width: 40px; height: 5px; border-radius: 3px; background: {{line}};"></span>
+          <p style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 24px;">Version</p>
+          <p style="margin: 4px 0 14px; font-size: 13px; color: {{sub}};">Parallel reading puts your second choice beside it.</p>
+          <sc-for list="{{versions}}" as="vr" hint-placeholder-count="4">
+            <button class="press" onClick="{{vr.pick}}" role="radio" aria-checked="{{vr.sel}}" style="cursor: pointer; width: 100%; border: 0; background: {{vr.bg}}; border-radius: 20px; padding: 13px 16px; margin-bottom: 6px; display: flex; gap: 14px; align-items: center; text-align: left; color: {{tx}};">
+              <span aria-hidden="true" style="width: 44px; height: 44px; border-radius: 12px 4px 4px 12px; background: {{vr.cover}}; box-shadow: inset -4px 0 0 rgba(0,0,0,.25); display: grid; place-items: center; font-family: Fraunces, serif; font-size: 12px; color: #FBF6EA;">{{vr.short}}</span>
+              <span style="flex: 1;"><span style="display: block; font-family: Fraunces, serif; font-size: 17px;">{{vr.name}}</span><span style="display: block; font-size: 12px; color: {{sub}};">{{vr.meta}}</span></span>
+              <span style="font-size: 12px; font-weight: 600; color: {{acc}};">{{vr.tag}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>      <sc-if value="{{setOpen}}" hint-placeholder-val="{{false}}">
+        <div onClick="{{closeAll}}" aria-hidden="true" style="position: absolute; inset: 0; z-index: 15; background: rgba(5,8,16,.5); backdrop-filter: blur(3px); animation: fade .3s both;"></div>
+        <div role="dialog" aria-modal="true" aria-label="Reading settings" class="noscroll" style="position: absolute; z-index: 16; left: 8px; right: 8px; bottom: 8px; max-height: 720px; overflow-y: auto; padding: 12px 20px 26px; border-radius: 38px; background: {{sheetBg}}; color: {{tx}}; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 -30px 60px -30px rgba(0,0,0,.6); animation: sheetUp .5s cubic-bezier(.2,.9,.1,1) both;">
+          <span aria-hidden="true" style="display: block; margin: 0 auto 12px; width: 40px; height: 5px; border-radius: 3px; background: {{line}};"></span>
+          <p style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 24px;">Reading</p>
+          <p style="margin: 16px 0 10px; font-size: 13px; color: {{sub}};">Theme</p>
+          <div role="radiogroup" aria-label="Theme" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+            <sc-for list="{{themes}}" as="th" hint-placeholder-count="4">
+              <button class="press" role="radio" aria-checked="{{th.sel}}" onClick="{{th.pick}}" style="cursor: pointer; border: 0; background: transparent; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 7px;">
+                <span aria-hidden="true" style="position: relative; width: 74px; height: 56px; display: flex; filter: drop-shadow(0 8px 10px rgba(0,0,0,.28)); transform: {{th.lift}}; transition: transform .35s cubic-bezier(.2,.9,.1,1.3);">
+                  <span style="flex: 1; border-radius: 10px 3px 3px 12px; background: linear-gradient(90deg, {{th.bg}} 70%, {{th.fold}}); padding: 9px 6px 0 8px; display: flex; flex-direction: column; gap: 4px;"><i style="height: 3px; width: 90%; border-radius: 2px; background: {{th.ink}}; opacity: .7;"></i><i style="height: 3px; width: 70%; border-radius: 2px; background: {{th.ink}}; opacity: .45;"></i><i style="height: 3px; width: 80%; border-radius: 2px; background: {{th.acc}};"></i></span>
+                  <span style="flex: 1; border-radius: 3px 10px 12px 3px; background: linear-gradient(270deg, {{th.bg}} 70%, {{th.fold}}); padding: 9px 8px 0 6px; display: flex; flex-direction: column; gap: 4px;"><i style="height: 3px; width: 85%; border-radius: 2px; background: {{th.ink}}; opacity: .7;"></i><i style="height: 3px; width: 92%; border-radius: 2px; background: {{th.ink}}; opacity: .45;"></i><i style="height: 3px; width: 60%; border-radius: 2px; background: {{th.ink}}; opacity: .45;"></i></span>
+                  <span style="position: absolute; inset: -4px; border-radius: 14px; box-shadow: 0 0 0 2px {{th.ring}}; transition: box-shadow .3s;"></span>
+                </span>
+                <span style="font-size: 12px; color: {{th.fg}};">{{th.name}}</span>
+              </button>
+            </sc-for>
+          </div>
+          <p style="margin: 20px 0 10px; font-size: 13px; color: {{sub}};">Tone</p>
+          <div role="radiogroup" aria-label="Tone" style="display: flex; gap: 8px;">
+            <sc-for list="{{tones}}" as="tn" hint-placeholder-count="3">
+              <button class="press" role="radio" aria-checked="{{tn.sel}}" onClick="{{tn.pick}}" style="cursor: pointer; flex: 1; border: 0; border-radius: 22px; padding: 10px 0 9px; background: {{tn.bg}}; display: flex; flex-direction: column; align-items: center; gap: 6px; color: {{tx}}; font-size: 12.5px;">
+                <span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 50%; background: {{tn.orb}}; box-shadow: {{tn.glow}};"></span>{{tn.name}}
+              </button>
+            </sc-for>
+          </div>
+          <p style="margin: 20px 0 0; font-size: 13px; color: {{sub}};">Text size</p>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span aria-hidden="true" style="font-family: Fraunces, serif; font-size: 14px;">A</span>
+            <div style="position: relative; flex: 1; height: 36px;"><div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 16px; height: 4px; border-radius: 2px; background: {{sizeTrack}};"></div><input type="range" min="16" max="28" step="1" value="{{size}}" onInput="{{onSize}}" aria-label="Text size" style="position: relative;"></div>
+            <span aria-hidden="true" style="font-family: Fraunces, serif; font-size: 24px;">A</span>
+          </div>
+          <p style="margin: 12px 0 10px; font-size: 13px; color: {{sub}};">Typeface and spacing</p>
+          <div style="display: flex; gap: 8px;">
+            <sc-for list="{{faces}}" as="fc" hint-placeholder-count="2"><button class="press" role="radio" aria-checked="{{fc.sel}}" onClick="{{fc.pick}}" style="cursor: pointer; flex: 1; height: 48px; border: 0; border-radius: 16px; background: {{fc.bg}}; color: {{tx}}; font-family: {{fc.font}}; font-size: 17px;">{{fc.name}}</button></sc-for>
+            <sc-for list="{{gaps}}" as="gp" hint-placeholder-count="2"><button class="press" role="radio" aria-checked="{{gp.sel}}" aria-label="{{gp.aria}}" onClick="{{gp.pick}}" style="cursor: pointer; width: 54px; height: 48px; border: 0; border-radius: 16px; background: {{gp.bg}}; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: {{gp.gap}};"><i style="width: 22px; height: 2px; border-radius: 1px; background: {{tx}};"></i><i style="width: 22px; height: 2px; border-radius: 1px; background: {{tx}};"></i><i style="width: 16px; height: 2px; border-radius: 1px; background: {{tx}};"></i></button></sc-for>
+          </div>
+        </div>
+      </sc-if>
+      <span aria-hidden="true" style="position: absolute; z-index: 30; left: 50%; bottom: 8px; transform: translateX(-50%); width: 134px; height: 5px; border-radius: 3px; background: {{ink}}; opacity: .55;"></span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960},"initialMode":{"type":"enum","options":["scroll","pages","verse","parallel"],"default":"scroll"},"initialSheet":{"type":"enum","options":["","pick","ver","set"],"default":""},"initialTheme":{"type":"enum","options":["night","dusk","paper","sepia"],"default":"night"}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const p = props || {};
+    this.state = { flip: 0, sheet: p.initialSheet || '', pickStep: 'books', test: 'nt', mode: p.initialMode || 'scroll', theme: p.initialTheme || 'night', tone: 'lamp', size: 19, face: 'serif', gap: 'snug', ver: 'suv', other: 'kjv', book: 'John', ch: 3, page: 0, verse: 0, sel: -1, hl: {}, saved: {} };
+  }
+  jumpsFor(list, cur, go) { return list.map(([id, label]) => ({ label, sel: cur === id ? 'true' : 'false', go: () => go(id),
+    border: cur === id ? 'rgba(243,201,105,.6)' : 'rgba(255,255,255,.1)', bg: cur === id ? 'rgba(243,201,105,.12)' : 'transparent', fg: cur === id ? '#F3C969' : '#9AA1B8' })); }
+  tokens(s) {
+    const T = { night: ['Night', '#121829', '#ECE6D8', '#9AA1B8', '#1B2340', '#0A0E19'], dusk: ['Dusk', '#251C2E', '#F1E4DA', '#B4A1B3', '#33283F', '#120C18'], paper: ['Paper', '#FBF6EA', '#2A2418', '#7D735F', '#FFFDF7', '#DCD2BC'], sepia: ['Sepia', '#E9D9BB', '#3A2B19', '#7B6547', '#F3E6CC', '#C9B48D'] };
+    const N = { lamp: ['Lamplight', '243,183,95', '#F3C969'], day: ['Daylight', '236,225,200', '#E6D7B0'], moon: ['Moonlight', '143,183,255', '#8FB7FF'] };
+    const t = T[s.theme], n = N[s.tone], light = s.theme === 'paper' || s.theme === 'sepia';
+    const acc = light ? (s.tone === 'moon' ? '#3E62A8' : '#9A6417') : n[2];
+    return { t, n, light, acc,
+      bg: t[1], ink: t[2], tx: t[2], sub: t[3], sheetBg: t[4], acc, glow: 'rgba(' + n[1] + ',' + (light ? '.22' : '.14') + ')',
+      line: light ? 'rgba(0,0,0,.14)' : 'rgba(255,255,255,.18)', chip: light ? 'rgba(0,0,0,.06)' : 'rgba(255,255,255,.07)', hair: light ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.07)',
+      litBg: 'linear-gradient(90deg, rgba(' + n[1] + ',' + (light ? '.35' : '.24') + '), rgba(' + n[1] + ',.06))',
+      font: s.face === 'serif' ? 'Fraunces, Georgia, serif' : 'Inter, system-ui, sans-serif', fs: s.size + 'px', lh: (s.gap === 'airy' ? 1.85 : 1.55).toFixed(2),
+      themes: Object.keys(T).map((k) => ({ name: T[k][0], bg: T[k][1], ink: T[k][2], fold: T[k][5], acc: k === 'paper' || k === 'sepia' ? '#9A6417' : '#F3C969', sel: s.theme === k ? 'true' : 'false', lift: s.theme === k ? 'translateY(-4px) rotate(-2deg)' : 'none', ring: s.theme === k ? acc : 'transparent', fg: s.theme === k ? t[2] : t[3], pick: () => this.setState({ theme: k }) })),
+      tones: Object.keys(N).map((k) => ({ name: N[k][0], sel: s.tone === k ? 'true' : 'false', orb: 'radial-gradient(circle at 35% 30%, #fff, rgb(' + N[k][1] + ') 60%)', glow: s.tone === k ? '0 0 18px rgba(' + N[k][1] + ',.8)' : 'none', bg: s.tone === k ? (light ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.08)') : 'transparent', pick: () => this.setState({ tone: k }) })),
+      size: s.size, onSize: (e) => this.setState({ size: Math.max(16, Math.min(28, Number(e.target.value) || 19)) }), sizeTrack: 'linear-gradient(90deg, ' + acc + ' ' + ((s.size - 16) / 12 * 100).toFixed(0) + '%, ' + (light ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.14)') + ' 0)',
+      faces: [['serif', 'Serif', 'Fraunces, serif'], ['sans', 'Sans', 'Inter, sans-serif']].map(([k, name, font]) => ({ name, font, sel: s.face === k ? 'true' : 'false', bg: s.face === k ? (light ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.1)') : 'transparent', pick: () => this.setState({ face: k }) })),
+      gaps: [['snug', '3px', 'Snug lines'], ['airy', '6px', 'Airy lines']].map(([k, gap, aria]) => ({ gap, aria, sel: s.gap === k ? 'true' : 'false', bg: s.gap === k ? (light ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.1)') : 'transparent', pick: () => this.setState({ gap: k }) }))
+    };
+  }
+  renderVals() {
+    const s = this.state; const k = this.tokens(s);
+    const KJV = [['In the beginning was the Word, and the Word was with God, and the Word was God.', 'The same was in the beginning with God.', 'All things were made by him; and without him was not any thing made that was made.', 'In him was life; and the life was the light of men.', 'And the light shineth in darkness; and the darkness comprehended it not.'],
+      ['And the third day there was a marriage in Cana of Galilee; and the mother of Jesus was there:', 'And both Jesus was called, and his disciples, to the marriage.', 'And when they wanted wine, the mother of Jesus saith unto him, They have no wine.', 'Jesus saith unto her, Woman, what have I to do with thee? mine hour is not yet come.', 'His mother saith unto the servants, Whatsoever he saith unto you, do it.'],
+      ['There was a man of the Pharisees, named Nicodemus, a ruler of the Jews:', 'The same came to Jesus by night, and said unto him, Rabbi, we know that thou art a teacher come from God: for no man can do these miracles that thou doest, except God be with him.', 'Jesus answered and said unto him, Verily, verily, I say unto thee, Except a man be born again, he cannot see the kingdom of God.', 'Nicodemus saith unto him, How can a man be born when he is old? can he enter the second time into his mother’s womb, and be born?', 'Jesus answered, Verily, verily, I say unto thee, Except a man be born of water and of the Spirit, he cannot enter into the kingdom of God.']];
+    const SUV = [['Hapo mwanzo kulikuwako Neno, naye Neno alikuwako kwa Mungu, naye Neno alikuwa Mungu.', 'Huyo mwanzo alikuwako kwa Mungu.', 'Vyote vilifanyika kwa huyo; wala pasipo yeye hakikufanyika chochote kilichofanyika.', 'Ndani yake ndimo ulimokuwa uzima, nao ule uzima ulikuwa nuru ya watu.', 'Nayo nuru yang’aa gizani, wala giza halikuiweza.'],
+      ['Hata siku ya tatu palikuwa na arusi huko Kana ya Galilaya; naye mama yake Yesu alikuwako.', 'Yesu naye pamoja na wanafunzi wake walikuwa wamealikwa arusini.', 'Hata divai ilipowaishia, mama yake Yesu akamwambia, Hawana divai.', 'Yesu akamwambia, Mama, tuna nini mimi nawe? Saa yangu haijawasili bado.', 'Mama yake akawaambia watumishi, Lo lote atakalowaambia, fanyeni.'],
+      ['Basi palikuwa na mtu mmoja wa Mafarisayo, jina lake Nikodemo, mkuu wa Wayahudi.', 'Huyo alimjia usiku, akamwambia, Rabi, tunajua ya kuwa wewe u mwalimu, umetoka kwa Mungu; kwa maana hakuna mtu awezaye kuzifanya ishara hizi uzifanyazo wewe, isipokuwa Mungu yu pamoja naye.', 'Yesu akajibu, akamwambia, Amin, amin, nakuambia, Mtu asipozaliwa mara ya pili, hawezi kuuona ufalme wa Mungu.', 'Nikodemo akamwambia, Awezaje mtu kuzaliwa akiwa mzee? Aweza kuingia tumboni mwa mamaye mara ya pili, akazaliwa?', 'Yesu akajibu, Amin, amin, nakuambia, Mtu asipozaliwa kwa maji na kwa Roho, hawezi kuuingia ufalme wa Mungu.']];
+    const VERS = { suv: ['SUV', 'Swahili Union Version', 'Kiswahili, 1952', '#7A3B2E', SUV, 'Yohana'], kjv: ['KJV', 'King James Version', 'English, 1769', '#2E3F6B', KJV, 'John'], lsg: ['LSG', 'Louis Segond', 'Français, 1910, 3 MB', '#3B5A3A', null, 'Jean'] };
+    const V = VERS[s.ver], O = VERS[s.other];
+    const text = (v) => (v[4] || KJV)[(s.ch - 1) % 3];
+    const T = text(V), OT = text(O);
+    const total = s.book === 'John' ? 21 : 28;
+    const bookName = s.ver === 'suv' && s.book === 'John' ? 'Yohana' : s.book;
+    const go = (ch) => this.setState({ ch, page: 0, verse: 0, sel: -1, flip: s.flip + 1 });
+    const HL = [['gold', 'rgba(243,201,105,.38)'], ['rose', 'rgba(255,122,102,.32)'], ['sky', 'rgba(143,183,255,.34)'], ['sage', 'rgba(140,200,150,.34)']];
+    const key = (n) => s.book + s.ch + ':' + n;
+    const pages = [[0, 3], [3, 5]];
+    const vfs = Math.round(s.size * 1.35) + 'px';
+    const OTN = [['Law', '#C98B4A', ['Gen', 'Exo', 'Lev', 'Num', 'Deu']], ['History', '#8E7B5A', ['Jos', 'Jdg', 'Rut', '1 Sa', '2 Sa', '1 Ki', '2 Ki', 'Neh']], ['Poetry', '#B5627A', ['Job', 'Psa', 'Pro', 'Ecc', 'Son']], ['Prophets', '#6F7FB8', ['Isa', 'Jer', 'Lam', 'Eze', 'Dan', 'Hos', 'Joel', 'Mal']]];
+    const NTN = [['Gospels and Acts', '#E3B456', ['Matt', 'Mark', 'Luke', 'John', 'Acts']], ['Letters', '#7F9CC9', ['Rom', '1 Co', '2 Co', 'Gal', 'Eph', 'Phil', 'Col', 'Heb']], ['Prophecy', '#C46A5A', ['Rev']]];
+    const full = { John: 'John', Matt: 'Matthew', Mark: 'Mark', Luke: 'Luke', Acts: 'Acts', Rom: 'Romans', Heb: 'Hebrews', Rev: 'Revelation', Gen: 'Genesis', Psa: 'Psalms', Isa: 'Isaiah' };
+    const modes = [['scroll', 'Scroll'], ['pages', 'Pages'], ['verse', 'Verse'], ['parallel', 'Parallel']];
+    return {
+      jumps: this.jumpsFor(modes.concat([['pick', 'Book and chapter'], ['ver', 'Version'], ['set', 'Themes']]), s.sheet || s.mode, (id) => (['pick', 'ver', 'set'].includes(id) ? this.setState({ sheet: id, pickStep: 'books' }) : this.setState({ mode: id, sheet: '', flip: s.flip + 1 }))),
+      note: 'Four ways to read. Tap a verse in Scroll to highlight or save it, turn the corner in Pages, step through one verse at a time, or read two versions side by side.',
+      bg: k.bg, glow: k.glow, ink: k.ink, tx: k.tx, sub: k.sub, sheetBg: k.sheetBg, acc: k.acc, line: k.line, chip: k.chip, hair: k.hair, font: k.font, fs: k.fs, lh: k.lh,
+      themes: k.themes, tones: k.tones, size: k.size, onSize: k.onSize, sizeTrack: k.sizeTrack, faces: k.faces, gaps: k.gaps,
+      pill: k.light ? '#FFFFFF' : 'rgba(255,255,255,.14)', deckBg: k.light ? 'rgba(30,36,58,.92)' : 'rgba(22,29,51,.82)',
+      swap: 'enterB', bodySwap: s.flip % 2 ? 'enter' : 'enterB',
+      ref: bookName + ' ' + s.ch, ch: s.ch, verShort: V[0], verName: V[1], otherName: O[1],
+      openPick: () => this.setState({ sheet: 'pick', pickStep: 'books' }), openVer: () => this.setState({ sheet: 'ver' }), openSet: () => this.setState({ sheet: 'set' }), closeAll: () => this.setState({ sheet: '' }),
+      pickOpen: s.sheet === 'pick', verOpen: s.sheet === 'ver', setOpen: s.sheet === 'set',
+      modeIx: modes.findIndex((m) => m[0] === s.mode), modes: modes.map(([id, label]) => ({ label, sel: s.mode === id ? 'true' : 'false', fg: s.mode === id ? k.tx : k.sub, pick: () => this.setState({ mode: id, sel: -1, flip: s.flip + 1 }) })),
+      mScroll: s.mode === 'scroll', mPages: s.mode === 'pages', mVerse: s.mode === 'verse', mPar: s.mode === 'parallel',
+      verses: T.map((t, i) => { const n = i + 1, h = s.hl[key(n)]; return { n, t, selA: s.sel === n ? 'true' : 'false', hl: h ? HL.find((x) => x[0] === h)[1] : 'transparent', under: s.sel === n ? '0 2px 0 ' + k.acc : 'none', pick: () => this.setState({ sel: s.sel === n ? -1 : n }) }; }),
+      selBar: s.mode === 'scroll' && s.sel > 0 && !s.sheet, selN: s.sel,
+      hlColors: HL.map(([name, c]) => ({ name, c: c.replace(/,\.3\d\)/, ',.9)'), ring: s.hl[key(s.sel)] === name ? '0 0 0 2px #1B2340, 0 0 0 4px #FBF6EA' : 'none', pick: () => this.setState({ hl: Object.assign({}, s.hl, { [key(s.sel)]: s.hl[key(s.sel)] === name ? '' : name }) }) })),
+      saveVerse: () => this.setState({ saved: Object.assign({}, s.saved, { [key(s.sel)]: !s.saved[key(s.sel)] }) }), savedA: s.saved[key(s.sel)] ? 'true' : 'false', saveLabel: s.saved[key(s.sel)] ? 'Saved' : 'Save',
+      pageBg: k.light ? '#FFFCF4' : '#F2E9D6', pageInk: '#2A2418', pageEdge: k.light ? '#E8DFC9' : '#D9CDB2', pageEdge2: k.light ? '#DCD1B8' : '#BFB295', curl: k.light ? '#E3D8BF' : '#CDBF9F',
+      dropCap: s.page === 0, pageVerses: T.slice(pages[s.page][0], pages[s.page][1]).map((t, i) => ({ n: pages[s.page][0] + i + 1, t })), pageNo: 'page ' + (s.page + 1) + ' of 2',
+      turn: s.page % 2 ? 'unfold' : 'enter', nextPage: () => (s.page === 0 ? this.setState({ page: 1 }) : go(s.ch < total ? s.ch + 1 : s.ch)),
+      vNum: s.verse + 1, vText: T[s.verse], vfs, vSwap: s.verse % 2 ? 'enter' : 'enterB',
+      prevVerse: () => this.setState({ verse: Math.max(0, s.verse - 1) }), nextVerse: () => this.setState({ verse: Math.min(T.length - 1, s.verse + 1) }),
+      vDots: T.map((_, i) => ({ w: i === s.verse ? '20px' : '6px', c: i === s.verse ? k.acc : k.line })),
+      pfs: Math.round(s.size * 0.78) + 'px', pairs: T.map((a, i) => ({ n: i + 1, a, b: OT[i] })),
+      prevCh: () => go(Math.max(1, s.ch - 1)), nextCh: () => go(Math.min(total, s.ch + 1)), prevOp: s.ch > 1 ? '1' : '.35',
+      prevLabel: bookName + ' ' + Math.max(1, s.ch - 1), nextLabel: bookName + ' ' + Math.min(total, s.ch + 1), bookPct: (s.ch / total * 100).toFixed(1) + '%',
+      inBooks: s.pickStep === 'books', inChapters: s.pickStep === 'chapters', pickTitle: s.pickStep === 'books' ? 'Books' : (full[s.book] || s.book),
+      backBooks: () => this.setState({ pickStep: 'books' }), testIx: s.test === 'ot' ? 0 : 1,
+      testaments: [['ot', 'Old Testament'], ['nt', 'New Testament']].map(([id, label]) => ({ label, sel: s.test === id ? 'true' : 'false', fg: s.test === id ? k.tx : k.sub, pick: () => this.setState({ test: id }) })),
+      groups: (s.test === 'ot' ? OTN : NTN).map(([name, c, books]) => ({ name, c, books: books.map((b) => ({ short: b, name: full[b] || b, tint: c + '88', bg: b === s.book ? k.chip : 'transparent', pick: () => this.setState({ book: b, pickStep: 'chapters' }) })) })),
+      chapters: Array.from({ length: total }, (_, i) => ({ n: i + 1, cur: i + 1 === s.ch ? 'true' : 'false', bg: i + 1 === s.ch ? k.acc : k.chip, fg: i + 1 === s.ch ? (k.light ? '#FFF' : '#1A1608') : k.tx, delay: (i * 0.015).toFixed(3) + 's', pick: () => this.setState({ ch: i + 1, sheet: '', page: 0, verse: 0, sel: -1, flip: s.flip + 1 }) })),
+      versions: Object.keys(VERS).map((id) => { const v = VERS[id]; return { short: v[0], name: v[1], meta: v[2], cover: v[3], sel: s.ver === id ? 'true' : 'false', tag: s.ver === id ? 'Reading' : s.other === id ? 'Beside it' : v[4] ? '' : 'Get it', bg: s.ver === id ? k.chip : 'transparent', pick: () => (v[4] ? this.setState({ ver: id, other: id === s.ver ? s.other : s.ver, sheet: '', flip: s.flip + 1 }) : null) }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

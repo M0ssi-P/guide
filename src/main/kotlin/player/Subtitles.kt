@@ -2,7 +2,6 @@ package player
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.io.File
 
 @Serializable
 data class Chapter(
@@ -31,13 +30,11 @@ data class Timing(
     val endOffset: Int
 )
 
-fun loadChapters(path: String?): List<Chapter>? {
-
-    if(path == null) return null
-
-    val path = "C:\\Users\\god1t\\OneDrive\\Documents\\coding\\theguide_esentials\\src\\datastore\\bible\\NKJV-114\\subtitles\\${path}.json"
-    val file = File(path)
-    if (!file.exists()) return emptyList()
-    val jsonText = file.readText()
-    return Json.decodeFromString(jsonText)
+/** A chapter's recordings with their verse timings, as the Bible reader's highlighting reads them. */
+fun chaptersFrom(content: parsers.bible.models.IChapterContent?): List<Chapter>? = content?.audio?.map { a ->
+    Chapter(
+        audioName = a.title, title = a.title, voiceId = a.versionId, versionId = content.version?.id ?: 0, default = a.default,
+        fileId = "${a.id}", next = null, prev = null,
+        lyrics = a.timings.map { Lyric("${it.verse}", Timing(it.startMs / 1000.0, it.endMs / 1000.0, 0, 0)) },
+    )
 }

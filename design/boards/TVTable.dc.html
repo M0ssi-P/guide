@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TV Table</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1322}
+button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid #F3C969;outline-offset:2px}
+@keyframes enter{from{opacity:0;filter:blur(8px);transform:translateY(10px)}to{opacity:1;filter:none;transform:none}}
+@keyframes enterB{from{opacity:0;filter:blur(8px);transform:translateY(10px)}to{opacity:1;filter:none;transform:none}}
+@keyframes sheetUp{from{transform:translateY(105%)}to{transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes ripple{0%{transform:scale(.4);opacity:.55}100%{transform:scale(2.6);opacity:0}}
+@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+@keyframes flicker{0%,100%{transform:scaleY(1) skewX(0)}25%{transform:scaleY(1.06) skewX(-2deg)}50%{transform:scaleY(.95) skewX(1.5deg)}75%{transform:scaleY(1.03) skewX(-1deg)}}
+@keyframes halo{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.85;transform:scale(1.08)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes unfold{from{transform:perspective(900px) rotateX(-70deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes swing{0%{transform:rotate(-3deg)}50%{transform:rotate(-1.2deg)}100%{transform:rotate(-3deg)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes shimmer{from{background-position:-200px 0}to{background-position:200px 0}}
+@keyframes drift{0%{transform:translate(-8%,-4%) scale(1)}50%{transform:translate(6%,5%) scale(1.12)}100%{transform:translate(-8%,-4%) scale(1)}}
+.press{transition:transform .18s cubic-bezier(.3,.7,.2,1),background-color .25s,box-shadow .25s,color .25s}
+.press:active{transform:scale(.96)}
+.lit{background-repeat:no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:6px;transition:background-size .6s linear,color .5s}
+.wave i{display:inline-block;width:3px;border-radius:2px;animation:wave 1s ease-in-out infinite}
+.noscroll{scrollbar-width:none}.noscroll::-webkit-scrollbar{display:none}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.35;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27160%27%20height%3D%27160%27%3E%3Cfilter%20id%3D%27n%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%27.9%27%20numOctaves%3D%272%27%20stitchTiles%3D%27stitch%27/%3E%3CfeColorMatrix%20values%3D%270%200%200%200%200%20%200%200%200%200%200%20%200%200%200%200%200%20%200%200%200%20.5%200%27/%3E%3C/filter%3E%3Crect%20width%3D%27100%25%27%20height%3D%27100%25%27%20filter%3D%27url%28%23n%29%27/%3E%3C/svg%3E")}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:36px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#FBF6EA;box-shadow:0 0 0 6px rgba(243,201,105,.18),0 6px 16px rgba(0,0,0,.5)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border:0;border-radius:50%;background:#FBF6EA}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+@keyframes slideL{from{transform:translateX(105%)}to{transform:none}}
+@keyframes sheen{0%{transform:translateX(-120%) skewX(-18deg)}100%{transform:translateX(260%) skewX(-18deg)}}
+.tvf{transition:transform .35s cubic-bezier(.2,.9,.1,1.2),box-shadow .35s,background-color .3s,color .3s}
+.tvf:hover,.tvf:focus-visible{transform:scale(1.05);box-shadow:0 0 0 3px #F3C969,0 26px 50px -20px rgba(0,0,0,.9);outline:none;z-index:2}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #080B14; font-family: Inter, -apple-system, system-ui, sans-serif; color: #ECE6D8; display: flex; flex-direction: column; align-items: center; gap: 26px; padding: 26px 16px; box-sizing: border-box;">
+  <div style="position: relative; width: 100%; max-width: 1280px; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: {{bg}}; color: {{ink}}; box-shadow: 0 0 0 9px #030408, 0 0 0 10px #1B2133, 0 70px 140px -50px rgba(243,201,105,.25); transition: background .6s;">
+    <span aria-hidden="true" style="position: absolute; inset: -20%; background: radial-gradient(ellipse 55% 60% at {{ambientAt}}, {{glow}}, transparent 70%); transition: background 1s ease; pointer-events: none;"></span>
+    <nav aria-label="Main" style="position: absolute; z-index: 3; left: 0; top: 0; bottom: 0; width: 100px; padding: 40px 0 0 24px; box-sizing: border-box; background: linear-gradient(90deg, rgba(0,0,0,.16), transparent);"><span aria-current="false" style="display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; margin-bottom: 8px; border-radius: 27px; background: transparent; color: #6B7391;"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></span><span aria-current="page" style="display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; margin-bottom: 8px; border-radius: 27px; background: rgba(243,201,105,.16); color: #F3C969;"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M6 5v14M18 5v14M3 19h18"/></svg></span><span aria-current="false" style="display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; margin-bottom: 8px; border-radius: 27px; background: transparent; color: #6B7391;"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM12 8v6M9 11h6"/></svg></span><span aria-current="false" style="display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; margin-bottom: 8px; border-radius: 27px; background: transparent; color: #6B7391;"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg></span><span aria-current="false" style="display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; margin-bottom: 8px; border-radius: 27px; background: transparent; color: #6B7391;"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM20 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg></span><span aria-current="false" style="display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; margin-bottom: 8px; border-radius: 27px; background: transparent; color: #6B7391;"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h4v16H4zM10 4h4v16h-4zM16 5l3.5-1 3 15.5-3.5 1z"/></svg></span></nav>
+    <div style="position: absolute; inset: 0; animation: {{swap}} .6s cubic-bezier(.2,.8,.2,1) both;">
+      <div style="position: absolute; left: 120px; top: 40px; bottom: 40px; width: 410px; display: flex; flex-direction: column;">
+        <div style="position: relative; padding: 26px 20px 20px; border-radius: 34px; background: linear-gradient(180deg, #1E2642, #151B30); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 30px 60px -30px rgba(0,0,0,.8); color: #FFF8E8;">
+          <span class="grain" style="border-radius: 34px; opacity: .25;"></span>
+          <div style="position: relative; display: flex; justify-content: space-between;"><span aria-hidden="true" style="position: relative; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, #1B2238 0 26px, #4A2E14 26px {{L.pack}}, transparent {{L.pack}}), radial-gradient(circle, #232B45 0 75px, transparent 75px); box-shadow: inset 0 0 0 2px rgba(255,255,255,.06); transition: background 1s;"><svg width="150" height="150" viewBox="0 0 138 138" style="position: absolute; inset: 0; animation: spin {{spinDur}} linear infinite; animation-play-state: {{spinState}};"><g fill="none" stroke="#D9C9A3" stroke-width="2.5" opacity=".9"><circle cx="69" cy="69" r="22"/><path d="M69 47v-6M69 91v6M47 69h-6M91 69h6M53.4 53.4l-4.2-4.2M84.6 84.6l4.2 4.2M53.4 84.6l-4.2 4.2M84.6 53.4l4.2-4.2"/></g><circle cx="69" cy="69" r="9" fill="#D9C9A3"/><circle cx="69" cy="69" r="4" fill="#1B2238"/></svg></span><span aria-hidden="true" style="position: relative; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, #1B2238 0 26px, #4A2E14 26px {{R.pack}}, transparent {{R.pack}}), radial-gradient(circle, #232B45 0 75px, transparent 75px); box-shadow: inset 0 0 0 2px rgba(255,255,255,.06); transition: background 1s;"><svg width="150" height="150" viewBox="0 0 138 138" style="position: absolute; inset: 0; animation: spin {{spinDur}} linear infinite; animation-play-state: {{spinState}};"><g fill="none" stroke="#D9C9A3" stroke-width="2.5" opacity=".9"><circle cx="69" cy="69" r="22"/><path d="M69 47v-6M69 91v6M47 69h-6M91 69h6M53.4 53.4l-4.2-4.2M84.6 84.6l4.2 4.2M53.4 84.6l-4.2 4.2M84.6 53.4l4.2-4.2"/></g><circle cx="69" cy="69" r="9" fill="#D9C9A3"/><circle cx="69" cy="69" r="4" fill="#1B2238"/></svg></span></div>
+          <svg aria-hidden="true" viewBox="0 0 370 30" preserveAspectRatio="none" style="position: relative; display: block; width: 100%; height: 30px; margin-top: -10px;"><path d="M 20 0 Q 30 26 150 26 L 220 26 Q 340 26 350 0" stroke="#5A3A1A" stroke-width="3" fill="none"/></svg>
+          <div style="position: relative; margin: -4px auto 0; width: 170px; height: 34px; border-radius: 10px; background: #0B0F1C; display: flex; align-items: center; justify-content: center; gap: 2px;"><sc-for list="{{vu}}" as="u" hint-placeholder-count="20"><span style="width: 4px; height: {{u.h}}; border-radius: 2px; background: {{u.c}}; transition: height .15s;"></span></sc-for></div>
+          <p style="position: relative; margin: 14px 0 0; text-align: center; font-family: Fraunces, serif; font-weight: 300; font-size: 32px;">{{title}}</p>
+          <p style="position: relative; margin: 2px 0 0; text-align: center; font-size: 14.5px; color: #9AA1B8;">{{code}}, {{place}}</p>
+        </div>
+        <div style="margin-top: 18px;">
+          <div aria-hidden="true" style="display: flex; align-items: center; gap: 2px; height: 34px;"><sc-for list="{{scrub}}" as="w" hint-placeholder-count="60"><span style="flex: 1; height: {{w.h}}; border-radius: 2px; background: {{w.c}};"></span></sc-for></div>
+          <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 14px; color: {{sub}}; font-variant-numeric: tabular-nums;"><span>{{elapsed}}</span><span>{{left}}</span></div>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 30px; margin-top: 10px;">
+          <button class="tvf" onClick="{{prevPara}}" aria-label="Previous paragraph" style="cursor: pointer; width: 60px; height: 60px; border-radius: 50%; border: 0; background: {{chip}}; color: {{tx}}; display: grid; place-items: center;"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L9 12l9 6zM6 6v12"/></svg></button>
+          <button class="tvf" onClick="{{toggle}}" aria-label="{{playAria}}" style="cursor: pointer; position: relative; width: 84px; height: 84px; border-radius: 50%; border: 0; background: radial-gradient(circle at 35% 30%, #FFE7A8, #F3C969 45%, #D9953E); display: grid; place-items: center; box-shadow: 0 18px 44px -10px rgba(243,201,105,.75);"><span aria-hidden="true" style="position: absolute; inset: -8px; border-radius: 50%; border: 1.5px solid rgba(243,201,105,.35); animation: {{ringAnim}};"></span><svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="#1A1608"><path d="{{playPath}}"/></svg></button>
+          <button class="tvf" onClick="{{nextPara}}" aria-label="Next paragraph" style="cursor: pointer; width: 60px; height: 60px; border-radius: 50%; border: 0; background: {{chip}}; color: {{tx}}; display: grid; place-items: center;"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l9 6-9 6zM18 6v12"/></svg></button>
+        </div>
+      </div>
+
+      <div style="position: absolute; left: 590px; right: 60px; top: 40px; bottom: 30px; display: flex; flex-direction: column; color: {{tx}};">
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button class="tvf" onClick="{{openPick}}" style="cursor: pointer; height: 46px; padding: 0 18px; border-radius: 23px; border: 0; background: {{chip}}; color: {{tx}}; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">Sermons</button>
+          <button class="tvf" onClick="{{openLang}}" style="cursor: pointer; height: 46px; padding: 0 18px; border-radius: 23px; border: 0; background: {{chip}}; color: {{tx}}; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">{{langName}}</button>
+          <button class="tvf" onClick="{{openVoices}}" style="cursor: pointer; height: 46px; padding: 0 18px; border-radius: 23px; border: 0; background: {{chip}}; color: {{tx}}; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">Voices {{mixShort}}</button>
+          <button class="tvf" onClick="{{openSet}}" aria-label="Themes and text" style="cursor: pointer; height: 46px; padding: 0 18px; border-radius: 23px; border: 0; background: {{chip}}; color: {{tx}}; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; font-family: Fraunces, serif; font-size: 18px;">Aa</button>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 22px; animation: {{bodySwap}} .55s cubic-bezier(.2,.8,.2,1) both;">
+          <sc-for list="{{paras}}" as="pp" hint-placeholder-count="3">
+            <div style="display: flex; gap: 18px; opacity: {{pp.op}}; transition: opacity .6s;">
+              <span style="flex: none; width: 40px; text-align: right; padding-top: 8px; font-family: Fraunces, serif; font-size: 17px; color: {{pp.numFg}};">{{pp.n}}</span>
+              <p style="margin: 0; font-family: {{font}}; font-size: {{pp.fs}}; line-height: {{lh}}; transition: font-size .5s cubic-bezier(.2,.9,.1,1);">{{pp.before}}<span class="lit" style="background-image: {{litBg}}; background-size: {{pp.fill}} 100%;">{{pp.now}}</span>{{pp.after}}</p>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    <sc-if value="{{pickOpen}}" hint-placeholder-val="{{false}}">
+      <div onClick="{{closeAll}}" aria-hidden="true" style="position: absolute; inset: 0; z-index: 14; background: linear-gradient(90deg, rgba(5,8,16,.2), rgba(5,8,16,.75)); animation: fade .35s both;"></div>
+      <div role="dialog" aria-modal="true" aria-label="Sermons" class="noscroll" style="position: absolute; z-index: 15; top: 18px; right: 18px; bottom: 18px; width: 470px; box-sizing: border-box; padding: 34px 34px; border-radius: 30px; background: {{sheetBg}}; backdrop-filter: blur(24px) saturate(1.3); -webkit-backdrop-filter: blur(24px) saturate(1.3); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), -30px 0 80px -30px rgba(0,0,0,.8); color: {{tx}}; overflow-y: auto; animation: slideL .55s cubic-bezier(.2,.9,.1,1) both;">
+        <p style="margin: 0; font-family: Fraunces, serif; font-size: 32px;">Sermons</p>
+        <div role="tablist" aria-label="Year" style="display: flex; gap: 6px; margin-top: 16px;"><sc-for list="{{years}}" as="y" hint-placeholder-count="4"><button class="tvf" role="tab" aria-selected="{{y.sel}}" onClick="{{y.pick}}" style="cursor: pointer; height: 46px; padding: 0 16px; border-radius: 23px; border: 0; background: {{y.bg}}; color: {{y.fg}}; font-family: Fraunces, serif; font-size: 20px;">{{y.label}}</button></sc-for></div>
+        <div style="margin-top: 14px;"><sc-for list="{{found}}" as="fs" hint-placeholder-count="3"><button class="tvf" onClick="{{fs.pick}}" style="cursor: pointer; width: 100%; margin-bottom: 6px; border: 0; border-radius: 20px; padding: 14px 18px; background: {{fs.bg}}; display: flex; gap: 16px; align-items: center; text-align: left; color: {{tx}};"><span style="width: 80px; font-size: 14px; color: {{sub}}; font-variant-numeric: tabular-nums;">{{fs.code}}</span><span style="flex: 1;"><span style="display: block; font-family: Fraunces, serif; font-size: 21px;">{{fs.title}}</span><span style="display: block; font-size: 14px; color: {{sub}};">{{fs.meta}}</span></span></button></sc-for></div>
+        <p style="margin: 18px 0 8px; font-size: 15px; color: {{sub}};">Go to paragraph</p>
+        <div style="display: flex; align-items: center; gap: 14px;"><button class="tvf" onClick="{{paraDown}}" aria-label="Earlier paragraph" style="cursor: pointer; height: 46px; padding: 0 18px; border-radius: 23px; border: 0; background: {{chip}}; color: {{tx}}; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; width: 52px; justify-content: center; font-size: 22px;">−</button><span style="font-family: Fraunces, serif; font-size: 34px; width: 70px; text-align: center;">{{cur}}</span><button class="tvf" onClick="{{paraUp}}" aria-label="Later paragraph" style="cursor: pointer; height: 46px; padding: 0 18px; border-radius: 23px; border: 0; background: {{chip}}; color: {{tx}}; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; width: 52px; justify-content: center; font-size: 22px;">+</button></div>
+      </div>
+    </sc-if>    <sc-if value="{{langOpen}}" hint-placeholder-val="{{false}}">
+      <div onClick="{{closeAll}}" aria-hidden="true" style="position: absolute; inset: 0; z-index: 14; background: linear-gradient(90deg, rgba(5,8,16,.2), rgba(5,8,16,.75)); animation: fade .35s both;"></div>
+      <div role="dialog" aria-modal="true" aria-label="Language" class="noscroll" style="position: absolute; z-index: 15; top: 18px; right: 18px; bottom: 18px; width: 470px; box-sizing: border-box; padding: 34px 34px; border-radius: 30px; background: {{sheetBg}}; backdrop-filter: blur(24px) saturate(1.3); -webkit-backdrop-filter: blur(24px) saturate(1.3); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), -30px 0 80px -30px rgba(0,0,0,.8); color: {{tx}}; overflow-y: auto; animation: slideL .55s cubic-bezier(.2,.9,.1,1) both;">
+        <p style="margin: 0; font-family: Fraunces, serif; font-size: 32px;">Language</p>
+        <p style="margin: 6px 0 16px; font-size: 15px; color: {{sub}};">Text and voice change together. Your place is kept.</p>
+        <sc-for list="{{langs}}" as="lg" hint-placeholder-count="4"><button class="tvf" onClick="{{lg.pick}}" role="radio" aria-checked="{{lg.sel}}" style="cursor: pointer; width: 100%; margin-bottom: 6px; border: 0; border-radius: 20px; padding: 14px 18px; background: {{lg.bg}}; display: flex; gap: 14px; align-items: center; text-align: left; color: {{tx}};"><span style="flex: 1;"><span style="display: block; font-family: Fraunces, serif; font-size: 21px;">{{lg.name}}</span><span style="display: block; font-size: 14px; color: {{sub}};">{{lg.meta}}</span></span><span aria-hidden="true" style="width: 14px; height: 14px; border-radius: 50%; background: {{acc}}; transform: scale({{lg.dot}}); transition: transform .3s cubic-bezier(.2,.9,.1,1.4);"></span></button></sc-for>
+      </div>
+    </sc-if>    <sc-if value="{{voicesOpen}}" hint-placeholder-val="{{false}}">
+      <div onClick="{{closeAll}}" aria-hidden="true" style="position: absolute; inset: 0; z-index: 14; background: linear-gradient(90deg, rgba(5,8,16,.2), rgba(5,8,16,.75)); animation: fade .35s both;"></div>
+      <div role="dialog" aria-modal="true" aria-label="Voices" class="noscroll" style="position: absolute; z-index: 15; top: 18px; right: 18px; bottom: 18px; width: 470px; box-sizing: border-box; padding: 34px 34px; border-radius: 30px; background: {{sheetBg}}; backdrop-filter: blur(24px) saturate(1.3); -webkit-backdrop-filter: blur(24px) saturate(1.3); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), -30px 0 80px -30px rgba(0,0,0,.8); color: {{tx}}; overflow-y: auto; animation: slideL .55s cubic-bezier(.2,.9,.1,1) both;">
+        <p style="margin: 0; font-family: Fraunces, serif; font-size: 32px;">Voices</p>
+        <p style="margin: 6px 0 22px; font-size: 15px; line-height: 22px; color: {{sub}};">Keep Brother Branham’s own voice quietly underneath. Left and right move the balance.</p>
+        <div style="display: flex; justify-content: space-between; font-family: Fraunces, serif; font-size: 22px;"><span style="color: {{acc}};">{{langName}} {{mixA}}</span><span style="color: #8FB7FF;">{{mixB}} English</span></div>
+        <div style="position: relative; height: 40px; margin-top: 6px;"><div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 16px; height: 8px; border-radius: 4px; background: {{mixTrack}};"></div><input type="range" min="10" max="90" step="5" value="{{mix}}" onInput="{{onMix}}" aria-label="Balance with the English voice" style="position: relative;"></div>
+        <div style="display: flex; gap: 10px; margin-top: 16px;"><button class="tvf" onClick="{{mixLess}}" style="cursor: pointer; height: 46px; padding: 0 18px; border-radius: 23px; border: 0; background: {{chip}}; color: {{tx}}; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; flex: 1; justify-content: center;">More {{langName}}</button><button class="tvf" onClick="{{mixMore}}" style="cursor: pointer; height: 46px; padding: 0 18px; border-radius: 23px; border: 0; background: {{chip}}; color: {{tx}}; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; flex: 1; justify-content: center;">More English</button></div>
+        <button class="tvf" onClick="{{toggleSplit}}" role="switch" aria-checked="{{splitOn}}" style="cursor: pointer; width: 100%; margin-top: 22px; border: 0; background: transparent; display: flex; align-items: center; gap: 14px; font-size: 16px; color: {{tx}}; text-align: left; border-radius: 16px; padding: 8px 4px;"><span style="flex: 1;">Separate voices left and right</span><span aria-hidden="true" style="width: 52px; height: 30px; border-radius: 15px; background: {{splitBg}}; position: relative; transition: background .3s;"><span style="position: absolute; top: 4px; left: {{splitX}}; width: 22px; height: 22px; border-radius: 50%; background: #FBF6EA; transition: left .3s cubic-bezier(.2,.9,.1,1.3);"></span></span></button>
+      </div>
+    </sc-if>    <sc-if value="{{setOpen}}" hint-placeholder-val="{{false}}">
+      <div onClick="{{closeAll}}" aria-hidden="true" style="position: absolute; inset: 0; z-index: 14; background: linear-gradient(90deg, rgba(5,8,16,.2), rgba(5,8,16,.75)); animation: fade .35s both;"></div>
+      <div role="dialog" aria-modal="true" aria-label="Themes and text" class="noscroll" style="position: absolute; z-index: 15; top: 18px; right: 18px; bottom: 18px; width: 500px; box-sizing: border-box; padding: 34px 34px; border-radius: 30px; background: {{sheetBg}}; backdrop-filter: blur(24px) saturate(1.3); -webkit-backdrop-filter: blur(24px) saturate(1.3); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), -30px 0 80px -30px rgba(0,0,0,.8); color: {{tx}}; overflow-y: auto; animation: slideL .55s cubic-bezier(.2,.9,.1,1) both;">
+          <p style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 24px;">Reading</p>
+          <p style="margin: 16px 0 10px; font-size: 13px; color: {{sub}};">Theme</p>
+          <div role="radiogroup" aria-label="Theme" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+            <sc-for list="{{themes}}" as="th" hint-placeholder-count="4">
+              <button class="press" role="radio" aria-checked="{{th.sel}}" onClick="{{th.pick}}" style="cursor: pointer; border: 0; background: transparent; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 7px;">
+                <span aria-hidden="true" style="position: relative; width: 74px; height: 56px; display: flex; filter: drop-shadow(0 8px 10px rgba(0,0,0,.28)); transform: {{th.lift}}; transition: transform .35s cubic-bezier(.2,.9,.1,1.3);">
+                  <span style="flex: 1; border-radius: 10px 3px 3px 12px; background: linear-gradient(90deg, {{th.bg}} 70%, {{th.fold}}); padding: 9px 6px 0 8px; display: flex; flex-direction: column; gap: 4px;"><i style="height: 3px; width: 90%; border-radius: 2px; background: {{th.ink}}; opacity: .7;"></i><i style="height: 3px; width: 70%; border-radius: 2px; background: {{th.ink}}; opacity: .45;"></i><i style="height: 3px; width: 80%; border-radius: 2px; background: {{th.acc}};"></i></span>
+                  <span style="flex: 1; border-radius: 3px 10px 12px 3px; background: linear-gradient(270deg, {{th.bg}} 70%, {{th.fold}}); padding: 9px 8px 0 6px; display: flex; flex-direction: column; gap: 4px;"><i style="height: 3px; width: 85%; border-radius: 2px; background: {{th.ink}}; opacity: .7;"></i><i style="height: 3px; width: 92%; border-radius: 2px; background: {{th.ink}}; opacity: .45;"></i><i style="height: 3px; width: 60%; border-radius: 2px; background: {{th.ink}}; opacity: .45;"></i></span>
+                  <span style="position: absolute; inset: -4px; border-radius: 14px; box-shadow: 0 0 0 2px {{th.ring}}; transition: box-shadow .3s;"></span>
+                </span>
+                <span style="font-size: 12px; color: {{th.fg}};">{{th.name}}</span>
+              </button>
+            </sc-for>
+          </div>
+          <p style="margin: 20px 0 10px; font-size: 13px; color: {{sub}};">Tone</p>
+          <div role="radiogroup" aria-label="Tone" style="display: flex; gap: 8px;">
+            <sc-for list="{{tones}}" as="tn" hint-placeholder-count="3">
+              <button class="press" role="radio" aria-checked="{{tn.sel}}" onClick="{{tn.pick}}" style="cursor: pointer; flex: 1; border: 0; border-radius: 22px; padding: 10px 0 9px; background: {{tn.bg}}; display: flex; flex-direction: column; align-items: center; gap: 6px; color: {{tx}}; font-size: 12.5px;">
+                <span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 50%; background: {{tn.orb}}; box-shadow: {{tn.glow}};"></span>{{tn.name}}
+              </button>
+            </sc-for>
+          </div>
+          <p style="margin: 20px 0 0; font-size: 13px; color: {{sub}};">Text size</p>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span aria-hidden="true" style="font-family: Fraunces, serif; font-size: 14px;">A</span>
+            <div style="position: relative; flex: 1; height: 36px;"><div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 16px; height: 4px; border-radius: 2px; background: {{sizeTrack}};"></div><input type="range" min="22" max="40" step="1" value="{{size}}" onInput="{{onSize}}" aria-label="Text size" style="position: relative;"></div>
+            <span aria-hidden="true" style="font-family: Fraunces, serif; font-size: 24px;">A</span>
+          </div>
+          <p style="margin: 12px 0 10px; font-size: 13px; color: {{sub}};">Typeface and spacing</p>
+          <div style="display: flex; gap: 8px;">
+            <sc-for list="{{faces}}" as="fc" hint-placeholder-count="2"><button class="press" role="radio" aria-checked="{{fc.sel}}" onClick="{{fc.pick}}" style="cursor: pointer; flex: 1; height: 48px; border: 0; border-radius: 16px; background: {{fc.bg}}; color: {{tx}}; font-family: {{fc.font}}; font-size: 17px;">{{fc.name}}</button></sc-for>
+            <sc-for list="{{gaps}}" as="gp" hint-placeholder-count="2"><button class="press" role="radio" aria-checked="{{gp.sel}}" aria-label="{{gp.aria}}" onClick="{{gp.pick}}" style="cursor: pointer; width: 54px; height: 48px; border: 0; border-radius: 16px; background: {{gp.bg}}; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: {{gp.gap}};"><i style="width: 22px; height: 2px; border-radius: 1px; background: {{tx}};"></i><i style="width: 22px; height: 2px; border-radius: 1px; background: {{tx}};"></i><i style="width: 16px; height: 2px; border-radius: 1px; background: {{tx}};"></i></button></sc-for>
+          </div>
+      </div>
+    </sc-if>
+  </div>
+  <div style="width: 100%; max-width: 1280px; display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap;">
+    <div style="flex: 1 1 380px;">
+      <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-weight: 300; font-size: 34px; letter-spacing: -.4px; color: #FBF6EA;">The Table <span style="font-style: italic; color: #F3C969;">on the big screen</span></h1>
+      <p style="margin: 8px 0 0; font-size: 14.5px; line-height: 22px; color: #9AA1B8;">A tape deck that turns while the sermon plays, the words beside it, and side panels for sermons, language, voices and the same themes and tones as the desktop. <span style="color: #6B7391;">{{note}}</span></p>
+    </div>
+    <div role="tablist" aria-label="Screens" style="flex: 1 1 380px; display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start;">
+      <sc-for list="{{jumps}}" as="j" hint-placeholder-count="5">
+        <button class="press" role="tab" aria-selected="{{j.sel}}" onClick="{{j.go}}" style="cursor: pointer; height: 32px; padding: 0 13px; border-radius: 16px; border: 1px solid {{j.border}}; background: {{j.bg}}; color: {{j.fg}}; font-size: 12.5px; font-weight: 500;">{{j.label}}</button>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000},"initialSheet":{"type":"enum","options":["","pick","lang","voices","set"],"default":""},"initialTheme":{"type":"enum","options":["night","dusk","paper","sepia"],"default":"night"}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const p = props || {};
+    this.state = { flip: 0, sheet: p.initialSheet || '', theme: p.initialTheme || 'night', tone: 'lamp', size: 30, face: 'serif', gap: 'snug', lang: 'swa', sermon: 0, year: 1962, cur: 23, w: 0, f: 0.3, playing: true, pos: 0.32, mix: 15, split: true, tick: 0 };
+  }
+  componentDidMount() { this.t = setInterval(() => { const s = this.state; if (!s.playing) return; let f = s.f + 0.1, w = s.w, cur = s.cur; if (f >= 1) { f = 0.05; w = w + 1; if (w > 2) { w = 0; cur = cur + 1; } } this.setState({ f, w, cur, tick: s.tick + 1, pos: Math.min(1, s.pos + 0.0006) }); }, 500); }
+  componentWillUnmount() { clearInterval(this.t); }
+  jumpsFor(list, cur, go) { return list.map(([id, label]) => ({ label, sel: cur === id ? 'true' : 'false', go: () => go(id),
+    border: cur === id ? 'rgba(243,201,105,.6)' : 'rgba(255,255,255,.1)', bg: cur === id ? 'rgba(243,201,105,.12)' : 'transparent', fg: cur === id ? '#F3C969' : '#9AA1B8' })); }
+  tokens(s) {
+    const T = { night: ['Night', '#121829', '#ECE6D8', '#9AA1B8', '#1B2340', '#0A0E19'], dusk: ['Dusk', '#251C2E', '#F1E4DA', '#B4A1B3', '#33283F', '#120C18'], paper: ['Paper', '#FBF6EA', '#2A2418', '#7D735F', '#FFFDF7', '#DCD2BC'], sepia: ['Sepia', '#E9D9BB', '#3A2B19', '#7B6547', '#F3E6CC', '#C9B48D'] };
+    const N = { lamp: ['Lamplight', '243,183,95', '#F3C969'], day: ['Daylight', '236,225,200', '#E6D7B0'], moon: ['Moonlight', '143,183,255', '#8FB7FF'] };
+    const t = T[s.theme], n = N[s.tone], light = s.theme === 'paper' || s.theme === 'sepia';
+    const acc = light ? (s.tone === 'moon' ? '#3E62A8' : '#9A6417') : n[2];
+    return { t, n, light, acc,
+      bg: t[1], ink: t[2], tx: t[2], sub: t[3], sheetBg: t[4], acc, glow: 'rgba(' + n[1] + ',' + (light ? '.22' : '.14') + ')',
+      line: light ? 'rgba(0,0,0,.14)' : 'rgba(255,255,255,.18)', chip: light ? 'rgba(0,0,0,.06)' : 'rgba(255,255,255,.07)', hair: light ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.07)',
+      litBg: 'linear-gradient(90deg, rgba(' + n[1] + ',' + (light ? '.35' : '.24') + '), rgba(' + n[1] + ',.06))',
+      font: s.face === 'serif' ? 'Fraunces, Georgia, serif' : 'Inter, system-ui, sans-serif', fs: s.size + 'px', lh: (s.gap === 'airy' ? 1.85 : 1.55).toFixed(2),
+      themes: Object.keys(T).map((k) => ({ name: T[k][0], bg: T[k][1], ink: T[k][2], fold: T[k][5], acc: k === 'paper' || k === 'sepia' ? '#9A6417' : '#F3C969', sel: s.theme === k ? 'true' : 'false', lift: s.theme === k ? 'translateY(-4px) rotate(-2deg)' : 'none', ring: s.theme === k ? acc : 'transparent', fg: s.theme === k ? t[2] : t[3], pick: () => this.setState({ theme: k }) })),
+      tones: Object.keys(N).map((k) => ({ name: N[k][0], sel: s.tone === k ? 'true' : 'false', orb: 'radial-gradient(circle at 35% 30%, #fff, rgb(' + N[k][1] + ') 60%)', glow: s.tone === k ? '0 0 18px rgba(' + N[k][1] + ',.8)' : 'none', bg: s.tone === k ? (light ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.08)') : 'transparent', pick: () => this.setState({ tone: k }) })),
+      size: s.size, onSize: (e) => this.setState({ size: Math.max(16, Math.min(28, Number(e.target.value) || 19)) }), sizeTrack: 'linear-gradient(90deg, ' + acc + ' ' + ((s.size - 16) / 12 * 100).toFixed(0) + '%, ' + (light ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.14)') + ' 0)',
+      faces: [['serif', 'Serif', 'Fraunces, serif'], ['sans', 'Sans', 'Inter, sans-serif']].map(([k, name, font]) => ({ name, font, sel: s.face === k ? 'true' : 'false', bg: s.face === k ? (light ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.1)') : 'transparent', pick: () => this.setState({ face: k }) })),
+      gaps: [['snug', '3px', 'Snug lines'], ['airy', '6px', 'Airy lines']].map(([k, gap, aria]) => ({ gap, aria, sel: s.gap === k ? 'true' : 'false', bg: s.gap === k ? (light ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.1)') : 'transparent', pick: () => this.setState({ gap: k }) }))
+    };
+  }
+  renderVals() {
+    const s = this.state; const k = this.tokens(s); const p = s.pos;
+    const SERMONS = [[1962, '62-1014E', 'A Guide', 'Kiongozi', 'Jeffersonville, Indiana'], [1962, '62-1230E', 'Is This the Sign of the End, Sir?', 'Je, Hii Ni Ishara ya Mwisho, Bwana?', 'Jeffersonville, Indiana'], [1963, '63-0318', 'The First Seal', 'Muhuri wa Kwanza', 'Jeffersonville, Indiana'], [1963, '63-0728', 'Christ Is the Mystery of God Revealed', 'Kristo Ndiye Siri ya Mungu Iliyofunuliwa', 'Jeffersonville, Indiana'], [1964, '64-0614M', 'The Unveiling of God', 'Kufunuliwa kwa Mungu', 'Jeffersonville, Indiana'], [1965, '65-1127B', 'I Have Heard but Now I See', 'Nimesikia, Lakini Sasa Naona', 'Shreveport, Louisiana']];
+    const sw = s.lang === 'swa'; const cur = SERMONS[s.sermon];
+    const TEXT = sw ? [['Na leo hatuna nguzo ile ya nje, ', 'bali Roho Mtakatifu ndiye Kiongozi wetu. ', 'Yeye hatatuacha.'], ['Yesu alisema, “Yeye atawaongoza ', 'katika kweli yote.” ', 'Sio nusu ya kweli, bali kweli yote.'], ['Basi tumfuate Yeye, ', 'hata mahali ambapo hatuoni njia. ', 'Yeye anaiona.']]
+      : [['And today we don’t have that outward Pillar, ', 'but the Holy Spirit is our Guide. ', 'He will not leave us.'], ['Jesus said, “He will guide you ', 'into all truth.” ', 'Not half of it, all of it.'], ['So let us follow Him, ', 'even where we can’t see the road. ', 'He sees it.']];
+    const LANGS = [['swa', 'Kiswahili', 'Text and voice, downloaded'], ['eng', 'English', 'Text and voice, downloaded'], ['fra', 'Français', 'Text only, voice is 21 MB'], ['kin', 'Kinyarwanda', 'Download text and voice, 34 MB']];
+    const L = LANGS.find((x) => x[0] === s.lang);
+    const total = 7636, el = Math.round(total * p);
+    const fmt = (x) => { const h = Math.floor(x / 3600), m = Math.floor(x % 3600 / 60), sec = x % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(sec).padStart(2, '0'); };
+    const pack = (q) => Math.round(28 + 44 * Math.sqrt(q)) + 'px';
+    const mix = s.mix, pos = ((mix - 10) / 80 * 100).toFixed(1);
+    const setMix = (v) => this.setState({ mix: Math.max(10, Math.min(90, v)) });
+    return {
+      jumps: this.jumpsFor([['', 'Reading'], ['pick', 'Sermons'], ['lang', 'Language'], ['voices', 'Voices'], ['set', 'Themes and tones']], s.sheet, (id) => this.setState({ sheet: id })),
+      note: 'The deck stays on the left while the words fill with light on the right. Every panel slides in from the side so the reading never stops.',
+      bg: k.bg, glow: k.glow, ink: k.ink, tx: k.tx, sub: k.sub, sheetBg: k.sheetBg, acc: k.acc, line: k.line, chip: k.chip, hair: k.hair, litBg: k.litBg, font: k.font, lh: k.lh,
+      themes: k.themes, tones: k.tones, size: k.size, onSize: (e) => this.setState({ size: Math.max(22, Math.min(40, Number(e.target.value) || 30)) }), sizeTrack: k.sizeTrack, faces: k.faces, gaps: k.gaps,
+      ambientAt: '25% 35%', swap: 'enterB', bodySwap: (s.sermon + s.lang.length) % 2 ? 'enter' : 'enterB',
+      L: { pack: pack(1 - p) }, R: { pack: pack(p) }, spinDur: '2.4s', spinState: s.playing ? 'running' : 'paused',
+      vu: Array.from({ length: 20 }, (_, i) => ({ h: (s.playing ? 6 + Math.round(20 * Math.abs(Math.sin((s.tick + i) * 1.3) * Math.cos(i * .7))) : 4) + 'px', c: i % 5 === 4 ? '#8FB7FF' : '#F3C969' })),
+      title: sw ? cur[3] : cur[2], code: cur[1], place: cur[4], cur: s.cur,
+      scrub: Array.from({ length: 60 }, (_, i) => ({ h: (6 + Math.round(26 * Math.abs(Math.sin(i * 1.7) * Math.cos(i * .45)))) + 'px', c: i / 60 < p ? '#F3C969' : k.line })),
+      elapsed: fmt(el), left: '−' + fmt(total - el),
+      toggle: () => this.setState({ playing: !s.playing }), playAria: s.playing ? 'Pause' : 'Play', ringAnim: s.playing ? 'ripple 2.4s ease-out infinite' : 'none',
+      playPath: s.playing ? 'M6 5h4v14H6zM14 5h4v14h-4z' : 'M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z',
+      prevPara: () => this.setState({ cur: Math.max(1, s.cur - 1), w: 0, f: 0.05 }), nextPara: () => this.setState({ cur: s.cur + 1, w: 0, f: 0.05 }),
+      paras: TEXT.map((t, i) => { const n = s.cur + i - 1, on = i === 1; return { n, op: i === 0 ? '.4' : i === 2 ? '.6' : '1', numFg: on ? k.acc : k.sub, fs: (on ? s.size : Math.round(s.size * 0.72)) + 'px', before: on ? t.slice(0, s.w).join('') : t.join(''), now: on ? t[s.w] : '', after: on ? t.slice(s.w + 1).join('') : '', fill: on ? Math.round(s.f * 100) + '%' : '0%' }; }),
+      openPick: () => this.setState({ sheet: 'pick' }), openLang: () => this.setState({ sheet: 'lang' }), openVoices: () => this.setState({ sheet: 'voices' }), openSet: () => this.setState({ sheet: 'set' }), closeAll: () => this.setState({ sheet: '' }),
+      pickOpen: s.sheet === 'pick', langOpen: s.sheet === 'lang', voicesOpen: s.sheet === 'voices', setOpen: s.sheet === 'set',
+      langName: L[1], mixShort: (100 - mix) + '/' + mix,
+      years: [1962, 1963, 1964, 1965].map((y) => ({ label: String(y), sel: s.year === y ? 'true' : 'false', bg: s.year === y ? k.acc : k.chip, fg: s.year === y ? (k.light ? '#FFF' : '#1A1608') : k.tx, pick: () => this.setState({ year: y }) })),
+      found: SERMONS.map((x, i) => [x, i]).filter(([x]) => x[0] === s.year).map(([x, i]) => ({ code: x[1], title: sw ? x[3] : x[2], meta: sw ? x[2] : x[4], bg: i === s.sermon ? k.chip : 'transparent', pick: () => this.setState({ sermon: i, cur: 1, w: 0, f: 0.05, sheet: '' }) })),
+      paraDown: () => this.setState({ cur: Math.max(1, s.cur - 1), w: 0 }), paraUp: () => this.setState({ cur: s.cur + 1, w: 0 }),
+      langs: LANGS.map(([id, name, meta]) => ({ name, meta, sel: s.lang === id ? 'true' : 'false', bg: s.lang === id ? k.chip : 'transparent', dot: s.lang === id ? '1' : '0', pick: () => this.setState({ lang: id, sheet: '' }) })),
+      mix, mixA: (100 - mix) + '%', mixB: mix + '%', onMix: (e) => setMix(Number(e.target.value) || 15), mixLess: () => setMix(mix - 5), mixMore: () => setMix(mix + 5),
+      mixTrack: 'linear-gradient(90deg, #F3C969 0%, #E9A44C ' + pos + '%, #8FB7FF ' + pos + '%, #5D86D6 100%)',
+      toggleSplit: () => this.setState({ split: !s.split }), splitOn: s.split ? 'true' : 'false', splitBg: s.split ? '#F3C969' : 'rgba(127,127,127,.3)', splitX: s.split ? '26px' : '4px'
+    };
+  }
+}
+</script>
+</body>
+</html>

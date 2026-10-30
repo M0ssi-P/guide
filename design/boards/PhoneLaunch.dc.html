@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phone launch</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1322}
+button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid #F3C969;outline-offset:2px}
+@keyframes enter{from{opacity:0;filter:blur(8px);transform:translateY(10px)}to{opacity:1;filter:none;transform:none}}
+@keyframes enterB{from{opacity:0;filter:blur(8px);transform:translateY(10px)}to{opacity:1;filter:none;transform:none}}
+@keyframes sheetUp{from{transform:translateY(105%)}to{transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes ripple{0%{transform:scale(.4);opacity:.55}100%{transform:scale(2.6);opacity:0}}
+@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+@keyframes flicker{0%,100%{transform:scaleY(1) skewX(0)}25%{transform:scaleY(1.06) skewX(-2deg)}50%{transform:scaleY(.95) skewX(1.5deg)}75%{transform:scaleY(1.03) skewX(-1deg)}}
+@keyframes halo{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.85;transform:scale(1.08)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes unfold{from{transform:perspective(900px) rotateX(-70deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes swing{0%{transform:rotate(-3deg)}50%{transform:rotate(-1.2deg)}100%{transform:rotate(-3deg)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes shimmer{from{background-position:-200px 0}to{background-position:200px 0}}
+@keyframes drift{0%{transform:translate(-8%,-4%) scale(1)}50%{transform:translate(6%,5%) scale(1.12)}100%{transform:translate(-8%,-4%) scale(1)}}
+.press{transition:transform .18s cubic-bezier(.3,.7,.2,1),background-color .25s,box-shadow .25s,color .25s}
+.press:active{transform:scale(.96)}
+.lit{background-repeat:no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:6px;transition:background-size .6s linear,color .5s}
+.wave i{display:inline-block;width:3px;border-radius:2px;animation:wave 1s ease-in-out infinite}
+.noscroll{scrollbar-width:none}.noscroll::-webkit-scrollbar{display:none}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.35;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27160%27%20height%3D%27160%27%3E%3Cfilter%20id%3D%27n%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%27.9%27%20numOctaves%3D%272%27%20stitchTiles%3D%27stitch%27/%3E%3CfeColorMatrix%20values%3D%270%200%200%200%200%20%200%200%200%200%200%20%200%200%200%200%200%20%200%200%200%20.5%200%27/%3E%3C/filter%3E%3Crect%20width%3D%27100%25%27%20height%3D%27100%25%27%20filter%3D%27url%28%23n%29%27/%3E%3C/svg%3E")}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:36px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#FBF6EA;box-shadow:0 0 0 6px rgba(243,201,105,.18),0 6px 16px rgba(0,0,0,.5)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border:0;border-radius:50%;background:#FBF6EA}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0E1322; font-family: Inter, -apple-system, system-ui, sans-serif; color: #ECE6D8; display: flex; gap: 64px; justify-content: center; align-items: center; padding: 40px 16px; box-sizing: border-box; flex-wrap: wrap; position: relative; overflow: hidden;">
+  <span aria-hidden="true" style="position: absolute; width: 900px; height: 900px; left: 50%; top: 50%; margin: -450px 0 0 -300px; border-radius: 50%; background: radial-gradient(circle, rgba(243,201,105,.09), transparent 62%); animation: drift 18s ease-in-out infinite; pointer-events: none;"></span>
+  <aside style="position: relative; width: 300px; display: flex; flex-direction: column; gap: 16px;">
+    <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-weight: 300; font-size: 40px; line-height: 1.04; letter-spacing: -.5px; color: #FBF6EA;">First <span style="font-style: italic; color: #F3C969;">launch</span></h1>
+    <p style="margin: 0; font-size: 14.5px; line-height: 22px; color: #9AA1B8;">Choose the Table languages, then Bro. Joseph’s letters and their languages, and everything downloads in one go.</p>
+    <div role="tablist" aria-label="Screens" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
+      <sc-for list="{{jumps}}" as="j" hint-placeholder-count="5">
+        <button class="press" role="tab" aria-selected="{{j.sel}}" onClick="{{j.go}}" style="cursor: pointer; height: 32px; padding: 0 13px; border-radius: 16px; border: 1px solid {{j.border}}; background: {{j.bg}}; color: {{j.fg}}; font-size: 12.5px; font-weight: 500;">{{j.label}}</button>
+      </sc-for>
+    </div>
+    <p style="margin: 6px 0 0; font-size: 12.5px; line-height: 19px; color: #6B7391;">{{note}}</p>
+  </aside>
+  <div style="position: relative; width: 392px; height: 848px; border-radius: 58px; padding: 11px; background: linear-gradient(145deg, #2A3048, #10141F 40%, #1C2134); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.08), 0 80px 140px -50px rgba(0,0,0,.95), 0 0 0 1px #05070C; flex: none;">
+    <div style="position: relative; width: 100%; height: 100%; border-radius: 47px; overflow: hidden; background: {{bg}}; transition: background .6s;">
+      <span aria-hidden="true" style="position: absolute; left: -40%; top: -30%; width: 180%; height: 90%; background: radial-gradient(ellipse at 50% 30%, {{glow}}, transparent 60%); transition: background 1.2s ease; pointer-events: none;"></span>
+      <div style="position: absolute; left: 0; right: 0; top: 0; height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; font-size: 15px; font-weight: 600; color: {{ink}}; z-index: 20; pointer-events: none;">
+        <span>9:41</span>
+        <span aria-hidden="true" style="position: absolute; left: 50%; top: 11px; transform: translateX(-50%); width: 122px; height: 36px; border-radius: 18px; background: #000;"></span>
+        <span aria-hidden="true" style="font-size: 12px; letter-spacing: 1px;">▮▮▮ ▭</span>
+      </div>
+      <div class="noscroll" style="position: absolute; left: 0; right: 0; top: 54px; bottom: 0; overflow-y: auto; animation: {{swap}} .5s cubic-bezier(.2,.8,.2,1) both;">
+        <div style="min-height: 780px; box-sizing: border-box; padding: 10px 24px 34px; display: flex; flex-direction: column; color: #ECE6D8;">
+          <sc-if value="{{showSteps}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <button class="press" onClick="{{back}}" aria-label="Back" style="cursor: pointer; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.07); display: grid; place-items: center; color: #ECE6D8;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+              <div aria-label="Step {{stepNo}} of 3" style="flex: 1; display: flex; gap: 6px;"><sc-for list="{{dots}}" as="d" hint-placeholder-count="3"><i style="flex: 1; height: 4px; border-radius: 2px; background: {{d.c}}; transition: background .5s;"></i></sc-for></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{sWelcome}}" hint-placeholder-val="{{true}}">
+            <div style="flex: 1; display: flex; flex-direction: column; text-align: center; animation: {{swapA}} .6s both;">
+              <span style="flex: 1;"></span>
+              <span aria-hidden="true" style="position: relative; display: block; width: {{lampW}}; height: {{lampH}}; margin: 0 auto; transition: width .8s, height .8s;">
+              <span style="position: absolute; left: 50%; top: 0; width: {{haloS}}; height: {{haloS}}; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(circle, rgba(243,201,105,{{haloA}}), transparent 65%); animation: halo 2.6s ease-in-out infinite; transition: width 1s, height 1s;"></span>
+              <svg viewBox="0 0 54 62" style="position: absolute; inset: 0; width: 100%; height: 100%;"><g style="transform-origin: 27px 30px; transform: scale({{flame}}); transition: transform 1s cubic-bezier(.2,.9,.1,1.2);"><g style="transform-origin: 27px 30px; animation: flicker 1.8s ease-in-out infinite;"><path d="M27 8c5 7 8 11 8 16a8 8 0 0 1-16 0c0-5 3-9 8-16z" fill="url(#lfl)"/><path d="M27 18c2 3 3.5 5 3.5 7a3.5 3.5 0 0 1-7 0c0-2 1.5-4 3.5-7z" fill="#FFF6D8"/></g></g><path d="M6 40c6-3 36-3 42 0l-4 10c-1 3-4 5-8 5H18c-4 0-7-2-8-5z" fill="url(#llamp)"/><path d="M48 41c4 0 6 2 6 4s-2 3-5 3" stroke="#B88A3E" stroke-width="2.5" fill="none"/><rect x="22" y="33" width="10" height="7" rx="2" fill="#8C6A30"/><defs><linearGradient id="lfl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE7A8"/><stop offset="1" stop-color="#E9A44C"/></linearGradient><linearGradient id="llamp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8C27A"/><stop offset="1" stop-color="#8C6A30"/></linearGradient></defs></svg>
+            </span>
+              <p style="margin: 26px 0 0; font-family: Fraunces, Georgia, serif; font-weight: 300; font-size: 46px; letter-spacing: -.8px; color: #FFF8E8; animation: rise 1s .3s both;">The Guide</p>
+              <p style="margin: 10px 20px 0; font-family: Fraunces, Georgia, serif; font-style: italic; font-size: 18px; line-height: 1.5; color: #C9B98F; animation: rise 1s .5s both;">“Thy word is a lamp unto my feet, and a light unto my path.”</p>
+              <p style="margin: 6px 0 0; font-size: 13px; color: #8189A6; animation: rise 1s .6s both;">Psalm 119:105</p>
+              <span style="flex: 1.2;"></span>
+              <p style="margin: 0 0 14px; font-size: 13.5px; line-height: 20px; color: #9AA1B8; animation: rise 1s .8s both;">Two short choices, then everything is kept on this phone so it works without internet.</p>
+              <button class="press" onClick="{{toTable}}" style="cursor: pointer; height: 56px; border-radius: 28px; border: 0; background: #F3C969; color: #1A1608; font-weight: 700; font-size: 16px; box-shadow: 0 14px 36px -12px rgba(243,201,105,.7); animation: rise 1s .9s both;">Begin</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{sTable}}" hint-placeholder-val="{{false}}">
+            <div style="flex: 1; display: flex; flex-direction: column; animation: {{swapA}} .55s both;">
+              <h2 style="margin: 20px 0 0; font-family: Fraunces, Georgia, serif; font-weight: 300; font-size: 34px; line-height: 1.08; letter-spacing: -.4px; color: #FFF8E8;">Which languages for the Table?</h2>
+              <p style="margin: 8px 0 0; font-size: 14px; line-height: 20px; color: #9AA1B8;">Every sermon’s words in each language you pick. Voices download later, one sermon at a time, as you listen.</p>
+              <label style="display: flex; align-items: center; gap: 10px; margin-top: 16px; height: 46px; padding: 0 16px; border-radius: 23px; background: rgba(255,255,255,.06);"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9AA1B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input value="{{query}}" onInput="{{onQuery}}" placeholder="Search {{langCount}} languages" aria-label="Search languages" style="flex: 1; border: 0; background: transparent; outline: none; font: inherit; font-size: 15px; color: #FFF8E8;"></label>
+              <div class="noscroll" style="flex: 1; max-height: 410px; overflow-y: auto; margin: 10px -6px 0; padding: 0 6px;">
+                <sc-for list="{{tLangs}}" as="lg" hint-placeholder-count="6">
+                  <button class="press" role="checkbox" aria-checked="{{lg.on}}" onClick="{{lg.pick}}" style="cursor: pointer; width: 100%; margin-bottom: 6px; border: 0; border-radius: 20px; padding: 12px 14px; background: {{lg.bg}}; box-shadow: inset 0 0 0 1.5px {{lg.ring}}; display: flex; gap: 14px; align-items: center; text-align: left; color: #ECE6D8; transition: background .3s, box-shadow .3s;">
+                    <span aria-hidden="true" style="position: relative; flex: none; width: 14px; height: 42px; border-radius: 3px 3px 2px 2px; background: {{lg.spine}}; box-shadow: inset 2px 0 0 rgba(255,255,255,.15), inset -3px 0 0 rgba(0,0,0,.25); transform: {{lg.lift}}; transition: transform .4s cubic-bezier(.2,.9,.1,1.4);"><i style="position: absolute; left: 3px; right: 3px; top: 6px; height: 1.5px; background: rgba(255,240,200,.6);"></i></span>
+                    <span style="flex: 1; min-width: 0;"><span style="display: block; font-family: Fraunces, serif; font-size: 18px; color: #FFF8E8;">{{lg.name}}<span style="font-family: Inter, sans-serif; font-size: 12px; color: #8189A6;"> {{lg.en}}</span></span><span style="display: block; font-size: 12px; color: #8189A6;"><b style="font-weight: 600; color: #F3C969;">{{lg.tip}}</b>{{lg.meta}}</span></span>
+                    
+                    <span aria-hidden="true" style="width: 24px; height: 24px; flex: none; border-radius: 8px; background: {{lg.box}}; display: grid; place-items: center; transition: background .3s;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1608" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: {{lg.tick}}; transform: scale({{lg.tick}}); transition: transform .3s cubic-bezier(.2,.9,.1,1.4), opacity .2s;"><path d="M5 12l5 5 9-10"/></svg></span>
+                  </button>
+                </sc-for>
+              </div>
+              <button class="press" onClick="{{toLetters}}" aria-disabled="{{tNone}}" style="cursor: pointer; height: 56px; border-radius: 28px; border: 0; background: #F3C969; color: #1A1608; font-weight: 700; font-size: 16px; box-shadow: 0 14px 36px -12px rgba(243,201,105,.7); margin-top: 12px; opacity: {{tBtnOp}};">{{tBtn}}</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{sLetters}}" hint-placeholder-val="{{false}}">
+            <div style="flex: 1; display: flex; flex-direction: column; animation: {{swapA}} .55s both;">
+              <div aria-hidden="true" style="position: relative; height: 150px; margin-top: 10px;">
+                <sc-for list="{{envs}}" as="e" hint-placeholder-count="4"><span style="position: absolute; left: 50%; top: {{e.top}}; width: 220px; height: 118px; margin-left: -110px; border-radius: 6px; background: {{e.paper}}; box-shadow: 0 14px 30px -14px rgba(0,0,0,.8); transform: rotate({{e.rot}}) translateX({{e.x}}); animation: rise .7s {{e.delay}} cubic-bezier(.2,.8,.2,1) both;"><svg viewBox="0 0 220 118" style="position: absolute; inset: 0; width: 100%; height: 100%;"><path d="M0 0 L110 58 L220 0" fill="none" stroke="rgba(42,36,24,.16)" stroke-width="1.2"/></svg><span style="position: absolute; left: 50%; top: 42px; margin-left: -16px; width: 32px; height: 32px; border-radius: 48% 52% 50% 50%; background: radial-gradient(circle at 38% 32%, #B8394A, #8E1F2C 65%); box-shadow: 0 2px 4px rgba(60,10,15,.4); display: grid; place-items: center; font-family: Fraunces, serif; font-size: 11px; color: rgba(255,220,200,.75);">BT</span></span></sc-for>
+              </div>
+              <h2 style="margin: 14px 0 0; font-family: Fraunces, Georgia, serif; font-weight: 300; font-size: 32px; line-height: 1.08; letter-spacing: -.4px; color: #FFF8E8;">Bro. Joseph’s weekly letters</h2>
+              <p style="margin: 8px 0 0; font-size: 14px; line-height: 20px; color: #9AA1B8;">Every letter from Branham Tabernacle, with the quotes, scriptures and the Sunday service it goes with. New letters arrive each Saturday.</p>
+              <button class="press" onClick="{{toggleLetters}}" role="switch" aria-checked="{{lettersOn}}" style="cursor: pointer; margin-top: 16px; border: 0; background: transparent; padding: 0; display: flex; align-items: center; gap: 12px; color: #FFF8E8; font-size: 15px; text-align: left;"><span style="flex: 1;">Keep the whole archive on this phone</span><span aria-hidden="true" style="width: 46px; height: 28px; border-radius: 14px; background: {{lsBg}}; position: relative; transition: background .3s;"><span style="position: absolute; top: 3px; left: {{lsX}}; width: 22px; height: 22px; border-radius: 50%; background: #FBF6EA; transition: left .3s cubic-bezier(.2,.9,.1,1.3);"></span></span></button>
+              <div style="overflow: hidden; max-height: {{lpH}}; opacity: {{lpOp}}; transition: max-height .5s cubic-bezier(.2,.9,.1,1), opacity .3s;">
+                <p style="margin: 16px 0 8px; font-size: 13px; color: #9AA1B8;">In these languages</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{lLangs}}" as="ll" hint-placeholder-count="10"><button class="press" role="checkbox" aria-checked="{{ll.on}}" onClick="{{ll.pick}}" style="cursor: pointer; height: 36px; padding: 0 14px; border-radius: 18px; border: 0; background: {{ll.bg}}; color: {{ll.fg}}; font-size: 13px; font-weight: 600; transition: background .3s, color .3s;">{{ll.name}}</button></sc-for></div>
+              </div>
+              <span style="flex: 1;"></span>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin: 16px 2px 10px; font-size: 13px; color: #9AA1B8;"><span>{{sumLine}}</span><span style="font-family: Fraunces, serif; font-size: 17px; color: #FFF8E8;">{{totalMb}}</span></div>
+              <button class="press" onClick="{{startDl}}" style="cursor: pointer; height: 56px; border-radius: 28px; border: 0; background: #F3C969; color: #1A1608; font-weight: 700; font-size: 16px; box-shadow: 0 14px 36px -12px rgba(243,201,105,.7);">Download</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{sDownload}}" hint-placeholder-val="{{false}}">
+            <div style="flex: 1; display: flex; flex-direction: column; animation: {{swapA}} .55s both;">
+              <div style="margin-top: 26px; text-align: center;"><span aria-hidden="true" style="position: relative; display: block; width: {{lampW}}; height: {{lampH}}; margin: 0 auto; transition: width .8s, height .8s;">
+              <span style="position: absolute; left: 50%; top: 0; width: {{haloS}}; height: {{haloS}}; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(circle, rgba(243,201,105,{{haloA}}), transparent 65%); animation: halo 2.6s ease-in-out infinite; transition: width 1s, height 1s;"></span>
+              <svg viewBox="0 0 54 62" style="position: absolute; inset: 0; width: 100%; height: 100%;"><g style="transform-origin: 27px 30px; transform: scale({{flame}}); transition: transform 1s cubic-bezier(.2,.9,.1,1.2);"><g style="transform-origin: 27px 30px; animation: flicker 1.8s ease-in-out infinite;"><path d="M27 8c5 7 8 11 8 16a8 8 0 0 1-16 0c0-5 3-9 8-16z" fill="url(#lfl)"/><path d="M27 18c2 3 3.5 5 3.5 7a3.5 3.5 0 0 1-7 0c0-2 1.5-4 3.5-7z" fill="#FFF6D8"/></g></g><path d="M6 40c6-3 36-3 42 0l-4 10c-1 3-4 5-8 5H18c-4 0-7-2-8-5z" fill="url(#llamp)"/><path d="M48 41c4 0 6 2 6 4s-2 3-5 3" stroke="#B88A3E" stroke-width="2.5" fill="none"/><rect x="22" y="33" width="10" height="7" rx="2" fill="#8C6A30"/><defs><linearGradient id="lfl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE7A8"/><stop offset="1" stop-color="#E9A44C"/></linearGradient><linearGradient id="llamp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8C27A"/><stop offset="1" stop-color="#8C6A30"/></linearGradient></defs></svg>
+            </span></div>
+              <p style="margin: 18px 0 0; text-align: center; font-family: Fraunces, serif; font-weight: 300; font-size: 30px; color: #FFF8E8;">{{dlTitle}}</p>
+              <p style="margin: 4px 0 18px; text-align: center; font-size: 13.5px; color: #9AA1B8;">{{dlSub}}</p>
+              <sc-for list="{{dl}}" as="it" hint-placeholder-count="4">
+                <div style="display: flex; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06);">
+                  <span aria-hidden="true" style="position: relative; flex: none; width: {{it.iw}}; height: {{it.ih}}; border-radius: {{it.rad}}; background: rgba(255,255,255,.08); overflow: hidden;"><span style="position: absolute; left: 0; right: 0; bottom: 0; height: {{it.fill}}; background: {{it.color}}; transition: height .3s linear;"></span><span style="position: absolute; inset: 0; box-shadow: inset 2px 0 0 rgba(255,255,255,.12);"></span></span>
+                  <span style="flex: 1; min-width: 0;"><span style="display: block; font-family: Fraunces, serif; font-size: 16.5px; color: #FFF8E8;">{{it.name}}</span><span style="display: block; font-size: 12px; color: #8189A6;">{{it.sub}}</span></span>
+                  <span style="font-size: 12.5px; color: {{it.stFg}}; font-variant-numeric: tabular-nums; text-align: right;">{{it.st}}</span>
+                </div>
+              </sc-for>
+              <span style="flex: 1;"></span>
+              <button class="press" onClick="{{toggleWifi}}" role="switch" aria-checked="{{wifiOn}}" style="cursor: pointer; margin-top: 14px; border: 0; background: transparent; padding: 0; display: flex; align-items: center; gap: 12px; color: #D9D1C0; font-size: 13.5px; text-align: left;"><span style="flex: 1;">Only on Wi-Fi</span><span aria-hidden="true" style="width: 40px; height: 24px; border-radius: 12px; background: {{wfBg}}; position: relative; transition: background .3s;"><span style="position: absolute; top: 3px; left: {{wfX}}; width: 18px; height: 18px; border-radius: 50%; background: #FBF6EA; transition: left .3s cubic-bezier(.2,.9,.1,1.3);"></span></span></button>
+              <button class="press" onClick="{{skipToHome}}" style="cursor: pointer; margin-top: 12px; height: 50px; border-radius: 25px; border: 0; background: rgba(255,255,255,.07); color: #FFF8E8; font-weight: 600; font-size: 15px;">Start reading while it finishes</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{sDone}}" hint-placeholder-val="{{false}}">
+            <div style="flex: 1; display: flex; flex-direction: column; text-align: center; animation: {{swapA}} .6s both;">
+              <span style="flex: 1;"></span>
+              <span aria-hidden="true" style="position: relative; display: block; width: {{lampW}}; height: {{lampH}}; margin: 0 auto; transition: width .8s, height .8s;">
+              <span style="position: absolute; left: 50%; top: 0; width: {{haloS}}; height: {{haloS}}; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(circle, rgba(243,201,105,{{haloA}}), transparent 65%); animation: halo 2.6s ease-in-out infinite; transition: width 1s, height 1s;"></span>
+              <svg viewBox="0 0 54 62" style="position: absolute; inset: 0; width: 100%; height: 100%;"><g style="transform-origin: 27px 30px; transform: scale({{flame}}); transition: transform 1s cubic-bezier(.2,.9,.1,1.2);"><g style="transform-origin: 27px 30px; animation: flicker 1.8s ease-in-out infinite;"><path d="M27 8c5 7 8 11 8 16a8 8 0 0 1-16 0c0-5 3-9 8-16z" fill="url(#lfl)"/><path d="M27 18c2 3 3.5 5 3.5 7a3.5 3.5 0 0 1-7 0c0-2 1.5-4 3.5-7z" fill="#FFF6D8"/></g></g><path d="M6 40c6-3 36-3 42 0l-4 10c-1 3-4 5-8 5H18c-4 0-7-2-8-5z" fill="url(#llamp)"/><path d="M48 41c4 0 6 2 6 4s-2 3-5 3" stroke="#B88A3E" stroke-width="2.5" fill="none"/><rect x="22" y="33" width="10" height="7" rx="2" fill="#8C6A30"/><defs><linearGradient id="lfl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE7A8"/><stop offset="1" stop-color="#E9A44C"/></linearGradient><linearGradient id="llamp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8C27A"/><stop offset="1" stop-color="#8C6A30"/></linearGradient></defs></svg>
+            </span>
+              <p style="margin: 26px 0 0; font-family: Fraunces, Georgia, serif; font-weight: 300; font-size: 40px; letter-spacing: -.6px; color: #FFF8E8;">The lamp is lit</p>
+              <p style="margin: 10px 10px 0; font-size: 14.5px; line-height: 22px; color: #9AA1B8;">{{doneLine}}</p>
+              <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 18px;"><sc-for list="{{doneChips}}" as="dc" hint-placeholder-count="3"><span style="height: 30px; padding: 0 12px; border-radius: 15px; background: rgba(243,201,105,.12); color: #F3C969; font-size: 12.5px; font-weight: 600; display: inline-flex; align-items: center; animation: pop .5s {{dc.delay}} cubic-bezier(.2,.9,.1,1.3) both;">{{dc.name}}</span></sc-for></div>
+              <span style="flex: 1.2;"></span>
+              <button class="press" onClick="{{restart}}" style="cursor: pointer; height: 56px; border-radius: 28px; border: 0; background: #F3C969; color: #1A1608; font-weight: 700; font-size: 16px; box-shadow: 0 14px 36px -12px rgba(243,201,105,.7);">Open The Guide</button>
+              <p style="margin: 12px 0 0; font-size: 12.5px; color: #6B7391;">Add languages any time in Settings.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{sOffline}}" hint-placeholder-val="{{false}}">
+            <div style="flex: 1; display: flex; flex-direction: column; text-align: center; animation: {{swapA}} .6s both;">
+              <span style="flex: 1;"></span>
+              <svg aria-hidden="true" width="96" height="70" viewBox="0 0 24 18" style="display: block; margin: 0 auto;" fill="none" stroke="#6B7391" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 16h11a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 7.1 4.5 4.5 0 0 0 6.5 16z"/><path d="M4 2l16 15" stroke="#FF7A66"/></svg>
+              <p style="margin: 10px 0 0; font-family: Fraunces, serif; font-weight: 300; font-size: 34px; color: #FFF8E8;">Waiting for internet</p>
+              <p style="margin: 10px 10px 0; font-size: 14.5px; line-height: 22px; color: #9AA1B8;">{{offLine}} The rest will carry on by itself when you are back online. Nothing is lost.</p>
+              <span style="flex: 1.2;"></span>
+              <button class="press" onClick="{{retry}}" style="cursor: pointer; height: 56px; border-radius: 28px; border: 0; background: #F3C969; color: #1A1608; font-weight: 700; font-size: 16px; box-shadow: 0 14px 36px -12px rgba(243,201,105,.7);">Try again now</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <span aria-hidden="true" style="position: absolute; z-index: 30; left: 50%; bottom: 8px; transform: translateX(-50%); width: 134px; height: 5px; border-radius: 3px; background: {{ink}}; opacity: .55;"></span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960},"initialStep":{"type":"enum","options":["welcome","table","letters","download","offline","done"],"default":"welcome"}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const p = props || {};
+    this.state = { step: p.initialStep || 'welcome', flip: 0, query: '', table: { swa: true, eng: true }, letters: true, letterLangs: { en: true, fr: true }, prog: {}, wifi: true };
+    if (p.initialStep === 'download' || p.initialStep === 'offline') this.state.prog = { tswa: 100, teng: 64, len: 20 };
+  }
+  componentDidMount() { if (this.state.step === 'download') this.startDownload(); }
+  componentWillUnmount() { clearInterval(this.d); }
+  jumpsFor(list, cur, go) { return list.map(([id, label]) => ({ label, sel: cur === id ? 'true' : 'false', go: () => go(id),
+    border: cur === id ? 'rgba(243,201,105,.6)' : 'rgba(255,255,255,.1)', bg: cur === id ? 'rgba(243,201,105,.12)' : 'transparent', fg: cur === id ? '#F3C969' : '#9AA1B8' })); }
+  items(s, TL, LL) {
+    const t = TL.filter((x) => s.table[x[0]]).map((x) => ({ id: 't' + x[0], kind: 'table', name: x[1], sub: 'The Table, every sermon’s text', mb: x[3] }));
+    const l = s.letters ? LL.filter((x) => s.letterLangs[x[0]]).map((x) => ({ id: 'l' + x[0], kind: 'letter', name: x[1], sub: 'Bro. Joseph’s letters, 2015 to today', mb: x[2] })) : [];
+    return t.concat(l);
+  }
+  startDownload() {
+    clearInterval(this.d);
+    this.d = setInterval(() => {
+      const s = this.state; const prog = Object.assign({}, s.prog); let left = 0;
+      const list = this.list || [];
+      list.forEach((it, i) => { const p = prog[it.id] || 0; if (p < 100 && (i === 0 || (prog[list[i - 1].id] || 0) > 35)) prog[it.id] = Math.min(100, p + Math.max(3, Math.round(240 / it.mb))); if ((prog[it.id] || 0) < 100) left++; });
+      this.setState({ prog });
+      if (!left) { clearInterval(this.d); this.setState({ step: 'done', flip: s.flip + 1 }); }
+    }, 260);
+  }
+  renderVals() {
+    const s = this.state;
+    const TL = [['swa', 'Kiswahili', 'Swahili', 46, true, 'Voice for 1,180 sermons'], ['eng', 'English', 'English', 52, true, 'Brother Branham’s own voice'], ['fra', 'Français', 'French', 49, true, 'Voice for 1,020 sermons'], ['kin', 'Ikinyarwanda', 'Kinyarwanda', 38, true, 'Voice for 640 sermons'], ['run', 'Ikirundi', 'Kirundi', 31, false, 'Text only'], ['lin', 'Lingála', 'Lingala', 35, true, 'Voice for 410 sermons'], ['por', 'Português', 'Portuguese', 47, true, 'Voice for 980 sermons'], ['spa', 'Español', 'Spanish', 50, true, 'Voice for 1,100 sermons'], ['deu', 'Deutsch', 'German', 44, true, 'Voice for 870 sermons'], ['nya', 'Chichewa', 'Chichewa', 29, false, 'Text only']];
+    const LL = [['en', 'English', 3.1], ['fr', 'Français', 2.9], ['es', 'Español', 3.0], ['pt', 'Português', 2.9], ['de', 'Deutsch', 2.8], ['it', 'Italiano', 2.7], ['no', 'Norsk', 2.4], ['ro', 'Română', 2.6], ['ru', 'Русский', 3.3], ['uk', 'Українська', 3.2]];
+    const go = (step, extra) => this.setState(Object.assign({ step, flip: s.flip + 1 }, extra || {}));
+    const order = ['table', 'letters', 'download']; const ix = order.indexOf(s.step);
+    const list = this.items(s, TL, LL); this.list = list;
+    const mb = list.reduce((a, x) => a + x.mb, 0);
+    const done = list.filter((x) => (s.prog[x.id] || 0) >= 100).length;
+    const overall = list.length ? list.reduce((a, x) => a + Math.min(100, s.prog[x.id] || 0) * x.mb, 0) / (mb * 100) : 0;
+    const lit = s.step === 'done' ? 1 : s.step === 'download' || s.step === 'offline' ? 0.35 + 0.65 * overall : s.step === 'welcome' ? 0.55 : 0.4;
+    const q = s.query.trim().toLowerCase();
+    const nT = TL.filter((x) => s.table[x[0]]).length, nL = LL.filter((x) => s.letterLangs[x[0]]).length;
+    const SPINES = ['#7A2E2E', '#23365E', '#2F4A36', '#6B4A1E', '#4A2E5E', '#1E4250', '#7A5A1E', '#5E2E3A', '#2E4A5E', '#4A5A2A'];
+    return {
+      jumps: this.jumpsFor([['welcome', 'Welcome'], ['table', 'Table languages'], ['letters', 'Letters'], ['download', 'Downloading'], ['offline', 'No internet'], ['done', 'Ready']], s.step, (id) => { clearInterval(this.d); go(id, id === 'download' ? { prog: {} } : id === 'offline' ? { prog: { tswa: 100, teng: 64, len: 20 } } : {}); if (id === 'download') setTimeout(() => this.startDownload(), 0); }),
+      note: 'Swahili and English are ticked to begin with: the phone’s language, plus English for the voice underneath. Each language is a book spine; while it downloads the spine fills with light, and the lamp grows with the whole download.',
+      bg: '#0E1322', glow: 'rgba(243,201,105,' + (0.08 + 0.14 * lit).toFixed(2) + ')', ink: '#FBF6EA', swap: 'enterB', swapA: s.flip % 2 ? 'enter' : 'enterB',
+      lampW: Math.round(70 + 40 * lit) + 'px', lampH: Math.round(81 + 46 * lit) + 'px', haloS: Math.round(90 + 110 * lit) + 'px', haloA: (0.25 + 0.35 * lit).toFixed(2), flame: (0.35 + 0.65 * lit).toFixed(2),
+      showSteps: ix >= 0, stepNo: ix + 1, dots: order.map((_, i) => ({ c: i <= ix ? '#F3C969' : 'rgba(255,255,255,.12)' })),
+      back: () => { clearInterval(this.d); go(ix > 0 ? order[ix - 1] : 'welcome'); },
+      sWelcome: s.step === 'welcome', sTable: s.step === 'table', sLetters: s.step === 'letters', sDownload: s.step === 'download', sDone: s.step === 'done', sOffline: s.step === 'offline',
+      toTable: () => go('table'),
+      query: s.query, onQuery: (e) => this.setState({ query: String(e.target.value || '') }), langCount: TL.length,
+      tLangs: TL.map((x, i) => [x, i]).filter(([x]) => !q || (x[1] + ' ' + x[2]).toLowerCase().includes(q)).map(([[id, name, en, size, voice, vmeta], i]) => { const on = !!s.table[id]; return { name, en: name === en ? '' : en, meta: size + ' MB of text, ' + vmeta.charAt(0).toLowerCase() + vmeta.slice(1), tip: id === 'swa' ? 'Your phone’s language. ' : id === 'eng' ? 'For the voice underneath. ' : '', on: on ? 'true' : 'false', bg: on ? 'rgba(243,201,105,.09)' : 'rgba(255,255,255,.03)', ring: on ? 'rgba(243,201,105,.45)' : 'transparent', box: on ? '#F3C969' : 'rgba(255,255,255,.1)', tick: on ? '1' : '0', spine: SPINES[i % 10], lift: on ? 'translateY(-4px) rotate(-6deg)' : 'none', pick: () => this.setState({ table: Object.assign({}, s.table, { [id]: !on }) }) }; }),
+      tNone: nT ? 'false' : 'true', tBtnOp: nT ? '1' : '.4', tBtn: nT ? 'Continue with ' + nT + (nT === 1 ? ' language' : ' languages') : 'Pick at least one',
+      toLetters: () => (nT ? go('letters') : null),
+      envs: [0, 1, 2, 3].map((i) => ({ top: (6 + i * 9) + 'px', rot: (-6 + i * 4) + 'deg', x: (i - 1.5) * 10 + 'px', paper: ['#E6D9BD', '#EADFC6', '#F5EEDD', '#F2E9D6'][i], delay: (i * 0.12).toFixed(2) + 's' })),
+      toggleLetters: () => this.setState({ letters: !s.letters }), lettersOn: s.letters ? 'true' : 'false', lsBg: s.letters ? '#F3C969' : 'rgba(255,255,255,.15)', lsX: s.letters ? '21px' : '3px', lpH: s.letters ? '220px' : '0px', lpOp: s.letters ? '1' : '0',
+      lLangs: LL.map(([id, name]) => { const on = !!s.letterLangs[id]; return { name, on: on ? 'true' : 'false', bg: on ? '#F3C969' : 'rgba(255,255,255,.06)', fg: on ? '#1A1608' : '#D9D1C0', pick: () => this.setState({ letterLangs: Object.assign({}, s.letterLangs, { [id]: !on }) }) }; }),
+      sumLine: nT + ' Table ' + (nT === 1 ? 'language' : 'languages') + (s.letters && nL ? ', letters in ' + nL : ''), totalMb: mb.toFixed(0) + ' MB',
+      startDl: () => { go('download', { prog: {} }); setTimeout(() => this.startDownload(), 0); },
+      dlTitle: overall >= 1 ? 'All done' : 'Lighting the lamp', dlSub: done + ' of ' + list.length + ' ready, ' + Math.round(overall * mb) + ' of ' + mb.toFixed(0) + ' MB',
+      dl: list.map((it) => { const p = Math.min(100, s.prog[it.id] || 0), letter = it.kind === 'letter'; return { name: it.name, sub: it.sub, iw: letter ? '30px' : '14px', ih: letter ? '22px' : '40px', rad: letter ? '3px' : '3px 3px 2px 2px', color: letter ? 'linear-gradient(#E8DCC0, #C9B48D)' : 'linear-gradient(#FFE7A8, #E9A44C)', fill: p + '%', st: p >= 100 ? 'Ready' : p > 0 ? p + '%' : 'Waiting', stFg: p >= 100 ? '#F3C969' : '#8189A6' }; }),
+      toggleWifi: () => this.setState({ wifi: !s.wifi }), wifiOn: s.wifi ? 'true' : 'false', wfBg: s.wifi ? '#F3C969' : 'rgba(255,255,255,.15)', wfX: s.wifi ? '19px' : '3px',
+      skipToHome: () => { clearInterval(this.d); go('done'); },
+      doneLine: 'The Table in ' + nT + (nT === 1 ? ' language' : ' languages') + (s.letters && nL ? ' and every letter from Bro. Joseph' : '') + ' are on this phone, ready without internet.',
+      doneChips: TL.filter((x) => s.table[x[0]]).map((x) => x[1]).concat(s.letters && nL ? ['Letters'] : []).map((name, i) => ({ name, delay: (0.2 + i * 0.1).toFixed(2) + 's' })),
+      restart: () => go('welcome', { prog: {} }),
+      offLine: done + ' of ' + list.length + ' are already on this phone.', retry: () => { go('download'); setTimeout(() => this.startDownload(), 0); }
+    };
+  }
+}
+</script>
+</body>
+</html>

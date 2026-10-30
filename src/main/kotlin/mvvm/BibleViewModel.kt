@@ -12,9 +12,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonNull.content
 import loadData
-import parsers.bible.Bible
+import parsers.bible.BibleStore
 import parsers.bible.models.IBibleVersion
 import parsers.bible.models.IChapterContent
 import parsers.bible.models.ILanguage
@@ -22,7 +23,6 @@ import presentation.ProjectionViewModel
 import saveData
 
 class BibleViewModel : ViewModel(), ProjectionViewModel {
-    private val bible = Bible()
     var languages: List<ILanguage> by mutableStateOf(emptyList())
        private set
 
@@ -54,6 +54,8 @@ class BibleViewModel : ViewModel(), ProjectionViewModel {
             loadCurrentLanguage()
             loadVersions(currentLanguage?.tag)
             loadCurrentVersion()
+            // the version is read from its database on this computer: fetched the first time
+            currentVersion?.let { BibleLibrary.ready(it) }?.let { putCurrentVersion(it) }
             loadBook()
             loadCurrentChapter()
         }
@@ -65,19 +67,11 @@ class BibleViewModel : ViewModel(), ProjectionViewModel {
             return
         }
 
-        loadData<List<ILanguage>>("bible-languages")?.let {
-            languages = it
-            return
-        }
-
-        try {
-            val networkLanguages = bible.getAllLanguages()
-            ShareViewModels.bibleLanguages.value = networkLanguages
-            languages = networkLanguages
-            saveData("bible-languages", networkLanguages)
-        } catch (e: Exception) {
-            println("ERROR: ${e.message}")
-        }
+        // the file store's list, kept for opening offline
+        val list = runCatching { BibleStore.languages() }.getOrNull()?.also { saveData("bible-languages-r2", ArrayList(it)) }
+            ?: loadData<ArrayList<ILanguage>>("bible-languages-r2") ?: emptyList()
+        if (list.isNotEmpty()) ShareViewModels.bibleLanguages.value = list
+        languages = list
     }
 
     fun putCurrentLanguage(language: ILanguage?) {
@@ -98,7 +92,12 @@ class BibleViewModel : ViewModel(), ProjectionViewModel {
             return
         }
 
-        loadData<ILanguage>("current-bible-language")?.let {
+        // saved as the tag (older builds saved the whole language)
+        when (val saved = loadData<Any>("current-bible-language")) {
+            is ILanguage -> languages.find { it.tag == saved.tag } ?: saved
+            is String -> languages.find { it.tag == saved }
+            else -> null
+        }?.let {
             currentLanguage = it
             return
         }
@@ -144,7 +143,14 @@ class BibleViewModel : ViewModel(), ProjectionViewModel {
     }
 
     /** Reads the same book and chapter in [version], which may be in another language. */
-    fun switchVersion(version: IBibleVersion) {
+    fun switchVersion(listed: IBibleVersion) {
+        viewModelScope.launch {
+            // downloaded first when it isn't on this computer yet
+            BibleLibrary.ready(listed)?.let { show(it) }
+        }
+    }
+
+    private fun show(version: IBibleVersion) {
         val usfm = currentChapter?.usfm
         val otherLanguage = version.language.tag != currentLanguage?.tag
         putCurrentVersion(version)
@@ -183,18 +189,8 @@ class BibleViewModel : ViewModel(), ProjectionViewModel {
         if(version == null || chapter == null) return
 
         val key = "${version.id}.${chapter.usfm}"
-        val content = ShareViewModels.bibleChapterContent.getOrPut(key) {
-            loadData<IChapterContent>(key)?.let {
-                return@getOrPut it
-            }
-
-            val res = bible.getChapterDoc(version, book = chapter.usfm.split(".").first(), chapter.human.toInt())
-            saveData(key, res)
-
-            res
-        }
-
-        chapterContent = content
+        chapterContent = ShareViewModels.bibleChapterContent[key]
+            ?: BibleLibrary.chapter(version, chapter.usfm)?.also { ShareViewModels.bibleChapterContent[key] = it }
     }
 
     fun loadCurrentVersion() {
@@ -203,36 +199,23 @@ class BibleViewModel : ViewModel(), ProjectionViewModel {
             return@loadCurrentVersion
         }
 
-        loadData<IBibleVersion>("current-bible-version")?.let {
-            currentVersion = it
-            return@loadCurrentVersion
-        }
-
-        putCurrentVersion(versions.find { it.abbreviation == "NKJV" })
+        // the saved one when the store still lists it, else NKJV
+        val saved = loadData<IBibleVersion>("current-bible-version")
+        putCurrentVersion(versions.find { it.id == saved?.id } ?: versions.find { it.abbreviation == "NKJV" } ?: versions.firstOrNull())
     }
 
     suspend fun loadVersions(key: String?) {
         if (key == null) return
+        versions = versionsOf(key)
+    }
 
-        val vs = ShareViewModels.bibleVersions.getOrPut(key) {
-            val oldCachedVersionsData = loadData<MutableMap<String, List<IBibleVersion>>>("bible-versions")
-            oldCachedVersionsData?.get(key)?.let { cached ->
-                return@getOrPut cached
-            }
-
-            val v = bible.getVersionsFromLanguage(key)
-            val fullV = v.map { ver ->
-                bible.getFullVersion(ver)
-            }
-
-            val updatedCache = oldCachedVersionsData ?: mutableMapOf()
-            updatedCache[key] = fullV
-
-            saveData("bible-versions", updatedCache)
-
-            fullV
-        }
-
-        versions = vs
+    /** A language's versions on the file store (the last list fetched when offline), without switching to it. */
+    suspend fun versionsOf(key: String): List<IBibleVersion> {
+        ShareViewModels.bibleVersions[key]?.let { return it }
+        val language = languages.find { it.tag == key } ?: return emptyList()
+        return withContext(Dispatchers.IO) {
+            runCatching { BibleStore.versions(key) }.getOrNull()?.let { BibleLibrary.register(language, it) }
+            BibleLibrary.listed(key)
+        }.also { if (it.isNotEmpty()) ShareViewModels.bibleVersions[key] = it }
     }
 }

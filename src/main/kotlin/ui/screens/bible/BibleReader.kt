@@ -103,7 +103,6 @@ import navigation.Screen
 import navigation.dismiss
 import navigation.show
 import org.jetbrains.jewel.foundation.modifier.onHover
-import parsers.bible.Bible
 import parsers.bible.models.ChapterSection
 import parsers.bible.models.IBibleVersion
 import parsers.bible.models.IChapterContent
@@ -315,7 +314,7 @@ private fun BiblePages(model: BibleViewModel, verses: List<ChapterSection.IBible
                 pages.forEachIndexed { i, page ->
                     val x = half * (i - shift * 2)
                     if (x > -half * 2 && x < maxWidth * 1.5f) Column(
-                        Modifier.offset(x = x).width(half).fillMaxHeight().background(t.paperC)
+                        Modifier.offset(x = x).width(half).fillMaxHeight().background(theme.colors.popup)
                             .background(Brush.horizontalGradient(if (i % 2 == 0) listOf(Color.Transparent, Color.Transparent, Color.Black.copy(alpha = 0.18f)) else listOf(Color.Black.copy(alpha = 0.18f), Color.Transparent, Color.Transparent)))
                             .padding(start = 34.dp, end = 34.dp, top = 34.dp, bottom = 46.dp)
                     ) {
@@ -424,7 +423,7 @@ private fun BibleVerse(model: BibleViewModel, verses: List<ChapterSection.IBible
 internal suspend fun chapterIn(version: IBibleVersion, usfm: String): IChapterContent? = withContext(Dispatchers.IO) {
     val key = "${version.id}.$usfm"
     ShareViewModels.bibleChapterContent[key] ?: runCatching {
-        loadData<IChapterContent>(key) ?: Bible().getChapterDoc(version, usfm.substringBefore("."), usfm.substringAfter(".").toInt()).also { saveData(key, it) }
+        mvvm.BibleLibrary.chapter(version, usfm)
     }.getOrNull()?.also { ShareViewModels.bibleChapterContent[key] = it }
 }
 

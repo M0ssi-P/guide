@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 320x180 Android TV launcher banner: the lamp and the name, as on TV Launch -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape><solid android:color="#0E1322" /></shape></item>
+    <item android:drawable="@drawable/ic_lamp" android:width="120dp" android:height="120dp" android:gravity="center_vertical|left" android:left="16dp" />
+</layer-list>

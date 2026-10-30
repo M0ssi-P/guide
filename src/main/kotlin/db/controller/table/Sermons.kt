@@ -15,6 +15,9 @@ import parsers.vgr.models.Paragraph
 import parsers.vgr.models.Section
 import parsers.vgr.models.Segment
 import parsers.vgr.models.Sermon
+import parsers.vgr.FULL_SERMON_SQL
+import parsers.vgr.SermonRow
+import parsers.vgr.groupSermonRows
 import java.sql.Connection
 
 object Sermons {
@@ -149,26 +152,13 @@ object Sermons {
     }
 
     fun Connection.getFullSermon(sermon: Sermon): Sermon {
-        val query = """
-        SELECT 
-            s.id AS sec_id, s.can_hit AS sec_can_hit, s.is_header AS sec_is_header, s.key AS sec_key, s.paragraph AS sec_paragraph, s.created_at AS sec_created_at,
-            p.id AS para_id, p.hub_id AS para_hub_id, p.number AS para_number, p.text AS para_text, p.is_first AS para_is_first, p.created_at AS para_created_at,
-            l.display_number AS line_display_number, l.number AS line_number, l.segments AS line_segments, l.created_at AS line_created_at
-        FROM sections s
-        LEFT JOIN paragraphs p ON p.section_id = s.id
-        LEFT JOIN lines l ON l.paragraph_id = p.id
-        WHERE s.sermon_id = ?
-        ORDER BY s.rowid ASC, p.rowid ASC, l.rowid ASC
-        """.trimIndent()
-
-        // 1. Fetch all rows into a flat list of data holders
-        val rows = mutableListOf<FlatSermonRow>()
-        prepareStatement(query).use { stmt ->
+        val rows = mutableListOf<SermonRow>()
+        prepareStatement(FULL_SERMON_SQL).use { stmt ->
             stmt.setString(1, sermon.stringId)
             stmt.executeQuery().use { rs ->
                 while (rs.next()) {
                     rows.add(
-                        FlatSermonRow(
+                        SermonRow(
                             sectionId = rs.getString("sec_id"),
                             sectionCanHit = rs.getBoolean("sec_can_hit"),
                             sectionIsHeader = rs.getBoolean("sec_is_header"),
@@ -180,7 +170,6 @@ object Sermons {
                             paragraphNumber = rs.getObject("para_number")?.let { rs.getInt("para_number") },
                             paragraphText = rs.getString("para_text"),
                             paragraphIsFirst = rs.getBoolean("para_is_first"),
-//                            paragraphIsQuestion = rs.getBoolean("para_is_question"),
 
                             lineDisplayNumber = rs.getObject("line_display_number")?.let { rs.getBoolean("line_display_number") },
                             lineNumber = rs.getObject("line_number")?.let { rs.getInt("line_number") },
@@ -190,72 +179,8 @@ object Sermons {
                 }
             }
         }
-
-        // 2. Group flat rows into the nested domain model in memory
-        val sections = rows
-            .groupBy { it.sectionId }
-            .map { (_, sectionRows) ->
-                val firstSec = sectionRows.first()
-
-                val paragraphs = sectionRows
-                    .filter { it.paragraphId != null }
-                    .groupBy { it.paragraphId!! }
-                    .map { (_, paraRows) ->
-                        val firstPara = paraRows.first()
-
-                        val lines = paraRows
-                            .filter { it.lineNumber != null }
-                            .map { lineRow ->
-                                Line(
-                                    displayNumber = lineRow.lineDisplayNumber ?: false,
-                                    number = lineRow.lineNumber ?: 0,
-                                    segments = lineRow.lineSegmentsJson?.let {
-                                        Json.decodeFromString<List<Segment>>(it).toMutableList()
-                                    } ?: mutableListOf()
-                                )
-                            }
-
-                        Paragraph(
-                            id = (firstPara.paragraphHubId ?: 0).toLong(),
-                            dbId = firstPara.paragraphId!!,
-                            number = firstPara.paragraphNumber ?: 0,
-                            text = firstPara.paragraphText ?: "",
-                            isFirst = firstPara.paragraphIsFirst,
-//                            isQuestion = firstPara.paragraphIsQuestion,
-                            content = lines.toMutableList()
-                        )
-                    }
-
-                Section(
-                    dbId = firstSec.sectionId,
-                    canHit = firstSec.sectionCanHit,
-                    isHeader = firstSec.sectionIsHeader,
-                    key = firstSec.sectionKey ?: "",
-                    paragraph = firstSec.sectionParagraph ?: "",
-                    content = paragraphs.toMutableList()
-                )
-            }
-
-        return sermon.copy(sections = sections)
+        return sermon.copy(sections = groupSermonRows(rows))
     }
-
-    // Temporary data holder for the flat query results
-    private data class FlatSermonRow(
-        val sectionId: String,
-        val sectionCanHit: Boolean,
-        val sectionIsHeader: Boolean,
-        val sectionKey: String?,
-        val sectionParagraph: String?,
-        val paragraphId: String?,
-        val paragraphHubId: Int?,
-        val paragraphNumber: Int?,
-        val paragraphText: String?,
-        val paragraphIsFirst: Boolean,
-//        val paragraphIsQuestion: Boolean,
-        val lineDisplayNumber: Boolean?,
-        val lineNumber: Int?,
-        val lineSegmentsJson: String?
-    )
 
     fun Connection.getSermonsList(landId: String) : List<Sermon> {
         return runAndReturn(
