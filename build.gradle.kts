@@ -91,10 +91,11 @@ compose.desktop {
             windows {
                 // Never change this: Windows uses it to recognise newer MSIs of The Guide as upgrades of the same app.
                 upgradeUuid = "60391b7f-76ce-46af-a103-5198370d3c10"
-                iconFile.set(
-                    project.file("src/main/resources/src/logo.ico")
-                )
+                iconFile.set(project.file("src/main/resources/icons/icon.ico"))
             }
+            // the lamp icon, drawn from the logo's vector paths (16-1024 px)
+            macOS { iconFile.set(project.file("src/main/resources/icons/icon.icns")) }
+            linux { iconFile.set(project.file("src/main/resources/icons/logo.png")) }
         }
     }
 }

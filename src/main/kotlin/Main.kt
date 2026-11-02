@@ -1,4 +1,7 @@
 import activity.ActivityTracker
+import ui.intro.Intro as OpeningSting
+import ui.intro.IntroSound
+import ui.theme.Fraunces
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -62,6 +65,8 @@ fun main(args: Array<String>) {
          ) }
          val isHideSidebarHovered = remember { mutableStateOf(false) }
          val localFullscreen by configViewModel.localFullscreen.collectAsState()
+         // the opening sting, over the window while the app loads underneath
+         var intro by remember { mutableStateOf(true) }
 
          ThemeUI {
              val theme = LocalTheme.current
@@ -181,6 +186,7 @@ fun main(args: Array<String>) {
                                      }
                                      components.global.UpdateOverlay()
                                      components.global.EnglishAskOverlay()
+                                     if (intro) OpeningSting(Fraunces, wide = true, reducedMotion = false, onSound = IntroSound::play, onDone = { intro = false })
                                  }
                              }
 

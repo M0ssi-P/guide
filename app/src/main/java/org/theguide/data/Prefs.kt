@@ -44,6 +44,9 @@ object Prefs {
         set(v) = set("letter_langs", v)
     var wifiOnly by mutableStateOf(sp.getBoolean("wifi_only", true)); private set
     fun updateWifiOnly(v: Boolean) { wifiOnly = v; set("wifi_only", v) }
+    /** The opening sting's sound. */
+    var openingSound by mutableStateOf(sp.getBoolean("opening_sound", true)); private set
+    fun updateOpeningSound(v: Boolean) { openingSound = v; set("opening_sound", v) }
 
     /** The Table language being read, ISO3. */
     var readingLang: String

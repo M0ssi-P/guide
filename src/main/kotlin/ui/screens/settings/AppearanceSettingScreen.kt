@@ -1,5 +1,7 @@
 package ui.screens.settings
 
+import saveData
+import loadData
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -279,6 +281,15 @@ fun AppearanceContent(
             .padding(28.dp)
     ) {
         LiterarySectionHeader("Your Library")
+
+        // the opening sting's sound (saved on its own, read when the app starts)
+        var openingSound by remember { mutableStateOf(loadData<Boolean>("opening_sound") ?: true) }
+        SettingsToggleRow(
+            title = "Opening sound",
+            description = "Play the short chime with the lamp animation when The Guide starts.",
+            checked = openingSound,
+            onCheckedChange = { openingSound = it; saveData("opening_sound", it) }
+        )
 
         SettingsToggleRow(
             title = "Discover shelf",

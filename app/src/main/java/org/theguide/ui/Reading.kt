@@ -182,6 +182,15 @@ fun ColumnScope.ReadingSettings(s: LookState, sizeRange: IntRange = 16..28, tv: 
             }
         }
     }
+    // app-wide: the sound of the opening sting (the sheet is the one place for settings on the phone and TV)
+    Row(
+        Modifier.padding(top = 22.dp).fillMaxWidth().choiceOrFocus(tv, RoundedCornerShape(16.dp), { org.theguide.data.Prefs.updateOpeningSound(!org.theguide.data.Prefs.openingSound) }, Role.Switch)
+            .padding(horizontal = 4.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        T("Opening sound", if (tv) 16f else 13f, k.tx, Modifier.weight(1f))
+        Switch(org.theguide.data.Prefs.openingSound, 40f, 24f, 18f)
+    }
 }
 
 @Composable
