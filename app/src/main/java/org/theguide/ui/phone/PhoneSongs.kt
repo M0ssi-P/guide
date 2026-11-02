@@ -59,6 +59,8 @@ import kotlinx.coroutines.launch
 import org.theguide.data.Part
 import org.theguide.data.Song
 import org.theguide.data.Songbook
+import org.theguide.audio.BibleAudio
+import store.SongStore
 import org.theguide.data.Drop
 import org.theguide.data.Songs
 import androidx.compose.ui.focus.focusRequester
@@ -77,6 +79,7 @@ internal val shopLooks = listOf(Triple(0xFF3A2A52, 0xFFF3C969, 0xFFE9C7FF), Trip
 /** PhoneSongs board (phones can write songs; the TV can't). */
 @Composable
 fun PhoneSongs(haze: HazeState) {
+    StopSongAudioOnLeave()
     var tab by remember { mutableStateOf("library") }
     var book by remember { mutableIntStateOf(0) }
     var song by remember { mutableStateOf<Song?>(null) }
@@ -114,6 +117,7 @@ fun PhoneSongs(haze: HazeState) {
                                 S(s.n, 22f, if (b.mine) C.Gold else C.Faint, Modifier.width(38.dp), align = TextAlign.End)
                                 Column(Modifier.weight(1f)) { S(s.title, 17f, C.Ink); T(s.first, 12.5f, C.Meta, maxLines = 1, ellipsis = true) }
                                 if (b.mine) T("Yours", 11.5f, C.Gold)
+                                s.url?.let { PlayChip(it, tv = false) }
                             }
                         }
                     } else Shop()
@@ -174,7 +178,8 @@ private fun Shop() {
     }
     val id = ids[pick.coerceIn(0, ids.lastIndex)]
     val look = shopLooks[pick % shopLooks.size]
-    val owned = Songs.books.any { it.id == id }
+    val update = Songs.hasUpdate(id)
+    val owned = Songs.books.any { it.id == id } && !update
     val p = Songs.progress[id]
     val t by oneShot(pick, 700)
     val shimmerT by clock()
@@ -205,7 +210,7 @@ private fun Shop() {
                 .drawBehind { drawRect(gold(.35f), size = size.copy(width = size.width * fill)) }
                 .press({ if (!owned && p == null) scope.launch { Songs.get(id) } }).padding(horizontal = 22.dp),
             contentAlignment = Alignment.Center,
-        ) { T(when { owned -> "In your library"; p != null -> "Downloading $p%"; else -> "Get it, free" }, 14f, if (owned || p != null) C.Gold else C.OnGold, Modifier.width(IntrinsicSize.Max).padding(horizontal = 0.dp), weight = 600, align = TextAlign.Center) }
+        ) { T(when { owned -> "In your library"; p != null -> "Downloading $p%"; update -> "Update"; else -> "Get it, free" }, 14f, if (owned || p != null) C.Gold else C.OnGold, Modifier.width(IntrinsicSize.Max).padding(horizontal = 0.dp), weight = 600, align = TextAlign.Center) }
     }
     S("More songbooks", 20f, C.Ink, Modifier.padding(top = 28.dp, bottom = 10.dp))
     Row(Modifier.offset(x = (-20).dp).width(LocalConfiguration.current.screenWidthDp.dp).horizontalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -237,6 +242,44 @@ internal fun SongParts(parts: List<Part>, size: Float = 19f, markW: Float = 22f,
     }
 }
 
+/** What the song store knows about a song: its English title, category and author, and how it's sung. */
+/** A song list row's play button for its recording or tune: plays it without opening the song, and stops it again. */
+@Composable
+internal fun PlayChip(u: String, tv: Boolean, scale: Float = 1f) {
+    val on = BibleAudio.playing && BibleAudio.url == u
+    Box(
+        Modifier.size((34 * scale).dp).choiceOrFocus(tv, CircleShape, { BibleAudio.toggle(u) }).clip(CircleShape)
+            .background(C.Wax.copy(alpha = if (on) .24f else .1f)),
+        contentAlignment = Alignment.Center,
+    ) { Ico(if (on) Icons.Pause else Icons.Play, 12f * scale, C.Wax) }
+}
+
+/** A song's recording or tune stops when the songs screen closes (a Bible chapter playing is left alone). */
+@Composable
+internal fun StopSongAudioOnLeave() = DisposableEffect(Unit) {
+    onDispose { if (Songs.books.any { b -> b.songs.any { it.url != null && it.url == BibleAudio.url } }) BibleAudio.stop() }
+}
+
+@Composable
+internal fun SongDetails(s: Song, modifier: Modifier = Modifier, tv: Boolean = false) {
+    val f = if (tv) 1.25f else 1f
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        s.englishTitle?.let { T(it, 14f * f, C.PaperMuted, italic = true) }
+        listOfNotNull(s.category, s.author?.let { a -> s.year?.let { "$a, $it" } ?: a }).joinToString("  ·  ").takeIf { it.isNotEmpty() }
+            ?.let { T(it, 13f * f, C.PaperMuted) }
+        s.url?.let { u ->
+            val on = BibleAudio.playing && BibleAudio.url == u
+            Row(
+                Modifier.padding(top = 4.dp).choiceOrFocus(tv, RoundedCornerShape(18.dp), { BibleAudio.toggle(u) }).clip(RoundedCornerShape(18.dp))
+                    .background(C.Wax.copy(alpha = .1f)).padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) { Ico(if (on) Icons.Pause else Icons.Play, 12f * f, C.Wax); T(if (on) "Pause" else if (SongStore.isTune(u)) "Play tune" else "How it's sung", 13f * f, C.Wax, weight = 600) }
+        }
+    }
+    // a song's recording stops when its page closes
+    androidx.compose.runtime.DisposableEffect(s.url) { onDispose { if (s.url != null && BibleAudio.url == s.url) BibleAudio.stop() } }
+}
+
 @Composable
 private fun SongPage(s: Song, book: String, onClose: () -> Unit) {
     BackHandler(onBack = onClose)
@@ -245,7 +288,8 @@ private fun SongPage(s: Song, book: String, onClose: () -> Unit) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 28.dp, end = 28.dp, top = 64.dp, bottom = 60.dp)) {
             S(s.n, 54f, C.Wax, weight = 300, lineHeight = 1f)
             S(s.title, 30f, C.PaperInk, Modifier.padding(top = 6.dp, end = 60.dp), lineHeight = 1.1f)
-            S(book, 14f, C.PaperMuted, Modifier.padding(top = 6.dp, bottom = 26.dp), italic = true)
+            S(book, 14f, C.PaperMuted, Modifier.padding(top = 6.dp, bottom = 10.dp), italic = true)
+            SongDetails(s, Modifier.padding(bottom = 22.dp))
             SongParts(s.parts)
         }
         Box(Modifier.align(Alignment.TopEnd).padding(top = 60.dp, end = 20.dp).size(40.dp).clip(CircleShape).background(Color.Black.copy(alpha = .06f)).press(onClose, label = "Close the song"), contentAlignment = Alignment.Center) {

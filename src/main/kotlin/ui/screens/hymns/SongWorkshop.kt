@@ -342,7 +342,8 @@ private fun ShopTab(model: SongBookViewModal) {
                 val cols = (maxWidth / 320.dp).toInt().coerceIn(1, 3)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp), maxItemsInEachRow = cols) {
                     list.forEachIndexed { i, b ->
-                        val have = installed.any { it.saveName == b.id || it.name.equals(b.name, true) }
+                        val update = SongShop.hasUpdate(b)
+                        val have = installed.any { it.saveName == b.id || it.name.equals(b.name, true) } && !update
                         val p = SongShop.progress[b.id]
                         Lift(Modifier.weight(1f).rise(i * 50)) {
                             Row(Modifier.clip(RoundedCornerShape(4.dp)).background(theme.colors.menu).border(1.dp, theme.colors.border, RoundedCornerShape(4.dp)).padding(14.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -353,7 +354,7 @@ private fun ShopTab(model: SongBookViewModal) {
                                     Spacer(Modifier.weight(1f))
                                     if (p != null) Progress(p, if (p < 0.7f) "Downloading" else "Adding to your library")
                                     else Text(
-                                        if (have) "✓ In your library" else "Download", color = if (have) Green else Ink, fontSize = 12.5.sp, fontWeight = FontWeight.Bold,
+                                        if (have) "✓ In your library" else if (update) "Update" else "Download", color = if (have) Green else Ink, fontSize = 12.5.sp, fontWeight = FontWeight.Bold,
                                         modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(if (have) theme.colors.surface else theme.colors.primary)
                                             .clickable(enabled = !have) { scope.launch { if (SongShop.download(b)) model.refreshBooks() } }.hand().padding(horizontal = 14.dp, vertical = 7.dp)
                                     )

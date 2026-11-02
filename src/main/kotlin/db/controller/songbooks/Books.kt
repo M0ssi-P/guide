@@ -45,13 +45,25 @@ object Books {
                     id,
                     book_id,
                     titles,
-                    number
-                ) VALUES (?, ?, ?, ?)
+                    number,
+                    english_title,
+                    category,
+                    author,
+                    year,
+                    song_url,
+                    label
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
             generatedId,
             bookId,
             Json.encodeToString(song.titles),
             song.songNumber,
+            song.englishTitle,
+            song.category,
+            song.author,
+            song.year,
+            song.songUrl,
+            song.label,
         )
 
         idMapper(generatedId, song.lyrics)
@@ -120,7 +132,13 @@ object Books {
                 id = rs.getString("id"),
                 titles = Json.decodeFromString(rs.getString("titles")),
                 songNumber = rs.getInt("number"),
-                lyrics = lyrics
+                lyrics = lyrics,
+                englishTitle = rs.getString("english_title"),
+                category = rs.getString("category"),
+                author = rs.getString("author"),
+                year = rs.getString("year"),
+                songUrl = rs.getString("song_url"),
+                label = rs.getString("label"),
             )
         }
     }

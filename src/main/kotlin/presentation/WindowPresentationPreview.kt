@@ -177,7 +177,7 @@ fun WindowPresentationPreview(key: Int? = null) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                "Number: #${currentSong.value?.songNumber}",
+                                "Number: #${currentSong.value?.no}",
                                 style = theme.typography.h2,
                                 color = theme.colors.light,
                                 fontSize = (vw * 2).value.sp

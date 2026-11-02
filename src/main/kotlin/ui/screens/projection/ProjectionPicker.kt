@@ -247,8 +247,8 @@ private fun SongPicker(nav: Navigator, query: String) {
     val book = books.firstOrNull { it.id == bookId } ?: books.firstOrNull()
     val songs = remember(book?.id) { book?.let { runCatching { model.loadSongsFrom(it) }.getOrNull() } ?: emptyList() }
     val q = query.trim().lowercase()
-    val isNum = q.isNotEmpty() && q.all { it.isDigit() }
-    val results = songs.filter { q.isEmpty() || if (isNum) it.songNumber.toString().startsWith(q) else it.title().lowercase().contains(q) }.sortedBy { it.songNumber }
+    val isNum = q.matches(Regex("""\d+[a-z]?"""))
+    val results = songs.filter { q.isEmpty() || if (isNum) it.no.lowercase().startsWith(q) else it.title().lowercase().contains(q) }.sortedWith(compareBy({ it.songNumber }, { it.no }))
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             books.take(4).forEach { b -> StageChip(b.name, b.id == book?.id, Modifier.weight(1f)) { bookId = b.id } }
@@ -257,10 +257,10 @@ private fun SongPicker(nav: Navigator, query: String) {
             results.take(80).forEach { s ->
                 val cur = ProjectionDeck.source == DeckSource.SONGS && ProjectionDeck.title == s.title()
                 ResultRow(cur, {
-                    Text("${s.songNumber}", color = if (cur) Color(0xFFEFCB7E) else StageMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(30.dp))
+                    Text("${s.no}", color = if (cur) Color(0xFFEFCB7E) else StageMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(30.dp))
                     Text(s.title(), color = StageText, fontSize = 12.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }) {
-                    ProjectionDeck.load(DeckSource.SONGS, s.title(), "No. ${s.songNumber} · ${book?.name ?: ""}", deckFor(s, sequence(s, true)))
+                    ProjectionDeck.load(DeckSource.SONGS, s.title(), "No. ${s.no} · ${book?.name ?: ""}", deckFor(s, sequence(s, true)))
                 }
             }
             if (results.isEmpty()) Text("Nothing matches “$query”.", color = StageMuted, fontSize = 12.sp)

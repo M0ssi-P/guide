@@ -76,7 +76,7 @@ fun SongCard(song: ISongDetails, index: Int, model: SongBookViewModal) {
             Spacer(Modifier.width(20.dp))
             Column {
                 Text(
-                    "${song.songNumber}. ${song.titles.first().title}",
+                    "${song.no}. ${song.titles.first().title}",
                     style = TextStyle(
                         fontFamily = Inter,
                         fontSize = 14.sp,

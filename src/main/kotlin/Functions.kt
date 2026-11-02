@@ -108,14 +108,14 @@ fun searchSongs(query: String, songs: List<ISongDetails>): List<ISongDetails> {
     val q = query.trim().lowercase()
     if (q.isEmpty()) return songs
 
-    val isNumber = q.all { it.isDigit() }
+    val isNumber = q.matches(Regex("""\d+[a-z]?"""))
 
     return songs.map { song ->
         var score = 0;
 
         if (isNumber) {
-            if (song.songNumber.toString() == q) score += 100
-            else if (song.songNumber.toString().startsWith(q)) score += 80
+            if (song.no.equals(q, true)) score += 100
+            else if (song.no.lowercase().startsWith(q)) score += 80
         }
 
         val title = song.titles.first().title.lowercase()

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +26,7 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -90,7 +92,34 @@ fun HymnsContent(model: SongBookViewModal) {
                             style = theme.typography.hOne,
                             color = theme.colors.primaryText
                         )
-                        Text("Number: ${currentSong.value!!.songNumber}", style = theme.typography.body, color = theme.colors.text)
+                        Text("Number: ${currentSong.value!!.no}", style = theme.typography.body, color = theme.colors.text)
+                        // what the song store knows: English title, category and author, and how it's sung
+                        currentSong.value?.let { song ->
+                            song.englishTitle?.let { Text(it, style = theme.typography.body, color = theme.colors.text) }
+                            listOfNotNull(song.category, song.author?.let { a -> song.year?.let { "$a, $it" } ?: a }).joinToString("  ·  ").takeIf { it.isNotEmpty() }
+                                ?.let { Text(it, style = theme.typography.body, color = theme.colors.text) }
+                            song.songUrl?.let { url ->
+                                val globalPlayer = player.LocalPlayer.current
+                                val midi = url.endsWith(".mid", true)
+                                // a tune stops when its song closes
+                                DisposableEffect(url) { onDispose { if (player.Tune.url == url) player.Tune.stop() } }
+                                Text(
+                                    when {
+                                        midi && player.Tune.playing && player.Tune.url == url -> "❚❚  Pause"
+                                        store.SongStore.isTune(url) -> "▶  Play tune"
+                                        else -> "▶  How it's sung"
+                                    },
+                                    style = theme.typography.body, color = theme.colors.primaryBright,
+                                    modifier = Modifier.padding(top = 4.dp).clickable {
+                                        if (midi) return@clickable player.Tune.toggle(url)
+                                        globalPlayer.loadNowPlaying(player.GlobalPlayerViewModel.NowPlaying(
+                                            id = url, title = song.titles.firstOrNull()?.title ?: "Song ${song.no}", subtitle = song.author ?: "How it's sung",
+                                            type = player.GlobalPlayerType.PODCAST, isPlaying = true, currentPosition = 0L, url = url,
+                                        ))
+                                    }
+                                )
+                            }
+                        }
                     }
 
                     Column(

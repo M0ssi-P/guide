@@ -18,6 +18,7 @@ import okHttpClient
 import okhttp3.Request
 import org.theguide.App
 import store.FileStore
+import store.SongStore
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.zip.ZipEntry
@@ -25,10 +26,15 @@ import java.util.zip.ZipOutputStream
 
 /** A part of a song: verse number or "Ch", its lines, and whether it is the chorus. */
 data class Part(val mark: String, val text: String, val chorus: Boolean)
-data class Song(val n: String, val title: String, val parts: List<Part>) {
+/** A song; books from the song store also carry its category, author, English title and a recording of how it's sung. */
+data class Song(
+    val n: String, val title: String, val parts: List<Part>,
+    val englishTitle: String? = null, val category: String? = null, val author: String? = null, val year: String? = null, val url: String? = null,
+) {
     val first get() = parts.firstOrNull()?.text?.lineSequence()?.firstOrNull() ?: ""
 }
-data class Songbook(val id: String, val name: String, val language: String, val songs: List<Song>, val mine: Boolean = false)
+/** [version] is the song store's, to offer updates (books saved before the store had versions have none). */
+data class Songbook(val id: String, val name: String, val language: String, val songs: List<Song>, val mine: Boolean = false, val version: String? = null)
 
 /** Song books on the device (from the store or imported) and the reader's own songs. */
 object Songs {
@@ -38,6 +44,8 @@ object Songs {
 
     var books by mutableStateOf(load()); private set
     var shop by mutableStateOf<List<String>?>(null); private set
+    /** The song store's books (songbooks/index.json), by id. */
+    var store by mutableStateOf<Map<String, SongStore.Entry>>(emptyMap()); private set
     val progress = mutableStateMapOf<String, Int>()
 
     private fun load(): List<Songbook> {
@@ -79,10 +87,19 @@ object Songs {
 
     // ---------- the shop ----------
 
-    suspend fun refreshShop() { shop = runCatching { FileStore.list("hymns") }.getOrNull() ?: shop ?: emptyList() }
-    fun nameOf(id: String) = id.split('-', '_').joinToString(" ") { w -> w.replaceFirstChar { it.uppercase() } }
+    /** The song store's books, then any older ones still only offered as .zip files. */
+    suspend fun refreshShop() {
+        val listed = SongStore.list()
+        if (listed.isNotEmpty()) store = listed.associateBy { it.id }
+        val older = runCatching { FileStore.list("hymns") }.getOrNull().orEmpty()
+        shop = (store.keys + older.filter { it !in store }).toList().ifEmpty { shop ?: emptyList() }
+    }
+    fun nameOf(id: String) = store[id]?.title ?: id.split('-', '_').joinToString(" ") { w -> w.replaceFirstChar { it.uppercase() } }
+    /** True when the store has a newer edition of a book on the device. */
+    fun hasUpdate(id: String) = store[id]?.version?.takeIf { it.isNotEmpty() }?.let { v -> books.firstOrNull { it.id == id }?.let { it.version != v } } == true
 
     suspend fun get(id: String) = withContext(Dispatchers.IO) {
+        store[id]?.let { e -> return@withContext getFromStore(e) }
         progress[id] = 1
         try {
             val bytes = okHttpClient.newCall(Request.Builder().url(FileStore.songbookUrl(id)).build()).execute().use { r ->
@@ -93,6 +110,22 @@ object Songs {
             }
             readGuideZip(bytes)?.let { save(it.copy(id = id)); Prefs.songbooks = Prefs.songbooks + id }
         } finally { progress.remove(id) }
+    }
+
+    /** A book from the song store (its SQLite file), saved in the app's own format; an update replaces it. */
+    private suspend fun getFromStore(e: SongStore.Entry) {
+        progress[e.id] = 1
+        try {
+            val b = SongStore.fetch(e, File(App.context.cacheDir, "songstore")) { progress[e.id] = (it * 100).toInt().coerceAtLeast(1) }
+            save(Songbook(b.id, b.title, b.language, b.songs.map { s ->
+                Song(
+                    s.label, s.title, s.parts.map { p -> Part(if (p.chorus) "Ch" else "${p.n ?: ""}", p.text, p.chorus) },
+                    englishTitle = s.englishTitle, category = s.category?.let { if (b.language.startsWith("sw")) it.sw else it.en },
+                    author = s.author, year = s.year, url = s.songUrl,
+                )
+            }, version = b.version))
+            Prefs.songbooks = Prefs.songbooks + e.id
+        } finally { progress.remove(e.id) }
     }
 
     // ---------- import and export ----------

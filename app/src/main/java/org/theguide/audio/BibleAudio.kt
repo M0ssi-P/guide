@@ -1,5 +1,6 @@
 package org.theguide.audio
 
+import android.media.MediaPlayer
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -10,8 +11,11 @@ import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.delay
 import org.theguide.App
 import parsers.bible.models.ChapterAud
+import java.io.File
+import java.net.URL
+import kotlin.concurrent.thread
 
-/** A Bible chapter read aloud, on its own player so a sermon's track and place stay as they were; it lights each verse as it is read. */
+/** A Bible chapter read aloud (or a song as it is sung), on its own player so a sermon's track and place stay as they were; it lights each verse as it is read. */
 object BibleAudio {
     private val player by lazy {
         ExoPlayer.Builder(App.context).build().apply {
@@ -24,18 +28,46 @@ object BibleAudio {
 
     fun mp3(a: ChapterAud) = a.playOrDwnLoad.formattedMp3.let { if (it.startsWith("//")) "https:$it" else it }
 
-    fun toggle(a: ChapterAud) {
-        val u = mp3(a)
+    fun toggle(a: ChapterAud) = toggle(mp3(a))
+
+    /** Plays (or pauses) any recording, e.g. how a song is sung, or its MIDI tune. */
+    fun toggle(u: String) {
+        if (u.endsWith(".mid", true)) return toggleTune(u)
         when {
-            u != url -> { url = u; ms = 0; player.setMediaItem(MediaItem.fromUri(u)); player.prepare(); player.play(); Audio.pause() }
+            u != url -> { stop(); url = u; ms = 0; player.setMediaItem(MediaItem.fromUri(u)); player.prepare(); player.play(); Audio.pause() }
             player.isPlaying -> player.pause()
             else -> player.play()
         }
     }
 
+    // ExoPlayer has no MIDI, so tunes play on the platform's MediaPlayer from a cached copy (a few KB each)
+    private var tune: MediaPlayer? = null
+
+    private fun toggleTune(u: String) {
+        val t = tune
+        when {
+            u != url || t == null -> {
+                stop(); url = u; Audio.pause()
+                thread {
+                    runCatching {
+                        val f = File(App.context.cacheDir, "tunes/${u.hashCode()}.mid")
+                        if (!f.exists()) { f.parentFile?.mkdirs(); URL(u).openStream().use { i -> f.outputStream().use { i.copyTo(it) } } }
+                        val m = MediaPlayer().apply { setDataSource(f.path); setOnCompletionListener { playing = false }; prepare() }
+                        if (url == u) { tune = m; m.start(); playing = true } else m.release()
+                    }.onFailure { if (url == u) url = null }
+                }
+            }
+            t.isPlaying -> { t.pause(); playing = false }
+            else -> { t.start(); playing = true }
+        }
+    }
+
     fun seek(toMs: Long) { player.seekTo(toMs); ms = toMs }
 
-    fun stop() { if (url != null) { player.stop(); url = null; ms = 0 } }
+    fun stop() {
+        tune?.release(); tune = null
+        if (url != null) { player.stop(); url = null; ms = 0; playing = false }
+    }
 
     /** Follows the position while a screen shows the chapter. */
     suspend fun follow() { while (true) { ms = player.currentPosition; delay(100) } }

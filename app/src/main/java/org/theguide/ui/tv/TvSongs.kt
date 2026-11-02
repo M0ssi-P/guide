@@ -52,7 +52,10 @@ import org.theguide.data.Songs
 import org.theguide.ui.phone.LinkEntry
 import songs.link
 import org.theguide.ui.*
+import org.theguide.ui.phone.PlayChip
 import org.theguide.ui.phone.Shelf
+import org.theguide.ui.phone.StopSongAudioOnLeave
+import org.theguide.ui.phone.SongDetails
 import org.theguide.ui.phone.SongParts
 import org.theguide.ui.phone.shopLooks
 import org.theguide.ui.phone.spineOf
@@ -60,6 +63,7 @@ import org.theguide.ui.phone.spineOf
 /** TVSongs board. Songs arrive here from the shop, a USB drive or a file; writing songs is on the phone only. */
 @Composable
 fun TvSongs() {
+    StopSongAudioOnLeave()
     var tab by remember { mutableStateOf("library") }
     var flip by remember { mutableIntStateOf(0) }
     var link by remember { mutableStateOf(false) }
@@ -109,6 +113,8 @@ private fun Library() {
                             ) {
                                 S(sg.n, 26f, if (i == song) C.Gold else C.Faint, Modifier.width(44.dp), align = TextAlign.End)
                                 Column(Modifier.weight(1f)) { S(sg.title, 20f, c(Palette.Title), maxLines = 1, ellipsis = true); T(sg.first, 14f, C.Meta, maxLines = 1, ellipsis = true) }
+                                // its own focus stop, to the right of the song
+                                sg.url?.let { PlayChip(it, tv = true, scale = 1.25f) }
                             }
                         }
                         if (row.size == 1) Box(Modifier.weight(1f))
@@ -126,7 +132,8 @@ private fun Library() {
         ) {
             Column {
                 S(s?.n ?: "", 50f, C.Wax, weight = 300, lineHeight = 1f)
-                S(s?.title ?: "", 28f, C.PaperInk, Modifier.padding(top = 6.dp, bottom = 18.dp), lineHeight = 1.1f)
+                S(s?.title ?: "", 28f, C.PaperInk, Modifier.padding(top = 6.dp, bottom = 10.dp), lineHeight = 1.1f)
+                s?.let { SongDetails(it, Modifier.padding(bottom = 16.dp), tv = true) }
                 SongParts(s?.parts ?: emptyList(), 18f, 24f, 12f, 14f, 20f)
             }
         }
@@ -144,7 +151,8 @@ private fun Shop() {
     }
     val id = ids[pick.coerceIn(0, ids.lastIndex)]
     val look = shopLooks[pick % shopLooks.size]
-    val owned = Songs.books.any { it.id == id }
+    val update = Songs.hasUpdate(id)
+    val owned = Songs.books.any { it.id == id } && !update
     val p = Songs.progress[id]
     val ft by oneShot(pick, 700)
     val time by clock()
@@ -172,7 +180,7 @@ private fun Shop() {
                     .drawBehind { drawRect(gold(.35f), size = size.copy(width = size.width * fill)) }
                     .tvFocus(RoundedCornerShape(28.dp), { if (!owned && p == null) scope.launch { Songs.get(id) } }).padding(horizontal = 28.dp),
                 contentAlignment = Alignment.Center,
-            ) { T(when { owned -> "In your library"; p != null -> "Downloading $p%"; else -> "Get it" }, 18f, if (owned || p != null) C.Gold else C.OnGold, weight = 600) }
+            ) { T(when { owned -> "In your library"; p != null -> "Downloading $p%"; update -> "Update"; else -> "Get it" }, 18f, if (owned || p != null) C.Gold else C.OnGold, weight = 600) }
             Row(Modifier.padding(top = 40.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 ids.take(6).forEachIndexed { i, sid ->
                     val l = shopLooks[i % shopLooks.size]

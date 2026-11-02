@@ -24,6 +24,10 @@ fun startTableStatement(conn: Connection) = synchronized(conn) {
             stmt.execute(it)
         }
 
+        // the song store's details, on libraries made before them
+        val songColumns = conn.createStatement().use { s -> s.executeQuery("PRAGMA table_info(songs)").use { rs -> buildSet { while (rs.next()) add(rs.getString("name")) } } }
+        listOf("english_title", "category", "author", "year", "song_url", "label").filter { it !in songColumns }.forEach { stmt.execute("ALTER TABLE songs ADD COLUMN $it TEXT") }
+
         stmt.execute("CREATE INDEX IF NOT EXISTS idx_sermons_date_code ON sermons(date_code)")
         stmt.execute("CREATE INDEX IF NOT EXISTS idx_sections_sermon_id ON sections(sermon_id)")
         stmt.execute("CREATE INDEX IF NOT EXISTS idx_paragraphs_section_id ON paragraphs(section_id)")

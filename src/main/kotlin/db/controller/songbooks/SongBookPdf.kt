@@ -78,7 +78,7 @@ object SongBookPdf {
     }
 
     fun write(meta: BookMeta, songsIn: List<ISongDetails>, out: File) {
-        val songs = songsIn.sortedBy { it.songNumber }
+        val songs = songsIn.sortedWith(compareBy({ it.songNumber }, { it.no }))
         out.parentFile?.mkdirs()
         PDDocument().use { doc ->
             val f = Fonts(doc)
@@ -115,7 +115,7 @@ object SongBookPdf {
                     if (ci == 0) { cs.text("Contents", f.slab, 16f, M, y); y -= 26 }
                     chunk.forEach { s ->
                         val i = songs.indexOf(s)
-                        cs.text("${s.songNumber}", f.sans, 9f, M, y, Color(0xB5, 0x56, 0x1B))
+                        cs.text("${s.no}", f.sans, 9f, M, y, Color(0xB5, 0x56, 0x1B))
                         val title = s.titles.firstOrNull()?.title ?: ""
                         cs.text(title, f.body, 9.5f, M + 26, y)
                         val pg = "${starts[i]}"
@@ -131,7 +131,7 @@ object SongBookPdf {
                 var pageNo = starts[i]
                 var cs = doc.openPage(pageNo)
                 var y = page.height - M - 10
-                cs.text("${s.songNumber}", f.slab, 18f, M, y, Color(0xB5, 0x56, 0x1B))
+                cs.text("${s.no}", f.slab, 18f, M, y, Color(0xB5, 0x56, 0x1B))
                 cs.text(s.titles.firstOrNull()?.title ?: "", f.slab, 14f, M + 34, y)
                 y -= 26
                 lines.forEach { l ->

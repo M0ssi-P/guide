@@ -48,8 +48,8 @@ fun HymnsPresentationSidebar(
             Text("Select a Song", style = theme.typography.semiText, color = theme.colors.text)
             Spacer(Modifier.height(6.dp))
             SelectMenu(
-                data = songList.value.map { Items(key = it.songNumber.toString(), value = it) },
-                default = Items( key = currentSong.value?.songNumber.toString(), value = currentSong.value ),
+                data = songList.value.map { Items(key = it.no, value = it) },
+                default = Items( key = currentSong.value?.no.toString(), value = currentSong.value ),
                 fill = false,
                 onValueChange = {
                     model.setCurrentSong(it.value!!)

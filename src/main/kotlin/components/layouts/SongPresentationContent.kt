@@ -117,7 +117,7 @@ fun SongPresentationContent(model: SongBookViewModal) {
                             style = theme.typography.h2,
                             color = theme.colors.primaryText
                         )
-                        Text("Number: ${currentSong.value!!.songNumber}", style = theme.typography.body, color = theme.colors.text)
+                        Text("Number: ${currentSong.value!!.no}", style = theme.typography.body, color = theme.colors.text)
                     }
 
                     Row(

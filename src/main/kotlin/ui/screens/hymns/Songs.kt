@@ -38,6 +38,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -71,6 +72,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.heartIcon
+import com.composables.pauseIcon
+import com.composables.play2Icon
 import com.composables.plusIcon
 import com.composables.projectorIcon
 import com.composables.searchIcon
@@ -128,7 +131,7 @@ object SongPrefs {
 private enum class SongFilter(val label: String) { ALL("All"), FAVS("Favourites"), RECENT("Recent"), SET("In set") }
 
 internal fun ISongDetails.title(lang: String? = null): String =
-    (lang?.let { l -> titles.firstOrNull { it.languageCode.equals(l, true) } } ?: titles.firstOrNull())?.title ?: "Song $songNumber"
+    (lang?.let { l -> titles.firstOrNull { it.languageCode.equals(l, true) } } ?: titles.firstOrNull())?.title ?: "Song $no"
 
 private fun ISongLyricLine.text() = lines.joinToString("\n")
 private fun ISongLyricLine.isChorus() = type == LyricType.CHORUS
@@ -163,6 +166,8 @@ fun Songs() {
     val favs by SongPrefs.favs
     val set by SongPrefs.set
     val recent by SongPrefs.recent
+    // a tune belongs to this screen (recordings play on in the main player)
+    DisposableEffect(Unit) { onDispose { player.Tune.stop() } }
     if (books.isEmpty()) { SongsEmpty(); return }
 
     var query by remember { mutableStateOf("") }
@@ -178,7 +183,7 @@ fun Songs() {
     val counts = remember(books) { books.associate { it.id to runCatching { model.loadSongsFrom(it).size }.getOrDefault(0) } }
 
     val q = query.trim().lowercase()
-    val isNumber = q.isNotEmpty() && q.all { it.isDigit() }
+    val isNumber = q.matches(Regex("""\d+[a-z]?""")) // "25" or "25b"
     val list = songs.asSequence()
         .filter {
             when (filter) {
@@ -189,10 +194,10 @@ fun Songs() {
             }
         }
         .filter { s ->
-            q.isEmpty() || if (isNumber) s.songNumber.toString().startsWith(q)
+            q.isEmpty() || if (isNumber) s.no.lowercase().startsWith(q)
             else (s.titles.joinToString(" ") { it.title } + " " + s.lyrics.joinToString(" ") { it.text() }).lowercase().contains(q)
         }
-        .sortedBy { it.songNumber }.toList()
+        .sortedWith(compareBy({ it.songNumber }, { it.no })).toList()
 
     val song = current
     val seq = remember(song, chorusAfter) { song?.let { sequence(it, chorusAfter) } ?: emptyList() }
@@ -206,7 +211,8 @@ fun Songs() {
     }
     fun project() {
         val s = song ?: return
-        ProjectionDeck.load(DeckSource.SONGS, s.title(), "No. ${s.songNumber} · ${book?.name ?: ""}", deckFor(s, seq), at)
+        if (player.Tune.url != s.songUrl) player.Tune.stop()
+        ProjectionDeck.load(DeckSource.SONGS, s.title(), "No. ${s.no} · ${book?.name ?: ""}", deckFor(s, seq), at)
         SongPrefs.sung(s, book?.id ?: "")
         nav.navigate(Screen.Projection)
     }
@@ -264,7 +270,7 @@ fun Songs() {
                 }
             }
             SearchBox(query, search, { query = it }, { searchFocused = it }) {
-                if (isNumber) list.firstOrNull { it.songNumber.toString() == q }?.let { pick(it); query = ""; root.requestFocus() }
+                if (isNumber) list.firstOrNull { it.no.equals(q, true) }?.let { pick(it); query = ""; root.requestFocus() }
             }
             if (isNumber && list.isNotEmpty()) Text("Press Enter to open song $q", color = theme.colors.primaryBright, fontSize = 12.5.sp, modifier = Modifier.offset(y = (-6).dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -296,7 +302,7 @@ fun Songs() {
                     Box(
                         Modifier.size(72.dp).clip(RoundedCornerShape(18.dp)).background(Brush.linearGradient(listOf(theme.colors.primary, theme.colors.primary.copy(alpha = 0.7f)))),
                         contentAlignment = Alignment.Center
-                    ) { Text("${song.songNumber}", color = Ink, fontFamily = Fraunces, fontWeight = FontWeight.Bold, fontSize = 32.sp) }
+                    ) { Text(song.no, color = Ink, fontFamily = Fraunces, fontWeight = FontWeight.Bold, fontSize = 32.sp) }
                     Column(Modifier.weight(1f)) {
                         val verses = song.lyrics.count { !it.isChorus() }
                         Text("${book?.name ?: ""} · $verses verses${if (song.lyrics.any { it.isChorus() }) " · chorus" else ""}", color = theme.colors.text, fontSize = 12.5.sp)
@@ -313,6 +319,7 @@ fun Songs() {
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        song.songUrl?.let { url -> PlaySong(song, url) }
                         val fav = song.id in favs
                         Ghost(if (fav) "Favourite" else "Add to favourites", icon = { Icon(heartIcon(Rose, fav), null, tint = Color.Unspecified, modifier = Modifier.size(15.dp)) }) { SongPrefs.toggleFav(song.id) }
                         Ghost(if (song.id in set) "✓ In service set" else "+ Add to set") { SongPrefs.toggleSet(song.id) }
@@ -421,7 +428,7 @@ fun Songs() {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 set.forEachIndexed { i, id ->
                     val s = songs.firstOrNull { it.id == id }
-                    key(id) { SetRow(i, s?.title() ?: "Song from another book", s?.let { "No. ${it.songNumber} · ${it.lyrics.size} parts" } ?: "", id == song?.id,
+                    key(id) { SetRow(i, s?.title() ?: "Song from another book", s?.let { "No. ${it.no} · ${it.lyrics.size} parts" } ?: "", id == song?.id,
                         onPick = { s?.let { pick(it) } }, onRemove = { SongPrefs.toggleSet(id) }, onMove = { to -> SongPrefs.move(i, to) }) }
                 }
                 if (set.isEmpty()) Text(
@@ -450,7 +457,7 @@ fun Songs() {
                         }.hand().padding(horizontal = 8.dp, vertical = 6.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(s?.let { "${it.songNumber} · ${it.title()}" } ?: "Song from another book", color = theme.colors.primaryText, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                        Text(s?.let { "${it.no} · ${it.title()}" } ?: "Song from another book", color = theme.colors.primaryText, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                         Text(sungWhen(r.at), color = theme.colors.text, fontSize = 12.sp)
                     }
                 }
@@ -526,12 +533,21 @@ private fun SongRow(s: ISongDetails, current: Boolean, fav: Boolean, inSet: Bool
         Box(
             Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(if (current) theme.colors.primary else theme.colors.menu),
             contentAlignment = Alignment.Center
-        ) { Text("${s.songNumber}", color = if (current) Ink else theme.colors.primaryText.copy(alpha = 0.8f), fontFamily = Fraunces, fontWeight = FontWeight.Bold, fontSize = 17.sp) }
+        ) { Text("${s.no}", color = if (current) Ink else theme.colors.primaryText.copy(alpha = 0.8f), fontFamily = Fraunces, fontWeight = FontWeight.Bold, fontSize = 17.sp) }
         Column(Modifier.weight(1f)) {
             Text(s.title(), color = theme.colors.primaryText, fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(s.lyrics.firstOrNull()?.lines?.firstOrNull() ?: "", color = theme.colors.text, fontSize = 12.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (fav) Icon(heartIcon(Rose), "Favourite", tint = Color.Unspecified, modifier = Modifier.size(14.dp))
+        s.songUrl?.let { url ->
+            val (on, toggle) = songAudio(s, url)
+            Box(
+                Modifier.size(30.dp).clip(RoundedCornerShape(8.dp)).background(if (on) theme.colors.primary.copy(alpha = 0.18f) else theme.colors.menu)
+                    .border(1.dp, if (on) theme.colors.primary else theme.colors.border, RoundedCornerShape(8.dp))
+                    .clickable(role = Role.Button, onClickLabel = if (on) "Pause" else "Play", onClick = toggle).hand(),
+                contentAlignment = Alignment.Center
+            ) { Icon(if (on) pauseIcon(theme.colors.primaryBright) else play2Icon(theme.colors.primaryText), null, tint = Color.Unspecified, modifier = Modifier.size(13.dp)) }
+        }
         if (hovered || inSet) Box(
             Modifier.size(30.dp).clip(RoundedCornerShape(8.dp)).background(theme.colors.menu).border(1.dp, theme.colors.border, RoundedCornerShape(8.dp))
                 .clickable(role = Role.Button, onClickLabel = if (inSet) "Remove from service set" else "Add to service set") { SongPrefs.toggleSet(s.id) }.hand(),
@@ -636,6 +652,47 @@ private fun SquareButton(label: String, wide: Boolean = false, onClick: () -> Un
             .onHover { hovered = it }.clickable(role = Role.Button, onClick = onClick).hand().padding(horizontal = if (wide) 10.dp else 0.dp),
         contentAlignment = Alignment.Center
     ) { Text(label, color = theme.colors.primaryText, fontSize = 12.sp) }
+}
+
+/** A song's recording or tune from the song store: MIDI tunes play here (the main player has no MIDI), recordings in the main player. */
+@Composable
+private fun PlaySong(song: ISongDetails, url: String) {
+    val theme = LocalTheme.current
+    val (on, toggle) = songAudio(song, url)
+    Ghost(
+        if (on) "Pause" else if (store.SongStore.isTune(url)) "Play tune" else "How it's sung",
+        icon = { Icon(if (on) pauseIcon(theme.colors.primaryText) else play2Icon(theme.colors.primaryText), null, tint = Color.Unspecified, modifier = Modifier.size(15.dp)) },
+        onClick = toggle,
+    )
+}
+
+/**
+ * Whether [song]'s recording or tune is playing, and what plays or pauses it: MIDI tunes on [player.Tune] (the main
+ * player has no MIDI), recordings in the main player. One at a time: starting one stops the other.
+ */
+@Composable
+private fun songAudio(song: ISongDetails, url: String): Pair<Boolean, () -> Unit> {
+    val globalPlayer = player.LocalPlayer.current
+    if (url.endsWith(".mid", true)) return (player.Tune.playing && player.Tune.url == url) to {
+        if (player.Tune.url != url) globalPlayer.pause()
+        player.Tune.toggle(url)
+    }
+    val now by globalPlayer.nowPlaying.collectAsState()
+    val playing by globalPlayer.isPlaying.collectAsState()
+    val mine = now?.id == url
+    return (mine && playing) to {
+        when {
+            mine && playing -> globalPlayer.pause()
+            mine -> globalPlayer.play()
+            else -> {
+                player.Tune.stop()
+                globalPlayer.loadNowPlaying(player.GlobalPlayerViewModel.NowPlaying(
+                    id = url, title = song.title(), subtitle = song.author ?: "How it's sung",
+                    type = player.GlobalPlayerType.PODCAST, isPlaying = true, currentPosition = 0L, url = url,
+                ))
+            }
+        }
+    }
 }
 
 @Composable
