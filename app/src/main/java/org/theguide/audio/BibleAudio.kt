@@ -33,6 +33,8 @@ object BibleAudio {
         }
     }
 
+    fun seek(toMs: Long) { player.seekTo(toMs); ms = toMs }
+
     fun stop() { if (url != null) { player.stop(); url = null; ms = 0 } }
 
     /** Follows the position while a screen shows the chapter. */

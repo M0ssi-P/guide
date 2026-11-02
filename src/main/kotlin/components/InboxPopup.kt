@@ -88,7 +88,7 @@ fun InboxButton(open: Boolean) {
     var lastUnread by remember { mutableStateOf(unread) }
 
     // pick up this week's letter without opening the letters pages; a first run (empty cache) is left to them
-    LaunchedEffect(Unit) { if (Letters.all.value.isNotEmpty()) Letters.sync() }
+    LaunchedEffect(Unit) { Letters.sync() }
     LaunchedEffect(unread) {
         if (unread > lastUnread && !open) {
             repeat(2) { ring.animateTo(0f, keyframes { durationMillis = 1200; -12f at 240; 10f at 480; -6f at 720; 3f at 960 }) }

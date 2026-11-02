@@ -3,6 +3,7 @@ package parsers.bible
 import parsers.bible.models.ILanguage
 import parsers.bible.models.Paragraph
 import parsers.bible.models.VerseLineDisplay
+import parsers.bible.models.VerseTiming
 import java.io.File
 import java.sql.DriverManager
 import kotlin.test.AfterTest
@@ -82,6 +83,12 @@ class BibleDbTest {
         assertEquals("https://cdn/JHN/3.mp3", a.playOrDwnLoad.formattedMp3)
         assertEquals(listOf(16, 17), a.timings.map { it.verse })
         assertEquals(9000L, a.timings[1].startMs)
+    }
+
+    @Test fun versesLastUntilTheNextStarts() {
+        val t = BibleDb.readAlong(listOf(VerseTiming(2, 9500, 14000), VerseTiming(1, 3000, 9000), VerseTiming(3, 15000, 20000)))
+        assertEquals(listOf(VerseTiming(1, 3000, 9500), VerseTiming(2, 9500, 15000), VerseTiming(3, 15000, 20000)), t)
+        assertEquals(emptyList(), BibleDb.readAlong(emptyList()))
     }
 
     @Test fun anEmptyChapterHasNoSections() {

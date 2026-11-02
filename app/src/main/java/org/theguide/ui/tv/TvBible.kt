@@ -3,6 +3,7 @@ package org.theguide.ui.tv
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -65,6 +66,7 @@ fun TvBible() {
     val st = BibleState
     LaunchedEffect(st.versionId, st.otherId, st.book, st.chapter) { st.load() }
     LaunchedEffect(BibleAudio.playing) { if (BibleAudio.playing) BibleAudio.follow() }
+    LaunchedEffect(BibleAudio.lit(st.audio)?.first) { st.followAudio() }
     val ls = rememberLook("tv-bible", 28, "airy")
     val k = ls.look
     var sheet by remember { mutableStateOf("") }
@@ -88,7 +90,7 @@ fun TvBible() {
                     Row {
                         modes.forEachIndexed { i, (id, label) ->
                             val col by animateColorAsState(if (st.mode == id) k.tx else k.sub, tw(300), label = "m")
-                            Box(Modifier.size(110.dp, 42.dp).tvFocus(RoundedCornerShape(21.dp), { st.chooseMode(id) }, Role.Tab).then(if (i == 0) Modifier.focusRequester(first) else Modifier), contentAlignment = Alignment.Center) { T(label, 15f, col, weight = 600) }
+                            Box(Modifier.size(110.dp, 42.dp).then(if (i == 0) Modifier.focusRequester(first) else Modifier).tvFocus(RoundedCornerShape(21.dp), { st.chooseMode(id) }, Role.Tab), contentAlignment = Alignment.Center) { T(label, 15f, col, weight = 600) }
                         }
                     }
                 }
@@ -101,10 +103,17 @@ fun TvBible() {
                     "scroll" -> {
                         // two columns, verses shared out by length, scrolled with the remote
                         val half = remember(st.verses) { var n = 0; val total = st.verses.sumOf { it.text.length }; st.verses.indexOfFirst { n += it.text.length; n > total / 2 } + 1 }
-                        Row(Modifier.fillMaxSize().focusable().verticalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(60.dp)) {
+                        // Up and Down turn a page; the audio's verse is followed again a few seconds later
+                        val sc = rememberScrollState()
+                        val pager = rememberCoroutineScope()
+                        Row(Modifier.fillMaxSize().onPreviewKeyEventCompat { key ->
+                            val d = when (key) { android.view.KeyEvent.KEYCODE_DPAD_DOWN -> 1; android.view.KeyEvent.KEYCODE_DPAD_UP -> -1; else -> 0 }
+                            if (d == 0 || (d < 0 && sc.value == 0) || (d > 0 && sc.value >= sc.maxValue)) false
+                            else { st.handAt = System.currentTimeMillis(); pager.launch { sc.animateScrollBy(d * sc.viewportSize * .8f) }; true }
+                        }.focusable().verticalScroll(sc), horizontalArrangement = Arrangement.spacedBy(60.dp)) {
                             listOf(st.verses.take(half), st.verses.drop(half)).forEach { part ->
                                 VerseFlow(part, style(ls.size.toFloat(), font, color = k.tx, lineHeight = ls.lineHeight), k.acc, 13f, null, -1, { null }, Modifier.weight(1f),
-                                    lit = BibleAudio.lit(st.audio), litColors = listOf(k.litStart, k.litEnd))
+                                    lit = BibleAudio.lit(st.audio), litColors = listOf(k.litStart, k.litEnd), follow = st::following)
                             }
                         }
                     }
@@ -116,12 +125,12 @@ fun TvBible() {
                             S("${v?.n ?: ""}", 110f, k.acc.copy(alpha = .25f), Modifier.enter({ vs }), weight = 300, lineHeight = .9f)
                             T(v?.text ?: "", Math.round(ls.size * 1.45f).toFloat(), k.tx, Modifier.padding(top = 14.dp).widthIn(max = 900.dp).enter({ vs }, Ease.Swap), face = font, weight = 300, lineHeight = 1.32f, tracking = -.4f, align = TextAlign.Center)
                             Row(Modifier.padding(top = 30.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                                TvChip("‹", { st.verse = (st.verse - 1).coerceAtLeast(0) }, k, Modifier.width(54.dp))
+                                TvChip("‹", { st.stepVerse(-1) }, k, Modifier.width(54.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     val from = (st.verse - 5).coerceAtLeast(0); val to = (from + 11).coerceAtMost(st.verses.size)
                                     (from until to).forEach { i -> val w = animate(if (i == st.verse) 26f else 8f, 350); Box(Modifier.size(w.dp, 8.dp).clip(RoundedCornerShape(4.dp)).background(if (i == st.verse) k.acc else k.line)) }
                                 }
-                                TvChip("›", { st.verse = (st.verse + 1).coerceAtMost(st.verses.lastIndex) }, k, Modifier.width(54.dp))
+                                TvChip("›", { st.stepVerse(1) }, k, Modifier.width(54.dp))
                             }
                         }
                     }

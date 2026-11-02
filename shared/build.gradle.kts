@@ -39,8 +39,8 @@ kotlin {
         jvmMain.get().dependsOn(jvmCommonMain)
         androidMain.get().dependsOn(jvmCommonMain)
         commonTest.dependencies { implementation(kotlin("test")) }
-        // the Bible database tests read a small SQLite fixture
-        jvmTest.dependencies { implementation(libs.xerial.sqlite) }
+        // SQLite over JDBC on the desktop JVM (letters, the weekly letters job, the database tests)
+        jvmMain.dependencies { implementation(libs.xerial.sqlite) }
     }
 }
 
@@ -56,3 +56,12 @@ android {
 }
 
 tasks.withType<Test> { useJUnitPlatform() }
+
+// the weekly letters job (.github/workflows/letters.yml): ./gradlew :shared:publishLetters [-Plangs=en,fr]
+tasks.register<JavaExec>("publishLetters") {
+    val main = kotlin.jvm().compilations["main"]
+    dependsOn(main.compileTaskProvider)
+    classpath = files(main.output.allOutputs, main.runtimeDependencyFiles)
+    mainClass.set("tools.PublishLettersKt")
+    args = (project.findProperty("langs") as String?)?.split(",") ?: emptyList()
+}

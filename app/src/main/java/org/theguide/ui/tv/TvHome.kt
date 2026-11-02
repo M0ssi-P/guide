@@ -107,8 +107,8 @@ fun TvHome() {
                         }
                         Row(Modifier.padding(top = 26.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                             Box(
-                                Modifier.height(58.dp).tvFocus(RoundedCornerShape(29.dp), { quote?.let { q -> scope.launch { hearQuote(q); Nav.go(Nav.Tab.Table) } } }).clip(RoundedCornerShape(29.dp)).background(C.Gold).sheen({ time })
-                                    .focusRequester(first).padding(horizontal = 28.dp),
+                                Modifier.height(58.dp).focusRequester(first).tvFocus(RoundedCornerShape(29.dp), { quote?.let { q -> scope.launch { hearQuote(q); Nav.go(Nav.Tab.Table) } } }).clip(RoundedCornerShape(29.dp)).background(C.Gold).sheen({ time })
+                                    .padding(horizontal = 28.dp),
                                 contentAlignment = Alignment.Center,
                             ) { T("Hear it", 19f, C.OnGold, weight = 600) }
                             val pop by oneShot(saved, 450)

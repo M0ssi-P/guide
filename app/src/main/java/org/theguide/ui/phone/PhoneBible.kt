@@ -32,6 +32,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -93,8 +94,12 @@ fun PhoneBible(haze: HazeState) {
     val font = if (ls.serif) Face.Serif else Face.Sans
 
     LaunchedEffect(BibleAudio.playing) { if (BibleAudio.playing) BibleAudio.follow() }
+    LaunchedEffect(BibleAudio.lit(st.audio)?.first) { st.followAudio() }
     Box(Modifier.fillMaxSize().background(k.bg).screenGlow(k.glow)) {
-        Column(Modifier.fillMaxSize().hazeSource(haze).padding(top = statusTop()).verticalScroll(rememberScrollState())) {
+        Column(Modifier.fillMaxSize().hazeSource(haze).padding(top = statusTop())
+            // a finger on the page pauses following the audio for a moment
+            .pointerInput(Unit) { awaitPointerEventScope { while (true) { awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial); st.handAt = System.currentTimeMillis() } } }
+            .verticalScroll(rememberScrollState())) {
             Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 150.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(Modifier.weight(1f).press({ sheet = "pick" }, label = "Choose a book and chapter").padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -116,7 +121,7 @@ fun PhoneBible(haze: HazeState) {
                     when (st.mode) {
                         "scroll" -> VerseFlow(st.verses, style(ls.size.toFloat(), font, color = k.tx, lineHeight = ls.lineHeight), k.acc, 11f,
                             { n -> st.sel = if (st.sel == n) -1 else n }, st.sel, { n -> highlightTint(Prefs.highlights[st.key(n)]) },
-                            lit = BibleAudio.lit(st.audio), litColors = listOf(k.litStart, k.litEnd))
+                            lit = BibleAudio.lit(st.audio), litColors = listOf(k.litStart, k.litEnd), follow = st::following)
                         "pages" -> Pages(k, ls, font)
                         "verse" -> OneVerse(k, ls, font)
                         else -> Parallel(k, ls, font)
@@ -239,7 +244,7 @@ private fun OneVerse(k: Look, ls: LookState, font: Face) {
         T(v.text, Math.round(ls.size * 1.35f).toFloat(), k.tx, Modifier.enter({ swap }, Ease.Swap), face = font, weight = 300, lineHeight = 1.4f, align = TextAlign.Center)
         S("${st.ref}:${v.n}", 14f, k.sub, Modifier.padding(top = 16.dp), italic = true)
         Row(Modifier.padding(top = 28.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            RoundButton({ st.verse = (st.verse - 1).coerceAtLeast(0) }, "Previous verse", bg = k.chip) { Ico(Icons.Back, 16f, k.tx) }
+            RoundButton({ st.stepVerse(-1) }, "Previous verse", bg = k.chip) { Ico(Icons.Back, 16f, k.tx) }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 val from = (st.verse - 4).coerceAtLeast(0); val to = (from + 9).coerceAtMost(st.verses.size)
                 (from until to).forEach { i ->
@@ -248,7 +253,7 @@ private fun OneVerse(k: Look, ls: LookState, font: Face) {
                     Box(Modifier.size(w.dp, 6.dp).clip(RoundedCornerShape(3.dp)).background(col))
                 }
             }
-            RoundButton({ st.verse = (st.verse + 1).coerceAtMost(st.verses.lastIndex) }, "Next verse", bg = k.chip) { Ico(Icons.Forward, 16f, k.tx) }
+            RoundButton({ st.stepVerse(1) }, "Next verse", bg = k.chip) { Ico(Icons.Forward, 16f, k.tx) }
         }
     }
 }

@@ -19,6 +19,7 @@ import parsers.vgr.Table
 import parsers.vgr.get
 import parsers.vgr.groupSermonRows
 import parsers.vgr.models.Sermon
+import parsers.vgr.VgrMedia
 import store.FileStore
 import java.io.File
 import java.io.IOException
@@ -66,36 +67,36 @@ object Tables {
         }
     }
 
-    /** Downloads and unpacks one language; [progress] gets (bytes read, total) of the gzipped file. */
+    /**
+     * Downloads (or updates) and unpacks one language; [progress] gets (done, total) of the download. A cut-off
+     * download picks up where it stopped next time, and the old copy stays readable until the new one is complete.
+     */
     suspend fun download(iso3: String, progress: (Long, Long) -> Unit) = withContext(Dispatchers.IO) {
         val target = file(iso3)
-        val part = File(target.parentFile, target.name + ".part")
+        val gz = File(target.parentFile, target.name + ".gz")
+        val tmp = File(target.parentFile, target.name + ".tmp")
+        val etag = FileStore.tableEtag(iso3)
+        VgrMedia.download(FileStore.tableUrl(iso3), gz) { progress((it * 1000).toLong(), 1000) }
         try {
-            okHttpClient.newCall(Request.Builder().url(FileStore.tableUrl(iso3)).build()).execute().use { res ->
-                if (!res.isSuccessful) throw IOException("HTTP ${res.code}")
-                val body = res.body ?: throw IOException("Empty response")
-                val total = body.contentLength()
-                var read = 0L
-                val counted = object : java.io.FilterInputStream(body.byteStream()) {
-                    override fun read(b: ByteArray, off: Int, len: Int): Int = super.read(b, off, len).also { if (it > 0) { read += it; progress(read, total) } }
-                }
-                GZIPInputStream(counted, 64 * 1024).use { input ->
-                    part.outputStream().use { out ->
-                        val buf = ByteArray(256 * 1024)
-                        while (true) {
-                            coroutineContext.ensureActive()
-                            val n = input.read(buf)
-                            if (n < 0) break
-                            out.write(buf, 0, n)
-                        }
-                    }
-                }
-            }
+            GZIPInputStream(gz.inputStream().buffered(), 64 * 1024).use { input -> tmp.outputStream().use { input.copyTo(it, 256 * 1024) } }
             close(iso3)
-            if (!part.renameTo(target)) throw IOException("Couldn't save ${target.name}")
+            lists.remove(iso3)
+            target.delete()
+            if (!tmp.renameTo(target)) throw IOException("Couldn't save ${target.name}")
+            etag?.let { etagFile(iso3).writeText(it) }
         } finally {
-            part.delete()
+            gz.delete(); tmp.delete()
         }
+    }
+
+    /** The store's etag of the copy on this device. */
+    private fun etagFile(iso3: String) = File(dir, "${iso3.lowercase()}.etag")
+
+    /** Installed languages with a newer database on the store; one installed before these checks is taken as current. */
+    suspend fun stale(): List<String> = installed().filter { iso3 ->
+        val latest = FileStore.tableEtag(iso3) ?: return@filter false
+        val mine = etagFile(iso3)
+        if (!mine.isFile) { mine.writeText(latest); false } else mine.readText() != latest
     }
 
     private val open = ConcurrentHashMap<String, SQLiteDatabase>()

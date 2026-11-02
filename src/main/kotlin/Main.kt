@@ -45,6 +45,7 @@ import ui.theme.ThemeUI
 
 @OptIn(ExperimentalFoundationApi::class)
 fun main(args: Array<String>) {
+    parsers.bt.openSql = { parsers.bt.JdbcSql(it) }
      // started from the backup copy to install an update: only the updater window
      if (args.firstOrNull() == "--updater") { update.runUpdater(args.getOrNull(1)); return }
      initialiseNetwork()

@@ -15,7 +15,15 @@ import logError
 import com.google.gson.JsonParser
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import saveData
+import storeDir
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import parsers.vgr.VgrMedia
+import store.FileStore
 import java.io.Serializable
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -90,6 +98,23 @@ object Letters {
 
     private val books = java.util.concurrent.ConcurrentHashMap<String, LetterBook>()
 
+    /**
+     * True when it's worth asking for new letters: this week's letter (dated its Saturday) isn't here yet and it's
+     * past 6pm that Saturday in Sydney, when it starts arriving. So checks run from then until the letter is in
+     * (a late one is still picked up on later launches), then stop for the week.
+     */
+    fun due(newest: LocalDate?, now: java.time.ZonedDateTime = java.time.ZonedDateTime.now(sydney)): Boolean {
+        val local = now.withZoneSameInstant(sydney)
+        var saturday = local.toLocalDate().with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.SATURDAY))
+        if (local.toLocalDate() == saturday && local.hour < 18) saturday = saturday.minusWeeks(1)
+        return newest == null || newest < saturday
+    }
+
+    private val sydney = java.time.ZoneId.of("Australia/Sydney")
+
+    /** The site's letter languages (what the weekly job publishes). */
+    val languages = listOf("en", "fr", "es", "pt", "de", "it", "no", "ro", "ru", "uk")
+
     /** The archive in one of the site's languages ("en", "fr", "es", ...). */
     fun book(lang: String): LetterBook = books.getOrPut(lang) { LetterBook(lang) }
 
@@ -98,6 +123,7 @@ object Letters {
     val sync: StateFlow<SyncState> get() = book("en").sync
     fun byId(id: String): Letter? = book("en").byId(id)
     suspend fun sync(full: Boolean = false) = book("en").sync(full)
+    suspend fun search(q: LetterQuery) = book("en").search(q)
     suspend fun detail(id: String): Letter? = book("en").detail(id)
 
     // ---------- parsing ----------
@@ -234,7 +260,21 @@ object Letters {
             val (mo, d, y) = m.destructured
             return runCatching { LocalDate.of(2000 + y.toInt(), mo.toInt(), d.toInt()) }.getOrNull()
         }
+        // the other languages put the day first: "samedi 31 octobre 2026", "31. Oktober 2026", "31 de octubre de 2026"
+        dayFirst.findAll(text).forEach { m ->
+            val (d, mon, y) = m.destructured
+            localMonths[mon.lowercase().trimEnd('.')]?.let { mo -> runCatching { LocalDate.of(y.toInt(), mo, d.toInt()) }.getOrNull()?.let { return it } }
+        }
         return null
+    }
+
+    private val dayFirst = Regex("""\b(\d{1,2})\.?\s+(?:de\s+)?(\p{L}+)\.?,?\s+(?:de\s+)?(\d{4})\b""")
+
+    /** Month names in the site's languages, full and short, as written in a date and on their own ("octobre", "октября"). */
+    private val localMonths: Map<String, Int> by lazy {
+        val styles = listOf(java.time.format.TextStyle.FULL, java.time.format.TextStyle.FULL_STANDALONE, java.time.format.TextStyle.SHORT, java.time.format.TextStyle.SHORT_STANDALONE)
+        languages.flatMap { lang -> java.time.Month.entries.flatMap { m -> styles.map { st -> m.getDisplayName(st, Locale.forLanguageTag(lang)).lowercase().trimEnd('.') to m.value } } }
+            .filter { (name, _) -> name.isNotBlank() && !name.all(Char::isDigit) }.toMap()
     }
 
     // ---------- search ----------
@@ -274,67 +314,141 @@ object Letters {
     fun monthName(date: LocalDate): String = date.format(months)
 }
 
-/** One language's letter archive, cached on its own (English keeps the original cache name). */
+/**
+ * One language's letter archive, in its own SQLite database (letters/<lang>.db). [all] holds the newest page(s), read
+ * off the main thread; [loadMore] adds the next page. New letters come from the file store, which a weekly job fills
+ * from the site; until it has this language, the site is read directly.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
 class LetterBook(val lang: String) {
-    private val cache = if (lang == "en") "bt_letters" else "bt_letters_$lang"
+    private val legacy = if (lang == "en") "bt_letters" else "bt_letters_$lang"
+    private val file get() = java.io.File(storeDir, "letters/$lang.db")
+    private val store = "${FileStore.BASE}/files/letters"
 
-    private val _all = MutableStateFlow<List<Letter>>(loadData<ArrayList<Letter>>(cache)?.toList() ?: emptyList())
+    private val _all = MutableStateFlow<List<Letter>>(emptyList())
     val all: StateFlow<List<Letter>> = _all.asStateFlow()
     private val _sync = MutableStateFlow(SyncState())
     val sync: StateFlow<SyncState> = _sync.asStateFlow()
     private val lock = Mutex()
+    private var shown = PAGE
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    fun byId(id: String): Letter? = _all.value.firstOrNull { it.id == id }
+    // opened (and the old cache moved in) on first use, off the main thread
+    private val ready: Deferred<LetterDb> = scope.async { open() }
+    private val db: LetterDb? get() = if (ready.isCompleted) runCatching { ready.getCompleted() }.getOrNull() else null
 
-    private suspend fun store(letters: List<Letter>) = lock.withLock {
-        val merged = _all.value.associateBy { it.id }.toMutableMap()
-        // a detailed copy (from the service page) wins over the archive copy
-        letters.forEach { l -> merged[l.id] = if (merged[l.id]?.detailed == true && !l.detailed) merged[l.id]!! else l }
-        _all.value = merged.values.sortedByDescending { it.letterDate }
-        saveData(cache, ArrayList(_all.value))
+    init { scope.launch { refresh() } }
+
+    private fun open(): LetterDb {
+        file.parentFile.mkdirs()
+        val db = LetterDb(openSql(file))
+        // letters saved before the database: moved in once, the old file kept beside it as .bak
+        loadData<ArrayList<Letter>>(legacy)?.let { old ->
+            db.add(old); old.forEach(db::upgrade)
+            java.io.File(storeDir, legacy).renameTo(java.io.File(storeDir, "$legacy.bak"))
+        }
+        return db
+    }
+
+    private suspend fun refresh() { _all.value = runCatching { ready.await().page(0, shown) }.getOrDefault(_all.value) }
+
+    fun byId(id: String): Letter? = _all.value.firstOrNull { it.id == id } ?: runCatching { db?.byId(id) }.getOrNull()
+    fun byCodeDate(code: String, date: LocalDate): Letter? = runCatching { db?.byCodeDate(code, date) }.getOrNull()
+
+    /** The newest letters straight from the database (for background work, which doesn't wait for [all]). */
+    suspend fun page(offset: Int = 0, limit: Int = PAGE): List<Letter> = withContext(Dispatchers.IO) { ready.await().page(offset, limit) }
+
+    /** The next page of older letters. */
+    suspend fun loadMore() { if (_all.value.size >= shown) { shown += PAGE; refresh() } }
+
+    /** Every letter a query matches, ranked; read from the database, not memory. */
+    suspend fun search(q: LetterQuery): List<LetterHit> = withContext(Dispatchers.IO) { Letters.search(ready.await().candidates(q), q) }
+    suspend fun sermons() = withContext(Dispatchers.IO) { ready.await().sermons() }
+    suspend fun kinds() = withContext(Dispatchers.IO) { ready.await().kinds() }
+
+    /** Brings new letters in; returns how many there were. [full] reads the whole site archive when the store can't help. */
+    suspend fun sync(full: Boolean = false): Int = withContext(Dispatchers.IO) {
+        if (_sync.value.running) return@withContext 0
+        // this week's letter is already here: nothing new until next Saturday
+        if (!full && !Letters.due(runCatching { ready.await().page(0, 1).firstOrNull()?.letterDate }.getOrNull())) return@withContext 0
+        _sync.value = SyncState(running = true)
+        try {
+            val db = ready.await()
+            val added = fromStore(db) ?: fromSite(db, full)
+            if (added > 0) refresh()
+            _sync.value = SyncState()
+            added
+        } catch (e: Exception) {
+            logError(e)
+            _sync.value = SyncState(error = "Couldn't reach the letters")
+            0
+        }
+    }
+
+    /** New letters from the file store (null when it has nothing for this language yet). */
+    private suspend fun fromStore(db: LetterDb): Int? {
+        val res = client.get("$store/$lang/latest.json", cacheTime = 0)
+        // a response we don't read still has to be closed, or OkHttp leaks its connection
+        if (!res.isSuccessful) { res.body.close(); return null }
+        val ids = Regex(""""([0-9A-Fa-f-]{36})"""").findAll(res.text).map { it.groupValues[1] }.toList()
+        val have = db.ids()
+        val missing = ids.filter { it !in have }
+        // far behind (or a new install): the whole database in one download, merged by id
+        if (have.isEmpty() || missing.size > ids.size / 2) {
+            val gz = java.io.File(file.parentFile, "$lang.store.db.gz")
+            val whole = java.io.File(file.parentFile, "$lang.store.db")
+            try {
+                VgrMedia.download("$store/$lang.db.gz", gz) { _sync.value = SyncState(running = true, page = (it * 60).toInt()) }
+                java.util.zip.GZIPInputStream(gz.inputStream().buffered()).use { i -> whole.outputStream().use { i.copyTo(it) } }
+                val other = openSql(whole)
+                val letters = try { LetterDb(other).page(0, Int.MAX_VALUE) } finally { other.close() }
+                return lock.withLock { db.add(letters).also { letters.forEach(db::upgrade) } }
+            } finally { gz.delete(); whole.delete() }
+        }
+        val fetched = missing.mapNotNull { id ->
+            val r = client.get("$store/$lang/$id.json")
+            if (!r.isSuccessful) { r.body.close(); null } else runCatching { LetterJson.read(r.text) }.getOrNull()
+        }
+        return lock.withLock { db.add(fetched).also { fetched.forEach(db::upgrade) } }
     }
 
     /**
-     * Pulls archive pages (newest first) into the local cache. Stops at the first page that is
-     * empty or fully cached, so after the first run this only fetches what's new.
+     * Reads the site's archive pages (newest first), stopping at the first page with nothing new, so after the first
+     * run only what's new is fetched.
      */
-    suspend fun sync(full: Boolean = false) = withContext(Dispatchers.IO) {
-        if (_sync.value.running) return@withContext
-        _sync.value = SyncState(running = true)
-        try {
-            var page = 1
-            while (page <= 600) {
-                _sync.value = SyncState(running = true, page = page)
-                val url = if (page == 1) "${Letters.HOST}/$lang/archive" else "${Letters.HOST}/$lang/archive/letters/$page"
-                val res = client.get(url, headers = defaultHeaders)
-                if (!res.isSuccessful) break
-                val letters = Letters.parseArchive(res.text)
-                if (letters.isEmpty()) break
-                val known = _all.value.map { it.id }.toSet()
-                val allKnown = letters.all { it.id in known }
-                store(letters)
-                if (allKnown && !full) break
-                page++
-                delay(250)
-            }
-            _sync.value = SyncState()
-        } catch (e: Exception) {
-            logError(e)
-            _sync.value = SyncState(error = "Couldn't reach branhamtabernacle.org")
+    private suspend fun fromSite(db: LetterDb, full: Boolean): Int {
+        var added = 0
+        var page = 1
+        while (page <= 600) {
+            _sync.value = SyncState(running = true, page = page)
+            val url = if (page == 1) "${Letters.HOST}/$lang/archive" else "${Letters.HOST}/$lang/archive/letters/$page"
+            val res = client.get(url, headers = defaultHeaders)
+            if (!res.isSuccessful) { res.body.close(); break }
+            val letters = Letters.parseArchive(res.text)
+            if (letters.isEmpty()) break
+            val n = lock.withLock { db.add(letters) }
+            added += n
+            if (n == 0 && !full) break
+            page++
+            delay(250)
         }
+        return added
     }
 
     /** Reads the service page for related services, audio and the preliminary/closing. */
     suspend fun detail(id: String): Letter? = withContext(Dispatchers.IO) {
         try {
             val res = client.get("${Letters.HOST}/$lang/streaming/viewservice/$id", headers = defaultHeaders)
-            if (!res.isSuccessful) return@withContext byId(id)
+            if (!res.isSuccessful) { res.body.close(); return@withContext byId(id) }
             val parsed = Letters.parseService(res.text, id, byId(id)) ?: return@withContext byId(id)
-            store(listOf(parsed))
+            lock.withLock { ready.await().apply { add(listOf(parsed)); upgrade(parsed) } }
+            refresh()
             parsed
         } catch (e: Exception) {
             logError(e)
             byId(id)
         }
     }
+
+    companion object { const val PAGE = 60 }
 }

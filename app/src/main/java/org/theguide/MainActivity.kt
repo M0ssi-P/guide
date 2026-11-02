@@ -22,6 +22,9 @@ class MainActivity : ComponentActivity() {
         // "tv" extra: the TV screens on any device, for checking them without a TV
         val tv = App.isTv || intent.getBooleanExtra("tv", false)
         setContent { if (tv) TvApp() else PhoneApp() }
+        // for the weekly letter's notification
+        if (android.os.Build.VERSION.SDK_INT >= 33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
     }
 
     override fun onStart() {

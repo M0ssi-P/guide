@@ -14,6 +14,13 @@ object FileStore {
     fun tableUrl(iso3: String) = "$BASE/table/db/download/table/${iso3.lowercase()}"
     fun songbookUrl(id: String) = "$BASE/songbooks/$id.zip"
 
+    private val etag = Regex(""""etag"\s*:\s*"([^"]+)"""")
+
+    /** The etag of a Table language's latest published database (it changes with every update); null when unknown. */
+    suspend fun tableEtag(iso3: String): String? = withContext(Dispatchers.IO) {
+        runCatching { etag.find(client.get("$BASE/table/db/latest/table/${iso3.lowercase()}").text)?.groupValues?.get(1) }.getOrNull()
+    }
+
     private val ids = Regex(""""ids"\s*:\s*\[([^\]]*)]""")
 
     /** What the store has of [kind] ("table": ISO3 codes, "hymns": song book ids). */

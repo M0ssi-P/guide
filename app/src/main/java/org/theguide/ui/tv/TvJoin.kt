@@ -141,9 +141,9 @@ private fun Find(onHost: (LiveHostInfo) -> Unit) {
             LiveClient.hosts.forEachIndexed { i, h ->
                 val (o1, o2) = hostOrbs[i % 2]
                 Row(
-                    Modifier.padding(bottom = 16.dp).fillMaxWidth().tvFocus(RoundedCornerShape(26.dp), { onHost(h) }).clip(RoundedCornerShape(26.dp)).background(c(Palette.Card)).then(if (i == 0) Modifier.sheen({ time }, 3200) else Modifier)
+                    Modifier.padding(bottom = 16.dp).fillMaxWidth().then(if (i == 0) Modifier.focusRequester(first) else Modifier).tvFocus(RoundedCornerShape(26.dp), { onHost(h) }).clip(RoundedCornerShape(26.dp)).background(c(Palette.Card)).then(if (i == 0) Modifier.sheen({ time }, 3200) else Modifier)
                         .insetRing(1.dp, if (i == 0) gold(.3f) else white(.06f), RoundedCornerShape(26.dp))
-                        .then(if (i == 0) Modifier.focusRequester(first) else Modifier).padding(horizontal = 26.dp, vertical = 22.dp),
+                        .padding(horizontal = 26.dp, vertical = 22.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
                     Box(Modifier.size(58.dp).clip(RoundedCornerShape(18.dp)).drawBehind { drawRect(Brush.radialGradient(0f to o1, 1f to o2, center = Offset(size.width * .3f, size.height * .3f), radius = size.width)) }, contentAlignment = Alignment.Center) {
@@ -212,10 +212,10 @@ private fun Name(onNext: () -> Unit) {
                         row.forEachIndexed { j, key ->
                             val wide = key == "space"
                             Box(
-                                Modifier.weight(if (wide) 2f else 1f).height(54.dp).tvFocus(RoundedCornerShape(16.dp), {
+                                Modifier.weight(if (wide) 2f else 1f).height(54.dp).then(if (r == 0 && j == 0) Modifier.focusRequester(first) else Modifier).tvFocus(RoundedCornerShape(16.dp), {
                                         name = when (key) { "del" -> name.dropLast(1); "clear" -> ""; "space" -> "$name "; else -> (name + if (name.isNotEmpty() && !name.endsWith(' ')) key.lowercase() else key).take(22) }
                                     }).clip(RoundedCornerShape(16.dp)).background(if (key.length > 1) white(.1f) else white(.05f))
-                                    .then(if (r == 0 && j == 0) Modifier.focusRequester(first) else Modifier).label(key),
+                                    .label(key),
                                 contentAlignment = Alignment.Center,
                             ) { T(when (key) { "del" -> "⌫"; "space" -> "Space"; "clear" -> "Clear"; else -> key }, if (key.length > 1) 15f else 20f, c(Palette.Title), weight = 500) }
                         }
@@ -242,8 +242,8 @@ private fun Lang(onJoined: () -> Unit) {
             Tables.installed().take(4).forEachIndexed { i, iso3 ->
                 val sel = iso3 == lang
                 Box(
-                    Modifier.weight(1f).height(200.dp).tvFocus(RoundedCornerShape(30.dp), { lang = iso3 }, Role.RadioButton).clip(RoundedCornerShape(30.dp)).background(if (sel) gold(.12f) else c(Palette.Card)).insetRing(2.dp, if (sel) gold(.6f) else Color.Transparent, RoundedCornerShape(30.dp))
-                        .then(if (i == 0) Modifier.focusRequester(first) else Modifier).padding(24.dp)
+                    Modifier.weight(1f).height(200.dp).then(if (i == 0) Modifier.focusRequester(first) else Modifier).tvFocus(RoundedCornerShape(30.dp), { lang = iso3 }, Role.RadioButton).clip(RoundedCornerShape(30.dp)).background(if (sel) gold(.12f) else c(Palette.Card)).insetRing(2.dp, if (sel) gold(.6f) else Color.Transparent, RoundedCornerShape(30.dp))
+                        .padding(24.dp)
                 ) {
                     S(Tables.tag(iso3).take(2).replaceFirstChar { it.uppercase() }, 130f, if (sel) gold(.25f) else white(.05f), Modifier.align(Alignment.TopEnd).offset(34.dp, (-50).dp), weight = 300, lineHeight = 1f)
                     Column(Modifier.align(Alignment.BottomStart)) { S(Tables.localName(iso3), 30f, c(Palette.Title)); T(liveLangMeta(iso3, LiveClient.state?.code ?: LiveClient.host?.code ?: ""), 15f, C.Sub) }
@@ -327,8 +327,8 @@ private fun Controls(onTool: (String) -> Unit, toast: String) {
                 val on = id == "audio" && textOnly
                 val a by spinAngle(800f, id == "sync" && syncing)
                 Row(
-                    Modifier.height(64.dp).tvFocus(RoundedCornerShape(32.dp), { if (id == "sync") syncing = true; onTool(id) }).clip(RoundedCornerShape(32.dp)).background(if (on) gold(.16f) else white(.08f))
-                        .then(if (i == 0) Modifier.focusRequester(first) else Modifier).padding(horizontal = 22.dp),
+                    Modifier.height(64.dp).then(if (i == 0) Modifier.focusRequester(first) else Modifier).tvFocus(RoundedCornerShape(32.dp), { if (id == "sync") syncing = true; onTool(id) }).clip(RoundedCornerShape(32.dp)).background(if (on) gold(.16f) else white(.08f))
+                        .padding(horizontal = 22.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) { Ico(icon, 22f, if (on) C.Gold else c(Palette.Title), Modifier.graphicsLayer { rotationZ = a }); T(label, 17f, if (on) C.Gold else c(Palette.Title), weight = 600) }
             }

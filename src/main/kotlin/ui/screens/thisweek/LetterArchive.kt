@@ -114,11 +114,17 @@ fun LetterArchive() {
         DateRange.CUSTOM -> parseDmy(fromText) to parseDmy(toText)
     }
     val query = LetterQuery(text, wholeWord, from, to, code, kind, look, newestFirst)
-    val hits = remember(letters, query) { Letters.search(letters, query) }
+    // searched in the database, so the whole archive answers, not only the page in memory
+    var hits by remember { mutableStateOf<List<parsers.bt.LetterHit>>(emptyList()) }
+    LaunchedEffect(letters, query) { hits = Letters.search(query) }
     val totalMatches = hits.sumOf { it.matches }
 
-    val sermons = remember(letters) { letters.distinctBy { it.code }.map { it.code to it.title } }
-    val kinds = remember(letters) { (letters.mapNotNull { it.kind } + listOf("HOME", "YFYC")).distinct().sorted() }
+    var sermons by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+    var kinds by remember { mutableStateOf(listOf("HOME", "YFYC")) }
+    LaunchedEffect(letters) {
+        sermons = Letters.book("en").sermons()
+        kinds = (Letters.book("en").kinds() + listOf("HOME", "YFYC")).distinct().sorted()
+    }
 
     val clearAll = { text = ""; range = DateRange.ANY; fromText = ""; toText = ""; code = null; kind = null; look = LookIn.ALL }
     val active = buildList {

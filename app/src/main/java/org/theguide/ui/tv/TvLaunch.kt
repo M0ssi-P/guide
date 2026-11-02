@@ -171,8 +171,8 @@ private fun ColumnScope.LettersStep(first: FocusRequester, mb: Double) {
         }
     }
     Row(
-        Modifier.padding(top = 24.dp).fillMaxWidth().tvFocus(RoundedCornerShape(18.dp), { Setup.lettersOn = !Setup.lettersOn }, Role.Switch).clip(RoundedCornerShape(18.dp)).background(white(.04f))
-            .focusRequester(first).padding(horizontal = 18.dp, vertical = 14.dp),
+        Modifier.padding(top = 24.dp).fillMaxWidth().focusRequester(first).tvFocus(RoundedCornerShape(18.dp), { Setup.lettersOn = !Setup.lettersOn }, Role.Switch).clip(RoundedCornerShape(18.dp)).background(white(.04f))
+            .padding(horizontal = 18.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) { T("Keep the whole archive on this TV", 18f, c(Palette.Title), Modifier.weight(1f)); Switch(Setup.lettersOn, 54f, 32f, 24f, 4f) }
     val open = animate(if (Setup.lettersOn) 1f else 0f, 500)

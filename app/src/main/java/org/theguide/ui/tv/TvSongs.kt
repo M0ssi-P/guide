@@ -75,8 +75,8 @@ fun TvSongs() {
                 S("Songs", 48f, c(Palette.Title), Modifier.weight(1f), weight = 300, tracking = -.6f)
                 listOf("library" to "Library", "shop" to "Shop", "move" to "Import and export").forEachIndexed { i, (id, label) ->
                     val on = tab == id
-                    Box(Modifier.height(50.dp).tvFocus(RoundedCornerShape(25.dp), { tab = id; flip++ }, Role.Tab).clip(RoundedCornerShape(25.dp)).background(if (on) gold(.16f) else white(.05f))
-                        .then(if (i == 0) Modifier.focusRequester(first) else Modifier).padding(horizontal = 24.dp), contentAlignment = Alignment.Center) { T(label, 17f, if (on) C.Gold else C.Soft, weight = 600) }
+                    Box(Modifier.height(50.dp).then(if (i == 0) Modifier.focusRequester(first) else Modifier).tvFocus(RoundedCornerShape(25.dp), { tab = id; flip++ }, Role.Tab).clip(RoundedCornerShape(25.dp)).background(if (on) gold(.16f) else white(.05f))
+                        .padding(horizontal = 24.dp), contentAlignment = Alignment.Center) { T(label, 17f, if (on) C.Gold else C.Soft, weight = 600) }
                 }
             }
             Box(Modifier.padding(start = 130.dp, end = 60.dp, top = 130.dp, bottom = 40.dp).fillMaxSize().enter({ swapA }, Ease.Swap)) {

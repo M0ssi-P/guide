@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -95,6 +96,24 @@ object BibleState {
         Prefs.bibleVersion = versionId; Prefs.bibleOther = otherId
     }
 
+    /** When the reader last scrolled by hand; following the audio waits a few seconds after it. */
+    var handAt = 0L
+    fun following() = System.currentTimeMillis() - handAt > 4000
+
+    /** The next or previous verse in single-verse mode; while the chapter plays, the audio goes there too. */
+    fun stepVerse(d: Int) {
+        verse = (verse + d).coerceIn(0, verses.lastIndex.coerceAtLeast(0))
+        val a = audio ?: return
+        if (BibleAudio.url != BibleAudio.mp3(a)) return
+        a.timings.firstOrNull { it.verse == verses.getOrNull(verse)?.n }?.let { BibleAudio.seek(it.startMs) }
+    }
+
+    /** In single-verse mode the verse on screen follows the one being read. */
+    fun followAudio() {
+        val n = BibleAudio.lit(audio)?.first ?: return
+        if (mode == "verse") verses.indexOfFirst { it.n == n }.takeIf { it >= 0 && it != verse }?.let { verse = it }
+    }
+
     fun chooseMode(m: String) { mode = m; sel = -1; flip++; Prefs.bibleMode = m }
 }
 
@@ -109,9 +128,11 @@ fun highlightTint(name: String?) = Highlights.firstOrNull { it.first == name }?.
 @Composable
 fun VerseFlow(
     verses: List<Verse>, style: TextStyle, acc: Color, supSize: Float, onTap: ((Int) -> Unit)?, sel: Int, tint: (Int) -> Color?, modifier: Modifier = Modifier,
-    lit: Pair<Int, Float>? = null, litColors: List<Color> = emptyList(),
+    lit: Pair<Int, Float>? = null, litColors: List<Color> = emptyList(), follow: () -> Boolean = { false },
 ) {
     var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    // keeps the verse being read in view in the scrolling parent
+    val bring = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
     val ranges = remember(verses) { mutableListOf<IntRange>() }
     val text = remember(verses, acc, supSize) {
         ranges.clear()
@@ -124,9 +145,17 @@ fun VerseFlow(
             }
         }
     }
+    androidx.compose.runtime.LaunchedEffect(lit?.first, layout) {
+        val l = layout ?: return@LaunchedEffect
+        val i = verses.indexOfFirst { it.n == lit?.first }.takeIf { it >= 0 && it < ranges.size } ?: return@LaunchedEffect
+        if (!follow()) return@LaunchedEffect
+        val r = ranges[i]
+        bring.bringIntoView(androidx.compose.ui.geometry.Rect(0f, l.getLineTop(l.getLineForOffset(r.first)), l.size.width.toFloat(), l.getLineBottom(l.getLineForOffset(r.last))))
+    }
     BasicText(
         text,
         modifier
+            .then(Modifier.bringIntoViewRequester(bring))
             .then(if (onTap != null) Modifier.pointerInput(verses) {
                 detectTapGestures { pos -> layout?.getOffsetForPosition(pos)?.let { o -> ranges.indexOfFirst { o in it }.takeIf { it >= 0 }?.let { onTap(verses[it].n) } } }
             } else Modifier)

@@ -80,8 +80,8 @@ fun TvLibrary() {
                     tabs.forEachIndexed { i, (id, label, count) ->
                         val on = tab == id
                         Row(
-                            Modifier.fillMaxWidth().height(54.dp).tvFocus(RoundedCornerShape(27.dp), { tab = id; flip++ }, Role.Tab).clip(RoundedCornerShape(27.dp)).background(if (on) gold(.16f) else Color.Transparent)
-                                .then(if (i == 0) Modifier.focusRequester(first) else Modifier).padding(horizontal = 20.dp),
+                            Modifier.fillMaxWidth().height(54.dp).then(if (i == 0) Modifier.focusRequester(first) else Modifier).tvFocus(RoundedCornerShape(27.dp), { tab = id; flip++ }, Role.Tab).clip(RoundedCornerShape(27.dp)).background(if (on) gold(.16f) else Color.Transparent)
+                                .padding(horizontal = 20.dp),
                             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
                         ) { T(label, 18f, if (on) C.Gold else C.Soft, weight = 600); T(count, 14f, if (on) C.Gold else C.Faint) }
                     }
@@ -117,6 +117,12 @@ private fun LettersTab() {
     val letters by Letters.book(lang).all.collectAsState()
     LaunchedEffect(lang) { Letters.book(lang).sync() }
     var sel by remember { mutableIntStateOf(0) }
+    // twenty envelopes at a time; reaching the last one reads the next from the database
+    var count by remember(lang) { mutableIntStateOf(20) }
+    LaunchedEffect(sel, letters.size) {
+        if (sel >= count - 2 && letters.size > count) count += 20
+        if (sel >= letters.size - 2 && letters.isNotEmpty()) Letters.book(lang).loadMore()
+    }
     val l: Letter? = letters.getOrNull(sel)
     var llang by remember(sel, lang) { mutableStateOf(lang) }
     val swap by oneShot(sel to lang, 700)
@@ -131,7 +137,7 @@ private fun LettersTab() {
                 }
             }
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy((-14).dp)) {
-                letters.take(40).forEachIndexed { i, x ->
+                letters.take(count).forEachIndexed { i, x ->
                     val shift = animate(if (i == sel) 24f else 0f, 350, Ease.O12)
                     Box(
                         Modifier.zIndex(i.toFloat()).graphicsLayer { translationX = shift * density; rotationZ = if (i % 2 == 1) .7f else -.6f }.fillMaxWidth().height(78.dp)

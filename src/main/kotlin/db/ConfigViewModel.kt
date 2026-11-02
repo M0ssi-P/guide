@@ -73,12 +73,19 @@ class ConfigViewModel: ViewModel() {
     val table = Table();
     lateinit var rs: RS;
 
+    /** Completed once the schema is set up at start; other startup work on [db] waits for it. */
+    val dbReady = kotlinx.coroutines.CompletableDeferred<Unit>()
+
     init {
         viewModelScope.launch {
             rs = RS()
 
-            startTableStatement(db)
-            createUpdatedAtTrigger(db)
+            try {
+                startTableStatement(db)
+                createUpdatedAtTrigger(db)
+            } finally {
+                dbReady.complete(Unit)
+            }
             loadLanguagesAndSave()
         }
     }
@@ -107,6 +114,7 @@ class ConfigViewModel: ViewModel() {
     @OptIn(ExperimentalPathApi::class)
     fun loadTableData() {
         viewModelScope.launch(Dispatchers.IO) {
+            dbReady.await()
             val isFound = db.checkIfOneExist(
                 """
                     SELECT * FROM sermons WHERE date_code = ? LIMIT 1
@@ -116,6 +124,7 @@ class ConfigViewModel: ViewModel() {
 
             if (isFound) {
                 setShouldHide(bool = false)
+                live.TableUpdates.start()
                 return@launch
             }
 
@@ -193,13 +202,18 @@ class ConfigViewModel: ViewModel() {
         }
     }
 
-    suspend fun mergeDb(incomingDb: Path, languageId: String) {
+    /** Adds a Table language's database to the library; with [replace], an update takes the language's old text out first, in the same transaction. */
+    suspend fun mergeDb(incomingDb: Path, languageId: String, replace: Boolean = false) {
+        // one connection is shared by the whole app: nothing else may read it mid-merge
+        synchronized(_db.value) {
         _db.value.autoCommit = false
         try {
             _installationStatus.value = "Please be patient while we prepare the Infobase."
             _db.value.createStatement(
             ).use { stmt ->
                 stmt.execute("ATTACH DATABASE '${incomingDb.toAbsolutePath()}' AS incoming")
+                // sections, paragraphs and lines go with their sermons (ON DELETE CASCADE)
+                if (replace) stmt.execute("DELETE FROM sermons WHERE language_id = '$languageId'")
 
                 stmt.execute("""
                 INSERT OR IGNORE INTO sermons (
@@ -265,7 +279,6 @@ class ConfigViewModel: ViewModel() {
 
                 stmt.execute("DETACH DATABASE incoming")
                 _installationStatus.value = "Infobase complete."
-                delay(100)
             }
         } catch (e: Exception) {
             _db.value.rollback()
@@ -273,6 +286,8 @@ class ConfigViewModel: ViewModel() {
         } finally {
             _db.value.autoCommit = true
         }
+        }
+        delay(100)
     }
 
     data class ExtractedData(

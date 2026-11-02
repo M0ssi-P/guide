@@ -1,0 +1,71 @@
+name: Publish letters
+
+# Brings each language's letters database on the file store up to date from branhamtabernacle.org
+# (see shared/src/jvmMain/kotlin/tools/PublishLetters.kt). The apps check letters/<lang>/latest.json for new ones.
+on:
+  schedule:
+    # the weekly letter arrives between 6pm and midnight Saturday, Sydney time. GitHub runs in UTC: that's
+    # 07:00-13:00 UTC in the southern summer and 08:00-14:00 in winter, so it starts hourly across both and the
+    # first step skips the runs that fall outside Saturday 18:00-23:59 in Sydney.
+    - cron: "0 7-14 * * 6"
+    # catch-up for a late letter: every 4 hours through Sunday and Monday in Sydney; these runs only go ahead while
+    # this week's letter is still missing from the file store
+    - cron: "0 15,19,23 * * 6"
+    - cron: "0 3,7,11,15,19,23 * * 0"
+    - cron: "0 3,7,11 * * 1"
+  workflow_dispatch:
+    inputs:
+      langs:
+        description: "Languages, comma-separated (e.g. en,fr). Empty for all."
+        required: false
+        default: ""
+
+# one run at a time, so two never write the same database
+concurrency:
+  group: letters
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - name: Saturday 6pm to midnight Sydney, or catching up a late letter
+        id: window
+        run: |
+          dow=$(TZ=Australia/Sydney date +%u); hour=$(TZ=Australia/Sydney date +%H)
+          go=false
+          if [ "${{ github.event_name }}" != "schedule" ]; then go=true
+          elif [ "$dow" = 6 ] && [ "$hour" -ge 18 ]; then go=true
+          elif [ "$dow" = 7 ] || [ "$dow" = 1 ]; then
+            # Sunday or Monday in Sydney: only while this week's (Saturday's) letter isn't published yet
+            saturday=$(TZ=Australia/Sydney date -d "last saturday" +%F)
+            newest=$(curl -sf https://theguide-file-store.vrg-theguide.workers.dev/files/letters/en/latest.json | grep -o '"newest":"[0-9-]*"' | cut -d'"' -f4)
+            if [ -z "$newest" ] || [[ "$newest" < "$saturday" ]]; then go=true; fi
+            echo "This week's Saturday: $saturday, newest published: ${newest:-none}"
+          fi
+          echo "go=$go" >> "$GITHUB_OUTPUT"
+          [ "$go" = true ] || echo "Nothing to do ($(TZ=Australia/Sydney date)), skipping."
+
+      - name: Checkout repo
+        if: steps.window.outputs.go == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        if: steps.window.outputs.go == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Grant execute permission for Gradle
+        if: steps.window.outputs.go == 'true'
+        run: chmod +x gradlew
+
+      - name: Publish letters
+        if: steps.window.outputs.go == 'true'
+        env:
+          THEGUIDE_ADMIN_TOKEN: ${{ secrets.THEGUIDE_ADMIN_TOKEN }}
+          LANGS: ${{ github.event.inputs.langs }}
+        run: |
+          if [ -n "$LANGS" ]; then ./gradlew :shared:publishLetters -Plangs="$LANGS"; else ./gradlew :shared:publishLetters; fi

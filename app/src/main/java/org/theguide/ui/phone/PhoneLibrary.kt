@@ -30,6 +30,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import parsers.bt.LetterBook
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -178,8 +181,11 @@ private fun LetterStacks(onOpen: (Letter, String) -> Unit) {
     Row(Modifier.padding(top = 18.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Prefs.letterLangs.forEach { code -> Chip(Setup.letterLanguages.firstOrNull { it.first == code }?.second ?: code, code == lang, height = 34f, size = 12.5f) { lang = code } }
     }
+    // twenty envelopes at a time; "Older letters" reads the next ones from the database
+    var count by remember(lang) { mutableIntStateOf(20) }
+    val more = rememberCoroutineScope()
     var n = 0
-    letters.take(60).groupBy { it.letterDate.withDayOfMonth(1) }.forEach { (month, list) ->
+    letters.take(count).groupBy { it.letterDate.withDayOfMonth(1) }.forEach { (month, list) ->
         S("${monthName(month)}${if (month.year != LocalDate.now().year) " ${month.year}" else ""}", 20f, C.Ink, Modifier.padding(top = 22.dp, bottom = 10.dp))
         // envelopes overlap by 30 px, each a little tilted, newest on top of the one before
         Column(verticalArrangement = Arrangement.spacedBy((-30).dp)) { list.forEachIndexed { j, l ->
@@ -204,8 +210,12 @@ private fun LetterStacks(onOpen: (Letter, String) -> Unit) {
             }
         } }
     }
+    // more on screen to show, or a full page loaded (the database may have older ones)
+    if (letters.size > count || (letters.isNotEmpty() && letters.size % LetterBook.PAGE == 0)) T("Older letters", 13f, C.Gold, Modifier.padding(top = 26.dp).press({
+        count += 20
+        if (count > letters.size) more.launch { Letters.book(lang).loadMore() }
+    }).padding(8.dp), weight = 600)
 }
-
 
 @Composable
 private fun Activity() {

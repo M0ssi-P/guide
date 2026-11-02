@@ -66,6 +66,7 @@ dependencies {
     implementation("androidx.media3:media3-session:1.6.1")
     implementation("dev.chrisbanes.haze:haze:1.5.4")
     implementation("com.google.zxing:core:3.5.3")
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0") { isTransitive = false }
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     debugImplementation("androidx.compose.ui:ui-tooling")

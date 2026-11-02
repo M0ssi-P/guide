@@ -286,6 +286,17 @@ internal fun langOptions(): List<Triple<String, String, Boolean>> {
     return all.map { Triple(it, metas[it] ?: "", Tables.has(it)) }
 }
 
+/** Downloads a Table language not yet on the device, then reads in it; [dl] holds its progress (0..100) while it comes in. */
+internal fun kotlinx.coroutines.CoroutineScope.getLanguage(iso3: String, dl: MutableMap<String, Int>) {
+    if (dl[iso3] != null) return
+    dl[iso3] = 0
+    launch {
+        val ok = runCatching { Tables.download(iso3) { r, t -> if (t > 0) dl[iso3] = (r * 100 / t).toInt() } }.isSuccess
+        dl.remove(iso3)
+        if (ok) { Prefs.tableLangs = Prefs.tableLangs + iso3; Reader.switchLanguage(iso3) }
+    }
+}
+
 @Composable
 private fun BoxScope.LangSheet(haze: HazeState, k: Look, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
@@ -299,13 +310,7 @@ private fun BoxScope.LangSheet(haze: HazeState, k: Look, onDismiss: () -> Unit) 
             Row(
                 Modifier.padding(bottom = 6.dp).fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(if (sel) k.chip else Color.Transparent)
                     .press({
-                        if (have) scope.launch { Reader.switchLanguage(iso3); onDismiss() }
-                        else if (dl[iso3] == null) scope.launch {
-                            dl[iso3] = 0
-                            runCatching { Tables.download(iso3) { r, t -> if (t > 0) dl[iso3] = (r * 100 / t).toInt() } }
-                            dl.remove(iso3)
-                            Prefs.tableLangs = Prefs.tableLangs + iso3
-                        }
+                        if (have) scope.launch { Reader.switchLanguage(iso3); onDismiss() } else scope.getLanguage(iso3, dl)
                     }, role = Role.RadioButton).padding(horizontal = 16.dp, vertical = 13.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {

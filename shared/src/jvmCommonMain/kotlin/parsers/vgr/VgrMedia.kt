@@ -76,32 +76,48 @@ object VgrMedia {
     fun fileName(iso3: String, dateCode: String, title: String, ext: String) =
         "${if (iso3.equals("ENG", true)) "" else iso3.uppercase()}$dateCode ${vgrSafeTitle(title)} VGR.$ext"
 
-    /** Downloads to a .part file first so a cancelled or failed download never leaves a broken file behind. */
-    suspend fun download(url: String, target: File, onProgress: (Float) -> Unit) = withContext(Dispatchers.IO) {
+    /**
+     * Downloads to a .part file first so a cut-off download never leaves a broken file behind. The .part stays, with
+     * the server's etag beside it, so the next try asks only for the rest (HTTP Range); a file that changed meanwhile
+     * starts over.
+     */
+    suspend fun download(url: String, target: File, onProgress: (Float) -> Unit): Unit = withContext(Dispatchers.IO) {
         val part = File(target.parentFile, target.name + ".part")
-        try {
-            okHttpClient.newCall(Request.Builder().url(url).build()).execute().use { res ->
-                if (!res.isSuccessful) throw IOException("HTTP ${res.code}")
-                val body = res.body ?: throw IOException("Empty response")
-                val total = body.contentLength()
-                body.byteStream().use { input ->
-                    part.outputStream().use { out ->
-                        val buf = ByteArray(64 * 1024)
-                        var read = 0L
-                        while (true) {
-                            coroutineContext.ensureActive()
-                            val n = input.read(buf)
-                            if (n < 0) break
-                            out.write(buf, 0, n)
-                            read += n
-                            if (total > 0) onProgress(read.toFloat() / total)
-                        }
+        val tag = File(target.parentFile, target.name + ".part.etag")
+        val have = if (part.isFile && tag.isFile) part.length() else 0L
+        val request = Request.Builder().url(url).apply { if (have > 0) header("Range", "bytes=$have-") }.build()
+        val again = okHttpClient.newCall(request).execute().use { res ->
+            val etag = res.header("ETag").orEmpty()
+            val resume = res.code == 206 && have > 0 && etag.isNotEmpty() && etag == tag.readText()
+            // a range we can't use (the file changed, or the part is already whole): start over
+            if (res.code == 416 || (res.code == 206 && !resume)) return@use true
+            if (!res.isSuccessful) throw IOException("HTTP ${res.code}")
+            val body = res.body ?: throw IOException("Empty response")
+            val start = if (resume) have else 0L
+            val total = body.contentLength().let { if (it > 0) start + it else -1L }
+            if (!resume) tag.writeText(etag)
+            body.byteStream().use { input ->
+                java.io.FileOutputStream(part, resume).use { out ->
+                    val buf = ByteArray(64 * 1024)
+                    var read = start
+                    while (true) {
+                        coroutineContext.ensureActive()
+                        val n = input.read(buf)
+                        if (n < 0) break
+                        out.write(buf, 0, n)
+                        read += n
+                        if (total > 0) onProgress(read.toFloat() / total)
                     }
                 }
             }
-            if (!part.renameTo(target)) throw IOException("Couldn't save ${target.name}")
-        } finally {
-            part.delete()
+            false
         }
+        if (again) {
+            part.delete(); tag.delete()
+            return@withContext download(url, target, onProgress)
+        }
+        target.delete()
+        if (!part.renameTo(target)) throw IOException("Couldn't save ${target.name}")
+        tag.delete()
     }
 }

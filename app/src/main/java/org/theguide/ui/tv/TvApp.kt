@@ -117,8 +117,8 @@ private fun BoxScope.Rail(railFocus: FocusRequester) {
         rail.forEach { (tab, icon) ->
             val on = Nav.tab == tab
             Box(
-                Modifier.size(54.dp).tvFocus(RoundedCornerShape(27.dp), { Nav.go(tab) }).clip(RoundedCornerShape(27.dp)).background(if (on) gold(.16f) else Color.Transparent)
-                    .then(if (on) Modifier.focusRequester(railFocus) else Modifier).label(tab.name),
+                Modifier.size(54.dp).then(if (on) Modifier.focusRequester(railFocus) else Modifier).tvFocus(RoundedCornerShape(27.dp), { Nav.go(tab) }).clip(RoundedCornerShape(27.dp)).background(if (on) gold(.16f) else Color.Transparent)
+                    .label(tab.name),
                 contentAlignment = Alignment.Center,
             ) { Ico(icon, 24f, if (on) C.Gold else C.Faint) }
         }

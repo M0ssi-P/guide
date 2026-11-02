@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,6 +57,7 @@ import org.theguide.ui.phone.Scrubber
 import org.theguide.ui.phone.VuMeter
 import org.theguide.ui.phone.clockText
 import org.theguide.ui.phone.englishTitle
+import org.theguide.ui.phone.getLanguage
 import org.theguide.ui.phone.langOptions
 import org.theguide.ui.phone.mixBrush
 import org.theguide.ui.phone.pack
@@ -160,17 +162,19 @@ fun TvTable() {
         when (sheet) {
             "pick" -> TvPanel(k.sheet, { sheet = "" }) { SermonsPanel(k) { sheet = "" } }
             "lang" -> TvPanel(k.sheet, { sheet = "" }) {
+                val dl = remember { mutableStateMapOf<String, Int>() }
                 S("Language", 32f, k.tx)
                 T("Text and voice change together. Your place is kept.", 15f, k.sub, Modifier.padding(top = 6.dp, bottom = 16.dp))
                 langOptions().forEach { (iso3, meta, have) ->
                     val sel = iso3 == Reader.iso3
                     val dot = animate(if (sel) 1f else 0f, 300, Ease.O14)
                     Row(
-                        Modifier.padding(bottom = 6.dp).fillMaxWidth().tvFocus(RoundedCornerShape(20.dp), { if (have) scope.launch { Reader.switchLanguage(iso3); sheet = "" } }, Role.RadioButton).clip(RoundedCornerShape(20.dp)).background(if (sel) k.chip else Color.Transparent)
+                        Modifier.padding(bottom = 6.dp).fillMaxWidth().tvFocus(RoundedCornerShape(20.dp), { if (have) scope.launch { Reader.switchLanguage(iso3); sheet = "" } else scope.getLanguage(iso3, dl) }, Role.RadioButton).clip(RoundedCornerShape(20.dp)).background(if (sel) k.chip else Color.Transparent)
+                            .drawBehind { dl[iso3]?.let { drawRect(gold(.35f), size = size.copy(width = size.width * it / 100f)) } }
                             .padding(horizontal = 18.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
-                        Column(Modifier.weight(1f)) { S(Tables.localName(iso3), 21f, k.tx); T(meta, 14f, k.sub) }
+                        Column(Modifier.weight(1f)) { S(Tables.localName(iso3), 21f, k.tx); T(dl[iso3]?.let { "Downloading $it%" } ?: meta, 14f, k.sub) }
                         Box(Modifier.size(14.dp).graphicsLayer { scaleX = dot; scaleY = dot }.clip(CircleShape).background(k.acc))
                     }
                 }

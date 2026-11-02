@@ -23,12 +23,14 @@ class App : Application() {
         instance = this
         storeDir = File(filesDir, "data")
         omegaDir = File(filesDir, "omega")
+        parsers.bt.openSql = { org.theguide.data.AndroidSql(it) }
         okHttpClient = OkHttpClient.Builder()
             .followRedirects(true)
             .followSslRedirects(true)
             .cache(Cache(File(cacheDir, "http_cache"), 50L * 1024L * 1024L))
             .build()
         client = Requests(okHttpClient, defaultHeaders, defaultCacheTime = 6, defaultCacheTimeUnit = TimeUnit.HOURS, responseParser = Mapper)
+        org.theguide.data.BackgroundCheck.schedule(this)
     }
 
     companion object {

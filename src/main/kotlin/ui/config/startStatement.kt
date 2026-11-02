@@ -4,7 +4,7 @@ import db.checkIfOneExist
 import db.loadSql
 import java.sql.Connection
 
-fun startTableStatement(conn: Connection) {
+fun startTableStatement(conn: Connection) = synchronized(conn) {
     conn.createStatement().use { stmt ->
         val sql = listOf(
             loadSql(resource = "languages.sql"),

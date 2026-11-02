@@ -64,7 +64,7 @@ class BibleDb(private val rows: (sql: String, args: List<Any>) -> List<List<Any?
         val timings = rows(
             "SELECT t.audio_id, t.verse, t.start_ms, t.end_ms FROM audio_timings t JOIN chapters c ON c.id = t.chapter_id WHERE c.usfm = ? ORDER BY t.verse",
             listOf(usfm),
-        ).groupBy({ it[0] as String }, { VerseTiming(int(it[1]), long(it[2]), long(it[3])) })
+        ).groupBy({ it[0] as String }, { VerseTiming(int(it[1]), long(it[2]), long(it[3])) }).mapValues { readAlong(it.value) }
         return rows(
             "SELECT a.id, a.voice_id, a.title, a.is_default, a.mp3_url, a.hls_url FROM audio a JOIN chapters c ON c.id = a.chapter_id WHERE c.usfm = ?",
             listOf(usfm),
@@ -84,6 +84,14 @@ class BibleDb(private val rows: (sql: String, args: List<Any>) -> List<List<Any?
         private fun int(x: Any?) = (x as Number).toInt()
         private fun long(x: Any?) = (x as Number).toLong()
         private fun bool(x: Any?) = when (x) { is Number -> x.toInt() != 0; is Boolean -> x; else -> false }
+
+        /**
+         * Verse timings for reading along: each verse lasts until the next one starts, so there is no gap between them;
+         * the first keeps its own start (the recording's introduction stays unlit) and the last its own end.
+         */
+        fun readAlong(timings: List<VerseTiming>): List<VerseTiming> = timings.sortedBy { it.verse }.let { t ->
+            t.mapIndexed { i, v -> t.getOrNull(i + 1)?.let { next -> v.copy(endMs = maxOf(next.startMs, v.startMs)) } ?: v }
+        }
 
         fun paragraphKind(usfm: String) = when {
             usfm == "pc" -> Paragraph.PC

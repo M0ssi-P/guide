@@ -107,10 +107,7 @@ fun letterDate(l: Letter, lang: String): String {
 }
 
 /** The same letter in another language (the service is the same; the site gives each language its own page). */
-fun letterIn(l: Letter, lang: String): Letter? {
-    val all = Letters.book(lang).all.value
-    return all.firstOrNull { it.id == l.id } ?: all.firstOrNull { it.code == l.code && it.letterDate == l.letterDate }
-}
+fun letterIn(l: Letter, lang: String): Letter? = Letters.book(lang).let { it.byId(l.id) ?: it.byCodeDate(l.code, l.letterDate) }
 
 /** Scripture references in the letter's quotes and text ("Ephesians 1:3-5"), for the Scripture line. */
 private val scriptureRef = Regex("""\b(?:[1-3] )?[A-Z][a-z]+\.? \d{1,3}:\d{1,3}(?:[-–]\d{1,3})?""")
